@@ -5,6 +5,8 @@
 #include <iostream>
 #include <iterator> // for std::forward_iterator_tag
 #include <string>
+#include <memory> // for std::shared_ptr
+#include <stdexcept> // for std::runtime_error
 #include <variant> // for std::get, std::variant, std::holds_alternative and std::monostate
 #include <unordered_map>
 
@@ -12,10 +14,35 @@ using std::cout, std::endl;
 using std::monostate;
 using std::string;
 using std::variant;
+using std::shared_ptr;
 
 namespace token {
+
+    class Lexeme {
+    public:
+        Lexeme() : value("") {}
+        Lexeme(string lexeme) : value(lexeme) {}
+        virtual string Value() const { return value; }
+        virtual double NumericValue() const { throw std::runtime_error("Not a numeric value"); } // Virtual method for numeric value
+    protected:
+        string value;
+    };
+
+    struct StringLiteral : public Lexeme {
+        StringLiteral(string lexeme) : Lexeme(lexeme) {}
+        string Value() const override {
+            if (value.length() < 2) return ""; // empty string
+            return value.substr(1, value.length()-2); // remove the double quotes
+        }
+    };
+
+    struct NumberLiteral : public Lexeme {
+        NumberLiteral(string lexeme) : Lexeme(lexeme) {}
+        double NumericValue() const override { return std::stod(value); }
+    };
+
     // exporting this type through the namespace
-    using TokenValue = variant<monostate, string, double>;
+    using TokenValue = Lexeme;
 
     // The order of this matters for the translating the enums to their corresponding string representations
     enum class TokenType {
@@ -87,25 +114,20 @@ namespace token {
     };
 
     struct Token {
-        TokenType type;
-        TokenValue literal;
-        string lexeme;
-        int line;
-        Token() : type(TokenType::NONE), literal(monostate()), lexeme(""), line(0) {}
-        Token(TokenType type, TokenValue literal, string lexeme, int line)
-            : type(type), literal(literal), lexeme(lexeme), line(line) {}
+        Token() : type(TokenType::NONE), lexeme(nullptr), line(0) {}
+        Token(TokenType type, shared_ptr<Lexeme> lexeme, int line)
+            : type(type), lexeme(lexeme), line(line) {}
         
         void print() const {
-            cout << "Token type: " << TokenTypeNames[static_cast<int>(type)] << ", Literal: ";
-            if (holds_alternative<string>(literal)) {
-                cout << get<string>(literal);
-            } else if (holds_alternative<double>(literal)) {
-                cout << get<double>(literal);
-            } else {
-                cout << "None";
-            }
-            cout << ", Lexeme: '" << lexeme << "' , Line: " << line << endl;
+            cout << "Token type: " << TokenTypeNames[static_cast<int>(type)] << ", Lexeme: " << lexeme->Value();
+            if (type == TokenType::STRING) cout << ", Literal: " << lexeme->Value();
+            if (type == TokenType::NUMBER) cout << ", Literal: " << lexeme->NumericValue();
+            cout << ", Line: " << line << endl;
         }
+
+        TokenType type;
+        shared_ptr<TokenValue> lexeme;
+        int line;
     };
 
 } // Token

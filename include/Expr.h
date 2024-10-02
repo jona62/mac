@@ -1,115 +1,113 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include "Token.h" // for token::Token
+#include "Token.h"
 #include <variant>
 #include <string>
+#include <memory>
 
 using token::Token;
 using std::string;
 using std::variant;
-using std::holds_alternative;
-using std::get;
-using std::to_string;
+using std::shared_ptr;
+using std::make_shared;
 
 namespace expr {
-    using ObjectValue = variant<string, double>;
 
     // Forward declaration of Visitor
     template <typename Result>
     class Visitor;
 
-    template <typename Result = void>
+    template <typename Result>
     class Expr {
     public:
-        virtual Result visit(Visitor<Result>* visitor) = 0;
+        virtual Result visit(shared_ptr<Visitor<Result>> visitor) = 0;
     };
 
     template <typename Result>
     class Binary : public Expr<Result> {
     public:
-        Binary(Expr<Result>* left, const Token &operatorToken, Expr<Result>* right)
+        Binary(shared_ptr<Expr<Result>> left, Token operatorToken, shared_ptr<Expr<Result>> right)
             : left(left), operatorToken(operatorToken), right(right) {}
 
-        Result visit(Visitor<Result>* visitor) override {
+        Result visit(shared_ptr<Visitor<Result>> visitor) override {
             return visitor->visitBinaryExpr(this);
         }
 
-        Expr<Result>* left;
-        const Token operatorToken;
-        Expr<Result>* right;
+        shared_ptr<Expr<Result>> left;
+        Token operatorToken;
+        shared_ptr<Expr<Result>> right;
     };
 
     template <typename Result>
     class Unary : public Expr<Result> {
     public:
-        Unary(const Token &operatorToken, Expr<Result>* right)
+        Unary(Token operatorToken, shared_ptr<Expr<Result>> right)
             : operatorToken(operatorToken), right(right) {}
 
-        Result visit(Visitor<Result>* visitor) override {
+        Result visit(shared_ptr<Visitor<Result>> visitor) override {
             return visitor->visitUnaryExpr(this);
         }
 
-        const Token operatorToken;
-        Expr<Result>* right;
+        Token operatorToken;
+        shared_ptr<Expr<Result>> right;
     };
 
     template <typename Result>
     class Literal : public Expr<Result> {
     public:
-        Literal(const ObjectValue& literal)
-            : literal(literal) {}
+        using LiteralValue = variant<string, double>;
 
-        Result visit(Visitor<Result>* visitor) override {
+        Literal(LiteralValue value) : value(value) {}
+
+        Result visit(shared_ptr<Visitor<Result>> visitor) override {
             return visitor->visitLiteralExpr(this);
         }
 
         string toString() const {
-            if (holds_alternative<string>(literal)) {
-                return get<string>(literal);
-            } else if (holds_alternative<double>(literal)) {
-                return to_string(get<double>(literal));
+            if (std::holds_alternative<string>(value)) {
+                return std::get<string>(value);
+            } else if (std::holds_alternative<double>(value)) {
+                return std::to_string(std::get<double>(value));
             }
-            return "None";
+            return "nil";
         }
 
-        ObjectValue literal;
+        LiteralValue value;
     };
 
     template <typename Result>
     class Grouping : public Expr<Result> {
     public:
-        Grouping(Expr<Result>* expression)
-            : expression(expression) {}
+        Grouping(shared_ptr<Expr<Result>> expression) : expression(expression) {}
 
-        Result visit(Visitor<Result>* visitor) override {
+        Result visit(shared_ptr<Visitor<Result>> visitor) override {
             return visitor->visitGroupingExpr(this);
         }
 
-        Expr<Result>* expression;
+        shared_ptr<Expr<Result>> expression;
     };
 
     template <typename Result>
     class Variable : public Expr<Result> {
     public:
-        Variable(const Token &name)
-            : name(name) {}
+        Variable(Token name) : name(name) {}
 
-        Result visit(Visitor<Result>* visitor) override {
+        Result visit(shared_ptr<Visitor<Result>> visitor) override {
             return visitor->visitVariableExpr(this);
         }
 
         Token name;
     };
-    
+
     template <typename Result>
     class Visitor {
     public:
         virtual Result visitBinaryExpr(Binary<Result>* expr) = 0;
         virtual Result visitUnaryExpr(Unary<Result>* expr) = 0;
-        virtual Result visitGroupingExpr(Grouping<Result>* expr) = 0;
         virtual Result visitLiteralExpr(Literal<Result>* expr) = 0;
         virtual Result visitVariableExpr(Variable<Result>* expr) = 0;
+        virtual Result visitGroupingExpr(Grouping<Result>* expr) = 0;
     };
 
 } // namespace expr

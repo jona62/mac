@@ -1,8 +1,12 @@
 #include "Scanner.h"
 
+#include <memory>
+
 using std::monostate;
 using token::Token;
 using token::TokenValue;
+using token::StringLiteral;
+using token::NumberLiteral;
 
 namespace scanner {
 
@@ -32,7 +36,7 @@ namespace scanner {
             }
             if (type != TokenType::NONE) {
                 string lexeme = string(1, c);
-                return Token(type, monostate{}, lexeme, line);
+                return Token(type, std::make_shared<TokenValue>(lexeme), line);
             }
 
             // two character tokens
@@ -72,7 +76,7 @@ namespace scanner {
 
             if (type != TokenType::NONE) {
                 string lexeme = source.substr(start, current - start);
-                return Token(type, monostate{}, lexeme, line);
+                return Token(type, std::make_shared<TokenValue>(lexeme), line);
             }
 
             // Longer lexemes
@@ -92,12 +96,12 @@ namespace scanner {
                     }
                     if (isAtEnd()) {
                         cout << "Unterminated string on line " << line << std::endl;
-                        return Token(TokenType::NONE, monostate {}, string(), line);
+                        return Token(TokenType::NONE, std::make_shared<TokenValue>(), line);
                     } else {
                         advance(); // closing "
-                        TokenValue literal = source.substr(start + 1, current - start - 2);
+                        // TokenValue literal = source.substr(start + 1, current - start - 2);
                         string lexeme = source.substr(start, current - start);
-                        return Token(TokenType::STRING, literal, lexeme, line);
+                        return Token(TokenType::STRING, std::make_shared<StringLiteral>(lexeme), line);
                     }
                 default:
                     if(isdigit(c)) {
@@ -110,8 +114,7 @@ namespace scanner {
                             while (isDigit(peek())) advance();
                         }
                         string lexeme = source.substr(start, current - start);
-                        TokenValue literal = stod(lexeme);
-                        return Token(TokenType::NUMBER, literal, lexeme, line);
+                        return Token(TokenType::NUMBER, std::make_shared<NumberLiteral>(lexeme), line);
                     } else if (isAlpha(c)) {
                         // Consume each alphanumeric character up to the maximum length
                         while (isAlphaNumeric(peek())) advance();
@@ -121,22 +124,21 @@ namespace scanner {
                         if (keywords.find(identifier) != keywords.end()) {
                             tokenType = keywords[identifier]; // Override type here
                         }
-                        return Token(tokenType, monostate{}, identifier, line);
+                        return Token(tokenType, std::make_shared<TokenValue>(identifier), line);
                     } else {
                         cout << "Unexpected character on line " << line << std::endl;
-                        return Token(TokenType::NONE, monostate {}, string(), line);
+                        return Token(TokenType::NONE, std::make_shared<TokenValue>(), line);
                     }
             }
             // This handles the case where the token is a single character like '/'
             type = TokenType::NONE;
             if (type != TokenType::NONE) {
                 string lexeme = source.substr(start, current - start);
-                cout << "lexeme: " << lexeme << std::endl;
-                return Token(type, monostate{}, lexeme, line);
+                return Token(type, std::make_shared<TokenValue>(lexeme), line);
             }
 
         }
-        return Token(TokenType::END_OF_FILE, "\0", "\0", line);
+        return Token(TokenType::END_OF_FILE, std::make_shared<TokenValue>(), line);
     }
 
 } // namespace scanner

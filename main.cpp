@@ -8,7 +8,8 @@
 #include "include/AstPrinter.h"
 
 using namespace std;
-using std::string;
+using namespace token;
+using namespace expr;
 
 void run(string source);
 
@@ -32,36 +33,33 @@ int main(int argc, char **argv) {
 void run(string source) {
 
     scanner::Scanner scanner(source);
-    std::vector<token::Token> tokens;
+    vector<Token> tokens;
     for (auto& token : scanner) {
         tokens.push_back(token);
-        // token.print();
+        token.print();
     }
 
     parser::Parser parser(tokens);
     parser.parse();
 
-    token::Token minusToken(token::TokenType::MINUS, std::monostate {}, "-", 1);
-    token::Token starToken(token::TokenType::STAR, std::monostate {}, "*", 1);
+    Token minusToken(TokenType::MINUS, std::make_shared<TokenValue>("-"), 1);
+    Token starToken(TokenType::STAR, std::make_shared<TokenValue>("*"), 1);
 
     // Create the individual expressions
-    expr::Literal<string> *stringLiteral = new expr::Literal<string>("String literal");
-
-    expr::Literal<string> *literal45_67 = new expr::Literal<string>(123.45);
-    expr::Unary<string> *unaryExpr = new expr::Unary<string>(minusToken, literal45_67);
-    expr::Grouping<string> *groupingExpr = new expr::Grouping<string>(stringLiteral);
+    auto stringLiteral = make_shared<expr::Literal<string>>("String literal");
+    auto literal45_67 = make_shared<expr::Literal<string>>(123.45);
+    auto unaryExpr = make_shared<expr::Unary<string>>(minusToken, literal45_67);
+    auto groupingExpr = make_shared<expr::Grouping<string>>(stringLiteral);
 
     // Create the full expression
-    expr::Expr<string>* expression = new expr::Binary<string>(unaryExpr, starToken, groupingExpr);
-    expr::Grouping<string> *grouping = new expr::Grouping<string>(expression);
-    expr::Expr<string>* expression2 = new expr::Binary<string>(grouping, starToken, literal45_67);
+    auto expression = make_shared<expr::Binary<string>>(unaryExpr, starToken, groupingExpr);
+    auto grouping = make_shared<expr::Grouping<string>>(expression);
+    auto expression2 = make_shared<expr::Binary<string>>(grouping, starToken, literal45_67);
 
     // Print the AST
-    printer::AstPrinter<string> *printer = new printer::AstPrinter<string>();
+    auto printer = make_shared<printer::AstPrinter<string>>();
     cout << expression->visit(printer) << endl;
     cout << expression2->visit(printer) << endl;
-    delete grouping;
-    delete printer;
 }
 
 void run_file(const char *path) {

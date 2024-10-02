@@ -1,4 +1,4 @@
-// this is a comment
+ohq // this is a comment
 (( )){} // grouping stuff
 !*+-/=<> <= == // operators
 "This is a string literal"
