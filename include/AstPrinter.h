@@ -20,7 +20,9 @@ namespace printer {
         }
 
         Result visitUnaryExpr(expr::Unary<Result>* expr) override {
-            return parenthesize(expr->operatorToken.lexeme->Value(), expr->right);
+            return expr->operatorToken.type == TokenType::NUMBER
+                ? parenthesize(expr->operatorToken.lexeme->NumericValue(), expr->right)
+                : parenthesize(expr->operatorToken.lexeme->Value(), expr->right);
         }
 
         Result visitLiteralExpr(expr::Literal<Result>* expr) override {
@@ -33,7 +35,7 @@ namespace printer {
         }
 
         Result visitGroupingExpr(expr::Grouping<Result>* expr) override {
-            return parenthesize("grouping", expr->expression);
+            return parenthesize("group", expr->expression);
         }
 
     private:
@@ -43,6 +45,15 @@ namespace printer {
             output << "(" << name;
             // C++17 fold expression to expand variadic arguments
             ((output << " " << exprs->visit(this->shared_from_this())), ...);
+            output << ")";
+            return output.str();
+        }
+
+        // Overload for numeric values
+        Result parenthesize(double numericValue, shared_ptr<expr::Expr<Result>> expr) {
+            std::ostringstream output;
+            output << "(" << numericValue;
+            output << " " << expr->visit(this->shared_from_this());
             output << ")";
             return output.str();
         }
