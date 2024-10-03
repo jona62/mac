@@ -3,8 +3,10 @@
 
 #include <vector>
 #include "Scanner.h"
+#include "Expr.h"
 
 using token::Token;
+using expr::Expr;
 
 namespace parser {
 
@@ -23,7 +25,15 @@ namespace parser {
         const Token& advance();
         const Token& peek();
         const Token& previous();
+        template <typename... Type>
+        bool match(Type... types);
         bool match(TokenType type);
+        shared_ptr<Expr> primary();
+        shared_ptr<Expr> unary();
+        shared_ptr<Expr> factor();
+        shared_ptr<Expr> term();
+        shared_ptr<Expr> comparison();
+        shared_ptr<Expr> equality();
         void synchronize();
         // Add more parsing functions as needed
     };

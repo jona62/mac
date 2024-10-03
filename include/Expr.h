@@ -7,6 +7,8 @@
 #include <memory>
 
 using token::Token;
+using token::TokenValue;
+
 using std::string;
 using std::variant;
 using std::shared_ptr;
@@ -64,7 +66,7 @@ namespace expr {
 
     class Literal : public Expr {
     public:
-        using LiteralValue = variant<string, double>;
+        using LiteralValue = TokenValue;
 
         Literal(LiteralValue value) : value(value) {}
 
@@ -77,6 +79,8 @@ namespace expr {
                 return std::get<string>(value);
             } else if (std::holds_alternative<double>(value)) {
                 return std::to_string(std::get<double>(value));
+            } else if (std::holds_alternative<bool>(value)) {
+                return std::get<bool>(value) ? "true" : "false";
             }
             return "nil";
         }

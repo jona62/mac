@@ -20,7 +20,7 @@ using std::make_shared;
 namespace token {
 
     // exporting this type through the namespace
-    using TokenValue = variant<string, double>;
+    using TokenValue = variant<string, double, bool, monostate>;
 
     // The order of this matters for the translating the enums to their corresponding string representations
     enum class TokenType {

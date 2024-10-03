@@ -42,6 +42,7 @@ void run(string source) {
     parser::Parser parser(tokens);
     parser.parse();
 
+    // This is what a parsed expression looks like
     auto expression = make_shared<expr::Binary>(
         make_shared<expr::Unary>(
             Token(TokenType::MINUS, TokenValue("-"), 1),
@@ -52,11 +53,6 @@ void run(string source) {
             make_shared<expr::Literal>("String literal")
         )
     );
-    auto grouping = make_shared<expr::Grouping>(expression);
-
-    // Print the AST
-    auto printer = make_shared<printer::AstPrinter>();
-    cout << grouping->visit(printer) << endl;
 }
 
 void run_file(const char *path) {
