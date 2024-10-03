@@ -15,6 +15,9 @@ To get started with Mac, follow these steps:
 ```bash
 $ cmake -S . -B build
 $ cmake --build build --clean-first
+$ cd build
+$ make && ./mac ../expression_file.mac
+$ make && ./mac ../token_file.mac
 ```
 3. Run the executable to start the Mac interpreter.
 
