@@ -36,30 +36,27 @@ void run(string source) {
     vector<Token> tokens;
     for (auto& token : scanner) {
         tokens.push_back(token);
-        token.print();
+        // token.print();
     }
 
     parser::Parser parser(tokens);
     parser.parse();
 
-    Token minusToken(TokenType::MINUS, std::make_shared<TokenValue>("-"), 1);
-    Token starToken(TokenType::STAR, std::make_shared<TokenValue>("*"), 1);
-
-    // Create the individual expressions
-    auto stringLiteral = make_shared<expr::Literal<string>>("String literal");
-    auto literal45_67 = make_shared<expr::Literal<string>>(123.45);
-    auto unaryExpr = make_shared<expr::Unary<string>>(minusToken, literal45_67);
-    auto groupingExpr = make_shared<expr::Grouping<string>>(stringLiteral);
-
-    // Create the full expression
-    auto expression = make_shared<expr::Binary<string>>(unaryExpr, starToken, groupingExpr);
-    auto grouping = make_shared<expr::Grouping<string>>(expression);
-    auto expression2 = make_shared<expr::Binary<string>>(grouping, starToken, literal45_67);
+    auto expression = make_shared<expr::Binary>(
+        make_shared<expr::Unary>(
+            Token(TokenType::MINUS, TokenValue("-"), 1),
+            make_shared<expr::Literal>(123.45)
+        ),
+        Token(TokenType::STAR, TokenValue("*"), 1),
+        make_shared<expr::Grouping>(
+            make_shared<expr::Literal>("String literal")
+        )
+    );
+    auto grouping = make_shared<expr::Grouping>(expression);
 
     // Print the AST
-    auto printer = make_shared<printer::AstPrinter<string>>();
-    cout << expression->visit(printer) << endl;
-    cout << expression2->visit(printer) << endl;
+    auto printer = make_shared<printer::AstPrinter>();
+    cout << grouping->visit(printer) << endl;
 }
 
 void run_file(const char *path) {

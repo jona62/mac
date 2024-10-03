@@ -14,53 +14,61 @@ using std::make_shared;
 
 namespace expr {
 
-    // Forward declaration of Visitor
-    template <typename Result>
-    class Visitor;
+    // Forward declaration of Expr classes
+    class Binary;
+    class Unary;
+    class Literal;
+    class Grouping;
+    class Variable;
 
-    template <typename Result>
-    class Expr {
+    class Visitor {
     public:
-        virtual Result visit(shared_ptr<Visitor<Result>> visitor) = 0;
+        virtual string visitBinaryExpr(Binary* expr) = 0;
+        virtual string visitUnaryExpr(Unary* expr) = 0;
+        virtual string visitLiteralExpr(Literal* expr) = 0;
+        virtual string visitGroupingExpr(Grouping* expr) = 0;
+        virtual string visitVariableExpr(Variable* expr) = 0;
     };
 
-    template <typename Result>
-    class Binary : public Expr<Result> {
+    class Expr {
     public:
-        Binary(shared_ptr<Expr<Result>> left, Token operatorToken, shared_ptr<Expr<Result>> right)
+        virtual string visit(shared_ptr<Visitor> visitor) = 0;
+    };
+
+    class Binary : public Expr {
+    public:
+        Binary(shared_ptr<Expr> left, Token operatorToken, shared_ptr<Expr> right)
             : left(left), operatorToken(operatorToken), right(right) {}
 
-        Result visit(shared_ptr<Visitor<Result>> visitor) override {
+        string visit(shared_ptr<Visitor> visitor) override {
             return visitor->visitBinaryExpr(this);
         }
 
-        shared_ptr<Expr<Result>> left;
+        shared_ptr<Expr> left;
         Token operatorToken;
-        shared_ptr<Expr<Result>> right;
+        shared_ptr<Expr> right;
     };
 
-    template <typename Result>
-    class Unary : public Expr<Result> {
+    class Unary : public Expr {
     public:
-        Unary(Token operatorToken, shared_ptr<Expr<Result>> right)
+        Unary(Token operatorToken, shared_ptr<Expr> right)
             : operatorToken(operatorToken), right(right) {}
 
-        Result visit(shared_ptr<Visitor<Result>> visitor) override {
+        string visit(shared_ptr<Visitor> visitor) override {
             return visitor->visitUnaryExpr(this);
         }
 
         Token operatorToken;
-        shared_ptr<Expr<Result>> right;
+        shared_ptr<Expr> right;
     };
 
-    template <typename Result>
-    class Literal : public Expr<Result> {
+    class Literal : public Expr {
     public:
         using LiteralValue = variant<string, double>;
 
         Literal(LiteralValue value) : value(value) {}
 
-        Result visit(shared_ptr<Visitor<Result>> visitor) override {
+        string visit(shared_ptr<Visitor> visitor) override {
             return visitor->visitLiteralExpr(this);
         }
 
@@ -76,40 +84,27 @@ namespace expr {
         LiteralValue value;
     };
 
-    template <typename Result>
-    class Grouping : public Expr<Result> {
+    class Grouping : public Expr {
     public:
-        Grouping(shared_ptr<Expr<Result>> expression) : expression(expression) {}
+        Grouping(shared_ptr<Expr> expression) : expression(expression) {}
 
-        Result visit(shared_ptr<Visitor<Result>> visitor) override {
+        string visit(shared_ptr<Visitor> visitor) override {
             return visitor->visitGroupingExpr(this);
         }
 
-        shared_ptr<Expr<Result>> expression;
+        shared_ptr<Expr> expression;
     };
 
-    template <typename Result>
-    class Variable : public Expr<Result> {
+    class Variable : public Expr {
     public:
         Variable(Token name) : name(name) {}
 
-        Result visit(shared_ptr<Visitor<Result>> visitor) override {
+        string visit(shared_ptr<Visitor> visitor) override {
             return visitor->visitVariableExpr(this);
         }
 
         Token name;
     };
-
-    template <typename Result>
-    class Visitor {
-    public:
-        virtual Result visitBinaryExpr(Binary<Result>* expr) = 0;
-        virtual Result visitUnaryExpr(Unary<Result>* expr) = 0;
-        virtual Result visitLiteralExpr(Literal<Result>* expr) = 0;
-        virtual Result visitVariableExpr(Variable<Result>* expr) = 0;
-        virtual Result visitGroupingExpr(Grouping<Result>* expr) = 0;
-    };
-
 } // namespace expr
 
 #endif /* EXPR_H */

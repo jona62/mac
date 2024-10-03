@@ -15,6 +15,7 @@ using std::monostate;
 using std::string;
 using std::variant;
 using std::shared_ptr;
+using std::make_shared;
 
 namespace token {
 
@@ -115,9 +116,9 @@ namespace token {
 
     struct Token {
         Token() : type(TokenType::NONE), lexeme(nullptr), line(0) {}
-        Token(TokenType type, shared_ptr<Lexeme> lexeme, int line)
-            : type(type), lexeme(lexeme), line(line) {}
-        
+        Token(TokenType type, Lexeme lexeme, int line)
+            : type(type), lexeme(make_shared<Lexeme>(lexeme)), line(line) {}
+
         void print() const {
             cout << "Token type: " << TokenTypeNames[static_cast<int>(type)] << ", Lexeme: " << lexeme->Value();
             if (type == TokenType::STRING) cout << ", Literal: " << lexeme->Value();
