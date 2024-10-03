@@ -19,31 +19,8 @@ using std::make_shared;
 
 namespace token {
 
-    class Lexeme {
-    public:
-        Lexeme() : value("") {}
-        Lexeme(string lexeme) : value(lexeme) {}
-        virtual string Value() const { return value; }
-        virtual double NumericValue() const { throw std::runtime_error("Not a numeric value"); } // Virtual method for numeric value
-    protected:
-        string value;
-    };
-
-    struct StringLiteral : public Lexeme {
-        StringLiteral(string lexeme) : Lexeme(lexeme) {}
-        string Value() const override {
-            if (value.length() < 2) return ""; // empty string
-            return value.substr(1, value.length()-2); // remove the double quotes
-        }
-    };
-
-    struct NumberLiteral : public Lexeme {
-        NumberLiteral(string lexeme) : Lexeme(lexeme) {}
-        double NumericValue() const override { return std::stod(value); }
-    };
-
     // exporting this type through the namespace
-    using TokenValue = Lexeme;
+    using TokenValue = variant<string, double>;
 
     // The order of this matters for the translating the enums to their corresponding string representations
     enum class TokenType {
@@ -115,19 +92,24 @@ namespace token {
     };
 
     struct Token {
-        Token() : type(TokenType::NONE), lexeme(nullptr), line(0) {}
-        Token(TokenType type, Lexeme lexeme, int line)
-            : type(type), lexeme(make_shared<Lexeme>(lexeme)), line(line) {}
+        Token() : type(TokenType::NONE), lexeme(""), line(0) {}
+        Token(TokenType type, TokenValue lexeme, int line)
+            : type(type), lexeme(lexeme), line(line) {}
 
         void print() const {
-            cout << "Token type: " << TokenTypeNames[static_cast<int>(type)] << ", Lexeme: " << lexeme->Value();
-            if (type == TokenType::STRING) cout << ", Literal: " << lexeme->Value();
-            if (type == TokenType::NUMBER) cout << ", Literal: " << lexeme->NumericValue();
+            cout << "Token type: " << TokenTypeNames[static_cast<int>(type)];
+            if (type == TokenType::STRING) {
+                cout << ", Literal: " << get<string>(lexeme);
+            } else if (type == TokenType::NUMBER) {
+                cout << ", Literal: " << get<double>(lexeme);
+            } else {
+                cout << ", Lexeme: " << get<string>(lexeme);
+            }
             cout << ", Line: " << line << endl;
         }
 
         TokenType type;
-        shared_ptr<TokenValue> lexeme;
+        TokenValue lexeme;
         int line;
     };
 

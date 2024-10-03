@@ -15,13 +15,13 @@ namespace printer {
     class AstPrinter : public Visitor, public std::enable_shared_from_this<AstPrinter> {
     public:
         string visitBinaryExpr(expr::Binary* expr) override {
-            return parenthesize(expr->operatorToken.lexeme->Value(), expr->left, expr->right);
+            return parenthesize(get<string>(expr->operatorToken.lexeme), expr->left, expr->right);
         }
 
         string visitUnaryExpr(expr::Unary* expr) override {
             return expr->operatorToken.type == TokenType::NUMBER
-                ? parenthesize(expr->operatorToken.lexeme->NumericValue(), expr->right)
-                : parenthesize(expr->operatorToken.lexeme->Value(), expr->right);
+                ? parenthesize(get<double>(expr->operatorToken.lexeme), expr->right)
+                : parenthesize(get<string>(expr->operatorToken.lexeme), expr->right);
         }
 
         string visitLiteralExpr(expr::Literal* expr) override {
@@ -30,7 +30,7 @@ namespace printer {
         }
 
         string visitVariableExpr(expr::Variable* expr) override {
-            return expr->name.lexeme->Value();
+            return get<string>(expr->name.lexeme);
         }
 
         string visitGroupingExpr(expr::Grouping* expr) override {

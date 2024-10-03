@@ -5,8 +5,6 @@
 using std::monostate;
 using token::Token;
 using token::TokenValue;
-using token::StringLiteral;
-using token::NumberLiteral;
 
 namespace scanner {
 
@@ -99,9 +97,8 @@ namespace scanner {
                         return Token(TokenType::NONE, TokenValue(), line);
                     } else {
                         advance(); // closing "
-                        // TokenValue literal = source.substr(start + 1, current - start - 2);
-                        string lexeme = source.substr(start, current - start);
-                        return Token(TokenType::STRING, StringLiteral(lexeme), line);
+                        TokenValue literal = source.substr(start + 1, current - start - 2); // Exclude the quotes
+                        return Token(TokenType::STRING, literal, line);
                     }
                 default:
                     if(isdigit(c)) {
@@ -114,7 +111,7 @@ namespace scanner {
                             while (isDigit(peek())) advance();
                         }
                         string lexeme = source.substr(start, current - start);
-                        return Token(TokenType::NUMBER, NumberLiteral(lexeme), line);
+                        return Token(TokenType::NUMBER, stod(lexeme), line);
                     } else if (isAlpha(c)) {
                         // Consume each alphanumeric character up to the maximum length
                         while (isAlphaNumeric(peek())) advance();
