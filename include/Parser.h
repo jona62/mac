@@ -34,6 +34,7 @@ namespace parser {
         shared_ptr<Expr> term();
         shared_ptr<Expr> comparison();
         shared_ptr<Expr> equality();
+        shared_ptr<Expr> expression();
         void synchronize();
         // Add more parsing functions as needed
     };

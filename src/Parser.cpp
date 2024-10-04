@@ -20,11 +20,9 @@ Parser::~Parser() {}
 void Parser::parse() {
     while (!isAtEnd()) {
         // This is a test case to check if the parser is working correctly
-        auto expr = equality();
+        auto expr = expression();
         auto printer = make_shared<printer::AstPrinter>();
         cout << expr->visit(printer) << endl;
-        // After parsing a statement, call advance() to move to the next token
-        advance();
     }
 }
 
@@ -135,6 +133,10 @@ shared_ptr<Expr> Parser::equality() {
         expr = make_shared<Binary>(expr, operation, rightOperand);
     }
     return expr;
+}
+
+shared_ptr<Expr> Parser::expression() {
+    return equality();
 }
 
 void Parser::synchronize() {

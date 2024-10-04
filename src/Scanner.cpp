@@ -127,8 +127,7 @@ namespace scanner {
                         return Token(TokenType::NONE, TokenValue(), line);
                     }
             }
-            // This handles the case where the token is a single character like '/'
-            type = TokenType::NONE;
+
             if (type != TokenType::NONE) {
                 string lexeme = source.substr(start, current - start);
                 return Token(type, TokenValue(lexeme), line);
