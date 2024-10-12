@@ -36,7 +36,7 @@ void run(string source) {
     vector<Token> tokens;
     for (auto& token : scanner) {
         tokens.push_back(token);
-        token.print();
+        token.toString();
     }
 
     parser::Parser parser(tokens);

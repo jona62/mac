@@ -25,6 +25,8 @@ namespace parser {
         const Token& advance();
         const Token& peek();
         const Token& previous();
+        void consume(const TokenType&, const string&);
+
         template <typename... Type>
         bool match(Type... types);
         bool match(TokenType type);

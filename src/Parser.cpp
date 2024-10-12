@@ -1,4 +1,5 @@
 #include "Parser.h"
+#include "ParserError.h"
 #include <iostream>
 #include <AstPrinter.h>
 
@@ -7,6 +8,7 @@ using expr::Binary;
 
 using token::TokenType;
 using token::TokenValue;
+using errors::ParseError;
 
 using std::shared_ptr;
 using std::make_shared;
@@ -53,6 +55,11 @@ const token::Token& Parser::previous() {
     return tokens[current - 1];
 }
 
+void Parser::consume(const token::TokenType& type, const std::string& message) {
+    if (match(type)) return;
+    throw ParseError(previous(), message);
+}
+
 bool Parser::match(token::TokenType type) {
     if (isAtEnd()) return false;  // Prevent out-of-bounds access
     if (peek().type == type) {
@@ -76,10 +83,7 @@ shared_ptr<Expr> Parser::primary() {
 
     if (match(TokenType::LEFT_PAREN)) {
         auto expr = equality();
-        if (!match(TokenType::RIGHT_PAREN)) {
-            std::cerr << "Error: Expected ')' after expression" << std::endl;
-            exit(EXIT_FAILURE);
-        }
+        consume(TokenType::RIGHT_PAREN, "Expected ')' after expression");
         return make_shared<expr::Grouping>(expr);
     }
     std::cerr << "Error: Expected expression" << std::endl;

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <iostream>
+#include <sstream>
 #include <iterator> // for std::forward_iterator_tag
 #include <string>
 #include <memory> // for std::shared_ptr
@@ -96,16 +97,32 @@ namespace token {
         Token(TokenType type, TokenValue lexeme, int line)
             : type(type), lexeme(lexeme), line(line) {}
 
-        void print() const {
-            cout << "Token type: " << TokenTypeNames[static_cast<int>(type)];
+        string toString() const {
+            std::ostringstream ss;
+            ss << "Token type: " << TokenTypeNames[static_cast<int>(type)];
             if (type == TokenType::STRING) {
-                cout << ", Literal: " << get<string>(lexeme);
+                ss << ", Literal: " << get<string>(lexeme);
             } else if (type == TokenType::NUMBER) {
-                cout << ", Literal: " << get<double>(lexeme);
+                ss << ", Literal: " << get<double>(lexeme);
             } else {
-                cout << ", Lexeme: " << get<string>(lexeme);
+                ss << ", Lexeme: " << get<string>(lexeme);
             }
-            cout << ", Line: " << line << endl;
+            ss << ", Line: " << line << endl;
+            return ss.str();
+        }
+
+        string tokenAsString() const {
+            std::ostringstream ss;
+            if (holds_alternative<string>(lexeme)) {
+                ss << get<string>(lexeme);
+            } else if (holds_alternative<double>(lexeme)) {
+                ss << get<double>(lexeme);
+            } else if (holds_alternative<bool>(lexeme)) {
+                ss << (get<bool>(lexeme) ? "true" : "false");
+            } else {
+                ss << "nil";
+            }
+            return ss.str();
         }
 
         TokenType type;
