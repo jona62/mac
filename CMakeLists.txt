@@ -13,6 +13,7 @@ set(SOURCES
     main.cpp
     src/Scanner.cpp  # Scanner implementation is in src/Scanner.cpp
     src/Parser.cpp # Parser implementation is in src/Parser.cpp
+    src/Interpreter.cpp # Interpreter implementation is in src/Interpreter.cpp
 )
 
 # Create the executable

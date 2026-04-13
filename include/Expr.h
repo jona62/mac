@@ -1,114 +1,221 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include "Token.h"
-#include <variant>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
+#include "Token.h"
 
-using token::Token;
-using token::TokenValue;
-
-using std::string;
-using std::variant;
 using std::shared_ptr;
-using std::make_shared;
+using std::string;
+using token::Token;
 
 namespace expr {
 
-    // Forward declaration of Expr classes
-    class Binary;
-    class Unary;
-    class Literal;
-    class Grouping;
-    class Variable;
+    template <typename T>
+    class Visitor;
 
-    class Visitor {
-    public:
-        virtual string visitBinaryExpr(Binary* expr) = 0;
-        virtual string visitUnaryExpr(Unary* expr) = 0;
-        virtual string visitLiteralExpr(Literal* expr) = 0;
-        virtual string visitGroupingExpr(Grouping* expr) = 0;
-        virtual string visitVariableExpr(Variable* expr) = 0;
-    };
-
+    template <typename T>
     class Expr {
     public:
-        virtual string visit(shared_ptr<Visitor> visitor) = 0;
+        virtual T visit(shared_ptr<Visitor<T>> visitor) = 0;
+        virtual ~Expr() = default;
     };
 
-    class Binary : public Expr {
+    template <typename T>
+    class Binary : public Expr<T> {
     public:
-        Binary(shared_ptr<Expr> left, Token operatorToken, shared_ptr<Expr> right)
+        Binary(shared_ptr<Expr<T>> left, Token operatorToken, shared_ptr<Expr<T>> right)
             : left(left), operatorToken(operatorToken), right(right) {}
 
-        string visit(shared_ptr<Visitor> visitor) override {
+        T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitBinaryExpr(this);
         }
 
-        shared_ptr<Expr> left;
+        shared_ptr<Expr<T>> left;
         Token operatorToken;
-        shared_ptr<Expr> right;
+        shared_ptr<Expr<T>> right;
     };
 
-    class Unary : public Expr {
+    template <typename T>
+    class Unary : public Expr<T> {
     public:
-        Unary(Token operatorToken, shared_ptr<Expr> right)
+        Unary(Token operatorToken, shared_ptr<Expr<T>> right)
             : operatorToken(operatorToken), right(right) {}
 
-        string visit(shared_ptr<Visitor> visitor) override {
+        T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitUnaryExpr(this);
         }
 
         Token operatorToken;
-        shared_ptr<Expr> right;
+        shared_ptr<Expr<T>> right;
     };
 
-    class Literal : public Expr {
+    template <typename T>
+    class Literal : public Expr<T> {
     public:
-        using LiteralValue = TokenValue;
+        using LiteralValue = token::TokenValue;
 
         Literal(LiteralValue value) : value(value) {}
 
-        string visit(shared_ptr<Visitor> visitor) override {
+        T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitLiteralExpr(this);
         }
 
-        string toString() const {
-            if (std::holds_alternative<string>(value)) {
-                return std::get<string>(value);
-            } else if (std::holds_alternative<double>(value)) {
+        LiteralValue value;
+
+        string toString() {
+            if (std::holds_alternative<double>(value)) {
                 return std::to_string(std::get<double>(value));
+            } else if (std::holds_alternative<string>(value)) {
+                return std::get<string>(value);
             } else if (std::holds_alternative<bool>(value)) {
                 return std::get<bool>(value) ? "true" : "false";
+            } else {
+                return "nil";
             }
-            return "nil";
         }
-
-        LiteralValue value;
     };
 
-    class Grouping : public Expr {
-    public:
-        Grouping(shared_ptr<Expr> expression) : expression(expression) {}
-
-        string visit(shared_ptr<Visitor> visitor) override {
-            return visitor->visitGroupingExpr(this);
-        }
-
-        shared_ptr<Expr> expression;
-    };
-
-    class Variable : public Expr {
+    template <typename T>
+    class Variable : public Expr<T> {
     public:
         Variable(Token name) : name(name) {}
 
-        string visit(shared_ptr<Visitor> visitor) override {
+        T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitVariableExpr(this);
         }
 
         Token name;
     };
-} // namespace expr
 
-#endif /* EXPR_H */
+    template <typename T>
+    class Grouping : public Expr<T> {
+    public:
+        Grouping(shared_ptr<Expr<T>> expression) : expression(expression) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitGroupingExpr(this);
+        }
+
+        shared_ptr<Expr<T>> expression;
+    };
+
+    template <typename T>
+    class Logical : public Expr<T> {
+    public:
+        Logical(shared_ptr<Expr<T>> left, Token operatorToken, shared_ptr<Expr<T>> right)
+            : left(left), operatorToken(operatorToken), right(right) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitLogicalExpr(this);
+        }
+
+        shared_ptr<Expr<T>> left;
+        Token operatorToken;
+        shared_ptr<Expr<T>> right;
+    };
+
+    template <typename T>
+    class Call : public Expr<T> {
+    public:
+        Call(shared_ptr<Expr<T>> callee, Token paren, std::vector<shared_ptr<Expr<T>>> arguments)
+            : callee(callee), paren(paren), arguments(arguments) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitCallExpr(this);
+        }
+
+        shared_ptr<Expr<T>> callee;
+        Token paren;
+        std::vector<shared_ptr<Expr<T>>> arguments;
+    };
+
+    template <typename T>
+    class Assign : public Expr<T> {
+    public:
+        Assign(Token name, shared_ptr<Expr<T>> value)
+            : name(name), value(value) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitAssignExpr(this);
+        }
+
+        Token name;
+        shared_ptr<Expr<T>> value;
+    };
+
+    template <typename T>
+    class Get : public Expr<T> {
+    public:
+        Get(shared_ptr<Expr<T>> object, Token name)
+            : object(object), name(name) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitGetExpr(this);
+        }
+
+        shared_ptr<Expr<T>> object;
+        Token name;
+    };
+
+    template <typename T>
+    class Set : public Expr<T> {
+    public:
+        Set(shared_ptr<Expr<T>> object, Token name, shared_ptr<Expr<T>> value)
+            : object(object), name(name), value(value) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitSetExpr(this);
+        }
+
+        shared_ptr<Expr<T>> object;
+        Token name;
+        shared_ptr<Expr<T>> value;
+    };
+
+    template <typename T>
+    class This : public Expr<T> {
+    public:
+        This(Token keyword) : keyword(keyword) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitThisExpr(this);
+        }
+
+        Token keyword;
+    };
+
+    template <typename T>
+    class Super : public Expr<T> {
+    public:
+        Super(Token keyword, Token method) : keyword(keyword), method(method) {}
+
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitSuperExpr(this);
+        }
+
+        Token keyword;
+        Token method;
+    };
+
+    template <typename T>
+    class Visitor {
+    public:
+        virtual T visitBinaryExpr(Binary<T>* expr) = 0;
+        virtual T visitUnaryExpr(Unary<T>* expr) = 0;
+        virtual T visitLiteralExpr(Literal<T>* expr) = 0;
+        virtual T visitVariableExpr(Variable<T>* expr) = 0;
+        virtual T visitGroupingExpr(Grouping<T>* expr) = 0;
+        virtual T visitLogicalExpr(Logical<T>* expr) = 0;
+        virtual T visitCallExpr(Call<T>* expr) = 0;
+        virtual T visitAssignExpr(Assign<T>* expr) = 0;
+        virtual T visitGetExpr(Get<T>* expr) = 0;
+        virtual T visitSetExpr(Set<T>* expr) = 0;
+        virtual T visitThisExpr(This<T>* expr) = 0;
+        virtual T visitSuperExpr(Super<T>* expr) = 0;
+        virtual ~Visitor() = default;
+    };
+}
+
+#endif // EXPR_H
