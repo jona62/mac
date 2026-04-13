@@ -1,0 +1,34 @@
+// Test applying effects to actual memes
+// Uses an existing template image
+
+var t = Template("assets/templates/blank.png");
+var m = Meme(t);
+m = m.text(Top, "test");
+
+// Apply direct effect
+var result = invert(m);
+print type(result);         // expect: map
+
+// Apply parameterized effect
+var blurred = blur(3);
+var result2 = blurred(m);
+print type(result2);        // expect: map
+
+// Pipe syntax: meme |> effect
+var result3 = m |> sepia;
+print type(result3);        // expect: map
+
+// Pipe with parameterized effect
+var result4 = m |> blur(5);
+print type(result4);        // expect: map
+
+// Compose and pipe
+var fx = blur(2) >> sepia;
+var result5 = m |> fx;
+print type(result5);        // expect: map
+
+// Chain via pipe
+var result6 = m |> invert |> sepia;
+print type(result6);        // expect: map
+
+print "effects ok";         // expect: effects ok

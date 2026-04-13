@@ -104,6 +104,31 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "_resolve_template", arity: 1, description: "Internal: resolves template name to file path." },
     { name: "_meme_save", arity: 6, description: "Internal: renders and saves meme image." },
     { name: "_gif_save", arity: 2, description: "Internal: renders and saves animated GIF." },
+    // Effects
+    { name: "blur", arity: 1, description: "blur(radius) — Box blur effect. Returns Meme → Meme. Pipeable." },
+    { name: "pixelate", arity: 1, description: "pixelate(blockSize) — Pixelation effect. Returns Meme → Meme." },
+    { name: "noise", arity: 1, description: "noise(amount) — Random noise effect. Returns Meme → Meme." },
+    { name: "saturate", arity: 1, description: "saturate(amount) — Adjust saturation (1.0 = normal). Returns Meme → Meme." },
+    { name: "contrast", arity: 1, description: "contrast(amount) — Adjust contrast (1.0 = normal). Returns Meme → Meme." },
+    { name: "brightness", arity: 1, description: "brightness(amount) — Adjust brightness (1.0 = normal). Returns Meme → Meme." },
+    { name: "jpeg", arity: 1, description: "jpeg(quality) — JPEG compression artifacts (low = more artifacts). Returns Meme → Meme." },
+    { name: "invert", arity: 1, description: "invert(meme) — Invert colors. Meme → Meme. Pipeable." },
+    { name: "sepia", arity: 1, description: "sepia(meme) — Sepia tone filter. Meme → Meme. Pipeable." },
+    { name: "sharpen", arity: 1, description: "sharpen(meme) — Sharpen filter. Meme → Meme. Pipeable." },
+    { name: "vignette", arity: 1, description: "vignette(meme) — Dark edges effect. Meme → Meme. Pipeable." },
+    // Layout
+    { name: "beside", arity: 2, description: "beside(meme1, meme2) — Side-by-side layout. Pipeable: m1 |> beside(m2)." },
+    { name: "stack", arity: 2, description: "stack(meme1, meme2) — Vertical stack layout. Pipeable: m1 |> stack(m2)." },
+    { name: "grid", arity: 3, description: "grid(cols, rows, memesArray) — Grid layout." },
+    { name: "pad", arity: 2, description: "pad(meme, pixels) — Add white padding. Pipeable." },
+    { name: "border", arity: 2, description: "border(meme, pixels) — Add black border. Pipeable." },
+    // Timeline
+    { name: "Timeline", arity: 0, description: "Timeline() — Create an empty animation timeline." },
+    { name: "at", arity: 3, description: "at(timeline, timeMs, meme) — Add keyframe. Returns timeline. Pipeable." },
+    { name: "transition", arity: 3, description: "transition(timeline, durationMs, type) — Add transition. Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe." },
+    { name: "hold", arity: 2, description: "hold(timeline, durationMs) — Hold last frame. Returns timeline. Pipeable." },
+    { name: "render", arity: 2, description: "render(timeline, path) — Render timeline to animated GIF." },
+    { name: "loop", arity: 2, description: "loop(timeline, count) — Set loop count. Returns timeline. Pipeable." },
 ];
 
 // Known properties/methods for built-in types
@@ -239,6 +264,13 @@ export class Analyzer {
             { name: "PNG", kind: "variable", description: "Format constant — PNG image output." },
             { name: "JPG", kind: "variable", description: "Format constant — JPG image output." },
             { name: "GIF", kind: "variable", description: "Format constant — GIF image output." },
+            { name: "deepfry", kind: "variable", description: "Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)." },
+            { name: "crossfade", kind: "variable", description: "Timeline transition — cross-fade between frames." },
+            { name: "slideLeft", kind: "variable", description: "Timeline transition — slide left." },
+            { name: "slideRight", kind: "variable", description: "Timeline transition — slide right." },
+            { name: "slideUp", kind: "variable", description: "Timeline transition — slide up." },
+            { name: "slideDown", kind: "variable", description: "Timeline transition — slide down." },
+            { name: "wipe", kind: "variable", description: "Timeline transition — wipe reveal." },
         ];
         for (const def of preludeTypes) {
             this.nativeNames.add(def.name);

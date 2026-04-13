@@ -69,6 +69,7 @@ class Meme {
         this._bottom = "";
         this._width = 0;
         this._height = 0;
+        this._rendered = nil;
     }
     text(position, str) {
         var m = Meme(this._template);
@@ -76,14 +77,19 @@ class Meme {
         m._bottom = this._bottom;
         m._width = this._width;
         m._height = this._height;
+        m._rendered = this._rendered;
         if (position == Top) m._top = str;
         if (position == Bottom) m._bottom = str;
         if (position == Center) m._bottom = str;
         return m;
     }
     save(format, path) {
-        _meme_save(this._template.path, this._top, this._bottom,
-                   this._width, this._height, path);
+        if (this._rendered) {
+            _save_rendered(this._rendered, path);
+        } else {
+            _meme_save(this._template.path, this._top, this._bottom,
+                       this._width, this._height, path);
+        }
     }
     resize(size) {
         var m = Meme(this._template);
@@ -91,6 +97,7 @@ class Meme {
         m._bottom = this._bottom;
         m._width = size.width;
         m._height = size.height;
+        m._rendered = this._rendered;
         return m;
     }
     __add__(other) {
@@ -121,3 +128,14 @@ class Gif {
         return this;
     }
 }
+
+// Composed effect preset
+var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
+
+// Transition type constants
+var crossfade = "crossfade";
+var slideLeft = "slideLeft";
+var slideRight = "slideRight";
+var slideUp = "slideUp";
+var slideDown = "slideDown";
+var wipe = "wipe";

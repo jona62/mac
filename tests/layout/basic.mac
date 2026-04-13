@@ -1,0 +1,37 @@
+// Test layout functions exist
+print type(beside);         // expect: function
+print type(stack);          // expect: function
+print type(grid);           // expect: function
+print type(pad);            // expect: function
+print type(border);         // expect: function
+
+// Test layout application with actual images
+var t = Template("assets/templates/blank.png");
+var m1 = Meme(t).text(Top, "left");
+var m2 = Meme(t).text(Top, "right");
+
+// beside
+var result = beside(m1, m2);
+print type(result);         // expect: map
+
+// stack
+var result2 = stack(m1, m2);
+print type(result2);        // expect: map
+
+// Pipe with beside
+var result3 = m1 |> beside(m2);
+print type(result3);        // expect: map
+
+// pad
+var result4 = m1 |> pad(10);
+print type(result4);        // expect: map
+
+// border
+var result5 = m1 |> border(5);
+print type(result5);        // expect: map
+
+// grid
+var result6 = grid(2, [m1, m2, m1, m2]);
+print type(result6);        // expect: map
+
+print "layout ok";          // expect: layout ok

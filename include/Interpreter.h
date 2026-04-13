@@ -76,6 +76,41 @@ namespace interpreter {
             defn("_resolve_template", make_shared<callable::ResolveTemplateFunction>());
             defn("_meme_save", make_shared<callable::MemeRenderSaveFunction>());
             defn("_gif_save", make_shared<callable::GifRenderSaveFunction>());
+
+            // Effects
+            defn("blur", make_shared<callable::ParamEffectCreator>("blur"));
+            defn("pixelate", make_shared<callable::ParamEffectCreator>("pixelate"));
+            defn("noise", make_shared<callable::ParamEffectCreator>("noise"));
+            defn("saturate", make_shared<callable::ParamEffectCreator>("saturate"));
+            defn("contrast", make_shared<callable::ParamEffectCreator>("contrast"));
+            defn("brightness", make_shared<callable::ParamEffectCreator>("brightness"));
+            defn("jpeg", make_shared<callable::ParamEffectCreator>("jpeg"));
+            defn("invert", make_shared<callable::DirectEffect>("invert"));
+            defn("sepia", make_shared<callable::DirectEffect>("sepia"));
+            defn("sharpen", make_shared<callable::DirectEffect>("sharpen"));
+            defn("vignette", make_shared<callable::DirectEffect>("vignette"));
+
+            // Layout
+            defn("beside", make_shared<callable::BesideFunction>());
+            defn("stack", make_shared<callable::StackFunction>());
+            defn("grid", make_shared<callable::GridFunction>());
+            defn("pad", make_shared<callable::PadFunction>());
+            defn("border", make_shared<callable::BorderFunction>());
+
+            // Effect infrastructure
+            defn("_apply_effect", make_shared<callable::ApplyEffectFunction>());
+            defn("_compose_layout", make_shared<callable::ComposeLayoutFunction>());
+            defn("_add_padding", make_shared<callable::AddPaddingFunction>());
+            defn("_add_border", make_shared<callable::AddBorderFunction>());
+            defn("_save_rendered", make_shared<callable::SaveRenderedFunction>());
+
+            // Timeline
+            defn("timeline", make_shared<callable::TimelineCreateFunction>());
+            defn("_timeline_keyframe", make_shared<callable::TimelineKeyframeFunction>());
+            defn("_timeline_transition", make_shared<callable::TimelineTransitionFunction>());
+            defn("_timeline_hold", make_shared<callable::TimelineHoldFunction>());
+            defn("_timeline_loop", make_shared<callable::TimelineLoopFunction>());
+            defn("_timeline_render", make_shared<callable::TimelineRenderFunction>());
         }
 
         // --- Expression visitors ---
@@ -632,6 +667,9 @@ namespace interpreter {
             }
             if (std::holds_alternative<shared_ptr<meme::MacGif>>(value)) {
                 return std::get<shared_ptr<meme::MacGif>>(value)->toString();
+            }
+            if (std::holds_alternative<shared_ptr<meme::MacTimeline>>(value)) {
+                return std::get<shared_ptr<meme::MacTimeline>>(value)->toString();
             }
             return std::get<string>(value);
         }
