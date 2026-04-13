@@ -139,3 +139,11 @@ var slideRight = "slideRight";
 var slideUp = "slideUp";
 var slideDown = "slideDown";
 var wipe = "wipe";
+
+// High-level timeline API (wraps _timeline_* natives)
+fun Timeline() { return timeline(); }
+fun at(tl, timeMs, meme) { return _timeline_keyframe(tl, meme); }
+fun transition(tl, durationMs, transType) { return _timeline_transition(tl, durationMs, transType); }
+fun hold(tl, durationMs) { return _timeline_hold(tl, durationMs); }
+fun render(tl, path) { return _timeline_render(tl, path); }
+fun loop(tl, count) { return _timeline_loop(tl, count); }

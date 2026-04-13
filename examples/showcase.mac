@@ -1,0 +1,68 @@
+// Mac Language Showcase
+// Generates a complex animated GIF using pipes, compose,
+// arrows, effects, layout, and timeline
+
+var t = Template("two_panel");
+var blank = Template("blank");
+
+// Data-driven meme generation with arrows
+var captions = [
+    ["When you write Java", "vs when you write Mac"],
+    ["Debugging at 2am", "It was a missing semicolon"],
+    ["Manager: use patterns", "Me: meme |> deepfry"],
+    ["Before functional", "After functional"],
+    ["Writing loops", "Writing pipelines"]
+];
+
+var memes = captions
+    |> map(pair -> Meme(t).text(Top, pair[0]).text(Bottom, pair[1]));
+
+// Create effect presets using compose
+var glitch = pixelate(6) >> contrast(1.8) >> noise(0.2);
+var vintage = sepia >> vignette >> brightness(0.9);
+var clean = sharpen >> contrast(1.1);
+
+// Apply different effects to each frame
+var styled = [
+    memes[0] |> clean,
+    memes[1] |> vintage,
+    memes[2] |> glitch,
+    memes[3] |> deepfry,
+    memes[4] |> invert
+];
+
+// Build animation with timeline
+Timeline()
+    |> at(0, styled[0])
+    |> transition(400, crossfade)
+    |> at(800, styled[1])
+    |> transition(400, slideLeft)
+    |> at(1600, styled[2])
+    |> transition(400, crossfade)
+    |> at(2400, styled[3])
+    |> transition(400, slideRight)
+    |> at(3200, styled[4])
+    |> hold(800)
+    |> loop(0)
+    |> render("showcase.gif");
+
+print "Showcase GIF saved!";
+
+// Effects comparison grid
+var grid = [clean, vintage, glitch, deepfry]
+    |> map(fx -> Meme(blank).text(Center, "Mac") |> fx)
+    |> toGrid(2, 2)
+    |> pad(5)
+    |> border(2);
+
+_save_rendered(grid["_rendered"], "showcase_grid.png");
+print "Grid saved!";
+
+// Countdown using simple Gif builder
+var countdown = Gif();
+var nums = ["5", "4", "3", "2", "1", "GO!"];
+for (var i = 0; i < 6; i = i + 1) {
+    countdown.frame(Meme(blank).text(Center, nums[i]), Duration(500));
+}
+countdown.save("countdown.gif");
+print "Countdown saved!";
