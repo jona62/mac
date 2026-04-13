@@ -36,16 +36,16 @@ var styled = [
 // Build animation with timeline — long holds so text is readable
 Timeline()
     |> at(0, styled[0])
-    |> hold(2500)
+    |> hold(4000)
     |> at(0, styled[1])
-    |> hold(2500)
+    |> hold(4000)
     |> at(0, styled[2])
-    |> hold(2500)
+    |> hold(4000)
     |> transition(150, crossfade)
     |> at(0, styled[3])
-    |> hold(2500)
+    |> hold(4000)
     |> at(0, styled[4])
-    |> hold(2000)
+    |> hold(3000)
     |> loop(0)
     |> render("showcase.gif");
 
