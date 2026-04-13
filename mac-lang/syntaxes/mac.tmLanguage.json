@@ -9,6 +9,9 @@
     { "include": "#class-declaration" },
     { "include": "#function-declaration" },
     { "include": "#function-call" },
+    { "include": "#stdlib-types" },
+    { "include": "#stdlib-constants" },
+    { "include": "#dunder-methods" },
     { "include": "#constants" },
     { "include": "#language-variables" },
     { "include": "#keywords" },
@@ -54,7 +57,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(var|fun|class|for|while|if|else|return|print|in|break|continue|meme)\\b"
+      "match": "\\b(var|fun|class|for|while|if|else|return|print|in|break|continue)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",
@@ -80,9 +83,21 @@
         "1": { "name": "entity.name.function.call.mac" }
       }
     },
+    "stdlib-types": {
+      "name": "support.class.mac",
+      "match": "\\b(Template|Meme|Gif|Frame|Size|Duration|Position|Format)\\b"
+    },
+    "stdlib-constants": {
+      "name": "support.constant.mac",
+      "match": "\\b(Top|Bottom|Center|PNG|JPG|GIF)\\b"
+    },
+    "dunder-methods": {
+      "name": "support.function.magic.mac",
+      "match": "\\b(__add__|__sub__|__mul__|__div__|__mod__|__eq__|__ne__|__lt__|__gt__|__le__|__ge__|__neg__|__not__)\\b"
+    },
     "operators": {
       "name": "keyword.operator.mac",
-      "match": "==|!=|<=|>=|[+\\-*/!<>=]"
+      "match": "==|!=|<=|>=|[+\\-*/!<>=%]"
     },
     "punctuation": {
       "patterns": [
@@ -95,8 +110,12 @@
           "match": "[()]"
         },
         {
+          "name": "punctuation.definition.array.mac",
+          "match": "[\\[\\]]"
+        },
+        {
           "name": "punctuation.separator.mac",
-          "match": "[,;]"
+          "match": "[,;:]"
         },
         {
           "name": "punctuation.accessor.mac",

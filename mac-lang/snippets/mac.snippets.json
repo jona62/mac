@@ -19,6 +19,23 @@
     ],
     "description": "Class with init method"
   },
+  "Class with Operators": {
+    "prefix": "classop",
+    "body": [
+      "class ${1:Name} {",
+      "\tinit(${2:x}) {",
+      "\t\tthis.${2:x} = ${2:x};",
+      "\t}",
+      "\t__add__(other) {",
+      "\t\treturn ${1:Name}(this.${2:x} + other.${2:x});",
+      "\t}",
+      "\t__eq__(other) {",
+      "\t\treturn this.${2:x} == other.${2:x};",
+      "\t}",
+      "}"
+    ],
+    "description": "Class with operator overloading"
+  },
   "For Loop": {
     "prefix": "for",
     "body": [
@@ -27,6 +44,15 @@
       "}"
     ],
     "description": "For loop"
+  },
+  "For-In Loop": {
+    "prefix": "forin",
+    "body": [
+      "for (var ${1:item} in ${2:collection}) {",
+      "\t${0}",
+      "}"
+    ],
+    "description": "For-in loop"
   },
   "While Loop": {
     "prefix": "while",
@@ -66,5 +92,46 @@
     "prefix": "var",
     "body": "var ${1:name} = ${2:value};",
     "description": "Variable declaration"
+  },
+  "Lambda": {
+    "prefix": "lambda",
+    "body": "fun(${1:params}) { return ${0}; }",
+    "description": "Lambda expression"
+  },
+  "Meme": {
+    "prefix": "meme",
+    "body": [
+      "var ${1:m} = Meme(Template(\"${2:two_panel}\"))",
+      "\t.text(Top, \"${3:top text}\")",
+      "\t.text(Bottom, \"${4:bottom text}\");",
+      "${1:m}.save(PNG, \"${5:output.png}\");"
+    ],
+    "description": "Create and save a meme"
+  },
+  "GIF": {
+    "prefix": "gif",
+    "body": [
+      "var ${1:t} = Template(\"${2:two_panel}\");",
+      "Gif()",
+      "\t.frame(Meme(${1:t}).text(Top, \"${3:frame 1}\"), Duration(${4:300}))",
+      "\t.frame(Meme(${1:t}).text(Top, \"${5:frame 2}\"), Duration(${4:300}))",
+      "\t.save(\"${6:output.gif}\");"
+    ],
+    "description": "Create and save an animated GIF"
+  },
+  "Template": {
+    "prefix": "template",
+    "body": "var ${1:t} = Template(\"${2:two_panel}\");",
+    "description": "Create a meme template"
+  },
+  "Map Literal": {
+    "prefix": "map",
+    "body": "var ${1:m} = {${2:key}: ${3:value}};",
+    "description": "Map literal"
+  },
+  "Array Literal": {
+    "prefix": "arr",
+    "body": "var ${1:a} = [${2:elements}];",
+    "description": "Array literal"
   }
 }

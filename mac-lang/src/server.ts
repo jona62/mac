@@ -276,6 +276,31 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
         }
     }
 
+    // Dot-completion hints for known types
+    const doc = documents.get(params.textDocument.uri);
+    if (doc && params.context?.triggerCharacter === ".") {
+        const memeProps = ["text", "save", "resize", "_top", "_bottom", "_template", "_width", "_height"];
+        const gifProps = ["frame", "save"];
+        const templateProps = ["name", "path"];
+        const sizeProps = ["width", "height"];
+        const durationProps = ["ms"];
+        const allDotProps = [
+            ...memeProps.map(p => ({ label: p, detail: "Meme" })),
+            ...gifProps.map(p => ({ label: p, detail: "Gif" })),
+            ...templateProps.map(p => ({ label: p, detail: "Template" })),
+            ...sizeProps.map(p => ({ label: p, detail: "Size" })),
+            ...durationProps.map(p => ({ label: p, detail: "Duration" })),
+            { label: "name", detail: "Position / Format" },
+        ];
+        for (const prop of allDotProps) {
+            items.push({
+                label: prop.label,
+                kind: CompletionItemKind.Property,
+                detail: prop.detail,
+            });
+        }
+    }
+
     return items;
 });
 
