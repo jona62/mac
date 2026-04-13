@@ -1,0 +1,108 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Mac",
+  "scopeName": "source.mac",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#class-declaration" },
+    { "include": "#function-declaration" },
+    { "include": "#function-call" },
+    { "include": "#constants" },
+    { "include": "#language-variables" },
+    { "include": "#keywords" },
+    { "include": "#logical-operators" },
+    { "include": "#operators" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "name": "comment.line.double-slash.mac",
+      "match": "//.*$"
+    },
+    "strings": {
+      "name": "string.quoted.double.mac",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.mac",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.mac",
+      "match": "\\b\\d+(\\.\\d+)?\\b"
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.mac",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.nil.mac",
+          "match": "\\b(nil)\\b"
+        }
+      ]
+    },
+    "language-variables": {
+      "name": "variable.language.mac",
+      "match": "\\b(this|super)\\b"
+    },
+    "keywords": {
+      "name": "keyword.control.mac",
+      "match": "\\b(var|fun|class|for|while|if|else|return|print)\\b"
+    },
+    "logical-operators": {
+      "name": "keyword.operator.logical.mac",
+      "match": "\\b(and|or)\\b"
+    },
+    "class-declaration": {
+      "match": "\\b(class)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": { "name": "keyword.control.mac" },
+        "2": { "name": "entity.name.type.class.mac" }
+      }
+    },
+    "function-declaration": {
+      "match": "\\b(fun)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": { "name": "keyword.control.mac" },
+        "2": { "name": "entity.name.function.mac" }
+      }
+    },
+    "function-call": {
+      "match": "\\b([A-Za-z_]\\w*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.call.mac" }
+      }
+    },
+    "operators": {
+      "name": "keyword.operator.mac",
+      "match": "==|!=|<=|>=|[+\\-*/!<>=]"
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.block.mac",
+          "match": "[{}]"
+        },
+        {
+          "name": "punctuation.definition.parameters.mac",
+          "match": "[()]"
+        },
+        {
+          "name": "punctuation.separator.mac",
+          "match": "[,;]"
+        },
+        {
+          "name": "punctuation.accessor.mac",
+          "match": "\\."
+        }
+      ]
+    }
+  }
+}

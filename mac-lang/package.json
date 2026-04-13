@@ -1,0 +1,36 @@
+{
+  "name": "mac-lang",
+  "displayName": "Mac Language",
+  "description": "Syntax highlighting, language configuration, and snippets for the Mac programming language",
+  "version": "0.1.0",
+  "publisher": "jona62",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mac",
+        "aliases": ["Mac", "mac"],
+        "extensions": [".mac"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mac",
+        "scopeName": "source.mac",
+        "path": "./syntaxes/mac.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "mac",
+        "path": "./snippets/mac.snippets.json"
+      }
+    ]
+  }
+}
