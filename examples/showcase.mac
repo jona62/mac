@@ -15,7 +15,9 @@ var captions = [
 ];
 
 var memes = captions
-    |> map(pair -> Meme(t).text(Top, pair[0]).text(Bottom, pair[1]));
+    |> map(pair -> Meme(t)
+        .text(Top, pair[0])
+        .text(Bottom, pair[1]));
 
 // Create effect presets using compose
 var glitch = pixelate(6) >> contrast(1.8) >> noise(0.2);

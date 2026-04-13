@@ -2,8 +2,13 @@
 build/
 .cache/
 .DS_Store
+__pycache__/
 tools/gen_templates
 *.png
 *.jpg
 *.gif
 !assets/templates/*.png
+webapp/generated/*
+!webapp/generated/.gitkeep
+webapp/server.pid
+webapp/server.log

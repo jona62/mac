@@ -83,6 +83,16 @@ ln -sf "$(pwd)/mac-lang" ~/.vscode/extensions/mac-lang
 cmake --build build && bash tests/run_tests.sh  # 37 tests
 ```
 
+## Web GIF Studio
+
+Launch the browser UI on port `9001`:
+
+```bash
+PORT=9001 ./webapp/run.sh
+```
+
+Then open `http://localhost:9001`.
+
 ## License
 
 MIT

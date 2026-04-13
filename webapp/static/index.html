@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mac GIF Studio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <section class="hero-card hero-card--main">
+          <p class="eyebrow">Mac Runtime Control Room</p>
+          <h1>GIF<br />Studio</h1>
+          <p class="hero-copy">
+            Build animated memes with frame-by-frame captions, live script output,
+            and a clean front-end on top of the real Mac GIF engine.
+          </p>
+          <div class="metric-strip">
+            <div class="metric">
+              <span class="metric__label">Canvas</span>
+              <strong id="heroCanvas">640 × 640</strong>
+            </div>
+            <div class="metric">
+              <span class="metric__label">Frames</span>
+              <strong id="heroFrames">3</strong>
+            </div>
+            <div class="metric">
+              <span class="metric__label">Runtime</span>
+              <strong id="heroDuration">1.2s</strong>
+            </div>
+          </div>
+        </section>
+
+        <aside class="hero-card hero-card--note">
+          <p class="hero-note__title">Workflow</p>
+          <ol class="workflow-list">
+            <li>Pick a template or blank card.</li>
+            <li>Dial the size with sliders and exact number inputs.</li>
+            <li>Write frame captions, set timing, and render the GIF.</li>
+          </ol>
+          <div class="preset-strip" id="presetStrip"></div>
+        </aside>
+      </header>
+
+      <main class="studio-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Template Deck</p>
+              <h2 class="panel-title">Pick Your Canvas</h2>
+            </div>
+            <span class="tag">Responsive Layout</span>
+          </div>
+          <div class="template-rail" id="templateRail"></div>
+
+          <div class="control-grid">
+            <section class="subpanel">
+              <div class="subpanel__head">
+                <h3>Canvas Controls</h3>
+                <span id="sizeBadge" class="pill">640 × 640</span>
+              </div>
+              <div class="dual-control">
+                <div class="dual-control__head">
+                  <label for="widthRange">Width</label>
+                  <span>240-1200 px</span>
+                </div>
+                <div class="dual-control__row">
+                  <input id="widthRange" type="range" min="240" max="1200" step="10" value="640" />
+                  <input id="widthInput" type="number" min="240" max="1200" step="10" value="640" />
+                </div>
+              </div>
+
+              <div class="dual-control">
+                <div class="dual-control__head">
+                  <label for="heightRange">Height</label>
+                  <span>240-1200 px</span>
+                </div>
+                <div class="dual-control__row">
+                  <input id="heightRange" type="range" min="240" max="1200" step="10" value="640" />
+                  <input id="heightInput" type="number" min="240" max="1200" step="10" value="640" />
+                </div>
+              </div>
+            </section>
+
+            <section class="subpanel">
+              <div class="subpanel__head">
+                <h3>Studio Summary</h3>
+                <span id="durationBadge" class="pill">1.2s</span>
+              </div>
+              <dl class="summary-grid">
+                <div>
+                  <dt>Template</dt>
+                  <dd id="summaryTemplate">Two Panel</dd>
+                </div>
+                <div>
+                  <dt>Total Frames</dt>
+                  <dd id="summaryFrames">3</dd>
+                </div>
+                <div>
+                  <dt>Total Runtime</dt>
+                  <dd id="summaryDuration">1200 ms</dd>
+                </div>
+                <div>
+                  <dt>Text Note</dt>
+                  <dd>Double quotes are normalized to apostrophes for the current Mac parser.</dd>
+                </div>
+              </dl>
+            </section>
+          </div>
+
+          <section class="frames-section">
+            <div class="subpanel__head subpanel__head--wide">
+              <div>
+                <p class="eyebrow">Frame Stack</p>
+                <h3>Write the Sequence</h3>
+              </div>
+              <button id="addFrameButton" class="button button--accent" type="button">Add Frame</button>
+            </div>
+            <div id="frameList" class="frame-list"></div>
+          </section>
+        </section>
+
+        <section class="panel panel--output">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Render Desk</p>
+              <h2 class="panel-title">Preview And Export</h2>
+            </div>
+            <button id="generateButton" class="button button--dark" type="button">Render GIF</button>
+          </div>
+
+          <section class="current-template">
+            <div class="current-template__copy">
+              <p class="eyebrow">Selected Template</p>
+              <h3 id="currentTemplateName">Two Panel</h3>
+              <p id="currentTemplateDescription"></p>
+            </div>
+            <img id="currentTemplateImage" alt="Selected template preview" />
+          </section>
+
+          <section class="output-card">
+            <div class="output-card__head">
+              <div>
+                <p class="eyebrow">Generated Asset</p>
+                <h3>GIF Preview</h3>
+              </div>
+              <a id="downloadLink" class="button button--outline" href="#" download hidden>Download</a>
+            </div>
+            <div class="preview-stage" id="previewStage">
+              <div class="preview-placeholder" id="previewPlaceholder">
+                Render a sequence to see the output here.
+              </div>
+              <img id="gifPreview" alt="Generated GIF preview" hidden />
+            </div>
+            <p class="status-line" id="statusLine" aria-live="polite">
+              Ready to render.
+            </p>
+          </section>
+
+          <section class="output-card output-card--script">
+            <div class="output-card__head">
+              <div>
+                <p class="eyebrow">Mac Output</p>
+                <h3>Live Script</h3>
+              </div>
+              <span class="tag">Exact Runtime Input</span>
+            </div>
+            <pre id="scriptPreview" class="script-preview"></pre>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
