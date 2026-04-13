@@ -8,7 +8,7 @@ export enum TokenType {
 
     // One or two character tokens
     BANG, BANG_EQUAL, EQUAL, EQUAL_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL,
-    PIPE, COMPOSE,
+    PIPE, COMPOSE, ARROW,
 
     // Literals
     IDENTIFIER, STRING, NUMBER,
@@ -100,7 +100,7 @@ export class Scanner {
             case "]": this.addToken(TokenType.RIGHT_BRACKET); break;
             case ",": this.addToken(TokenType.COMMA); break;
             case ".": this.addToken(TokenType.DOT); break;
-            case "-": this.addToken(TokenType.MINUS); break;
+            case "-": this.addToken(this.match(">") ? TokenType.ARROW : TokenType.MINUS); break;
             case "+": this.addToken(TokenType.PLUS); break;
             case ";": this.addToken(TokenType.SEMICOLON); break;
             case "*": this.addToken(TokenType.STAR); break;

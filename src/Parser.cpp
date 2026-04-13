@@ -381,9 +381,57 @@ shared_ptr<Expr<T>> Parser::primary() {
         return make_shared<expr::LambdaExpr<T>>(funToken, params, body);
     }
 
+    // Arrow function: x -> expr
+    if (peek().type == TokenType::IDENTIFIER && current + 1 < tokens.size()
+        && tokens[current + 1].type == TokenType::ARROW) {
+        advance(); // consume identifier
+        Token param = previous();
+        advance(); // consume ->
+        auto body = expression<T>();
+        std::vector<shared_ptr<stmt::Stmt<T>>> stmts;
+        stmts.push_back(make_shared<stmt::ReturnStmt<T>>(param, body));
+        return make_shared<expr::LambdaExpr<T>>(param, std::vector<Token>{param}, stmts);
+    }
+
     if (match(TokenType::IDENTIFIER)) return make_shared<expr::Variable<T>>(previous());
 
     if (match(TokenType::LEFT_PAREN)) {
+        // Try arrow function: (params) -> expr
+        size_t savedPos = current;
+        std::vector<Token> arrowParams;
+        bool isArrow = false;
+
+        if (peek().type == TokenType::IDENTIFIER || peek().type == TokenType::RIGHT_PAREN) {
+            if (peek().type != TokenType::RIGHT_PAREN) {
+                bool validParams = true;
+                do {
+                    if (peek().type != TokenType::IDENTIFIER) { validParams = false; break; }
+                    advance();
+                    arrowParams.push_back(previous());
+                } while (match(TokenType::COMMA));
+                if (!validParams) arrowParams.clear();
+            }
+            if (!arrowParams.empty() || peek().type == TokenType::RIGHT_PAREN) {
+                if (peek().type == TokenType::RIGHT_PAREN) {
+                    advance(); // consume )
+                    if (peek().type == TokenType::ARROW) {
+                        isArrow = true;
+                    }
+                }
+            }
+        }
+
+        if (isArrow) {
+            advance(); // consume ->
+            Token arrowToken = previous();
+            auto body = expression<T>();
+            std::vector<shared_ptr<stmt::Stmt<T>>> stmts;
+            stmts.push_back(make_shared<stmt::ReturnStmt<T>>(arrowToken, body));
+            return make_shared<expr::LambdaExpr<T>>(arrowToken, arrowParams, stmts);
+        }
+
+        // Not an arrow — restore and parse as grouping
+        current = savedPos;
         auto expr = expression<T>();
         consume(TokenType::RIGHT_PAREN, "Expected ')' after expression.");
         return make_shared<expr::Grouping<T>>(expr);

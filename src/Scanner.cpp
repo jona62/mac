@@ -25,7 +25,6 @@ namespace scanner {
                 case '}': type = TokenType::RIGHT_BRACE; break;
                 case ',': type = TokenType::COMMA; break;
                 case '.': type = TokenType::DOT; break;
-                case '-': type = TokenType::MINUS; break;
                 case '+': type = TokenType::PLUS; break;
                 case ';': type = TokenType::SEMICOLON; break;
                 case '*': type = TokenType::STAR; break;
@@ -70,6 +69,13 @@ namespace scanner {
                 case '|':
                     if (match('>')) {
                         type = TokenType::PIPE;
+                    }
+                    break;
+                case '-':
+                    if (match('>')) {
+                        type = TokenType::ARROW;
+                    } else {
+                        type = TokenType::MINUS;
                     }
                     break;
                 case '<':

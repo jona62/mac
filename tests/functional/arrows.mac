@@ -1,0 +1,32 @@
+// Arrow function syntax
+var double = x -> x * 2;
+print double(5);                             // expect: 10
+
+// Arrow with map
+print [1,2,3] |> map(x -> x * 2);           // expect: [2, 4, 6]
+
+// Arrow with filter
+print [1,2,3,4,5] |> filter(x -> x > 3);    // expect: [4, 5]
+
+// Multi-param arrow
+var add = (a, b) -> a + b;
+print add(3, 4);                             // expect: 7
+
+// Arrow in reduce
+print [1,2,3] |> reduce((a, b) -> a + b, 0); // expect: 6
+
+// Composed arrows
+var pipeline = (x -> x * 2) >> (x -> x + 1);
+print pipeline(5);                           // expect: 11
+
+// Arrow with find
+print [1,2,3,4] |> find(x -> x > 2);        // expect: 3
+
+// Arrow with any/all
+print [1,2,3] |> any(x -> x > 2);           // expect: true
+print [1,2,3] |> all(x -> x > 0);           // expect: true
+
+// Nested arrow (currying)
+var mul = x -> y -> x * y;
+var triple = mul(3);
+print triple(4);                             // expect: 12

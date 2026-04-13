@@ -768,11 +768,56 @@ export class Parser {
             return { kind: "lambda", funKeyword, params, body };
         }
 
+        // Arrow function: x -> expr
+        if (this.peek().type === TokenType.IDENTIFIER && this.current + 1 < this.tokens.length
+            && this.tokens[this.current + 1].type === TokenType.ARROW) {
+            this.advance();
+            const param = this.previous();
+            this.advance(); // consume ->
+            const body = this.expression();
+            const ret: Stmt = { kind: "return", keyword: param, value: body };
+            return { kind: "lambda", funKeyword: param, params: [param], body: [ret] };
+        }
+
         if (this.match(TokenType.IDENTIFIER)) {
             return { kind: "variable", name: this.previous() };
         }
 
         if (this.match(TokenType.LEFT_PAREN)) {
+            // Try arrow: (params) -> expr
+            const savedPos = this.current;
+            const arrowParams: Token[] = [];
+            let isArrow = false;
+
+            if (this.peek().type === TokenType.IDENTIFIER || this.peek().type === TokenType.RIGHT_PAREN) {
+                if (this.peek().type !== TokenType.RIGHT_PAREN) {
+                    let valid = true;
+                    do {
+                        if (this.peek().type !== TokenType.IDENTIFIER) { valid = false; break; }
+                        this.advance();
+                        arrowParams.push(this.previous());
+                    } while (this.match(TokenType.COMMA));
+                    if (!valid) arrowParams.length = 0;
+                }
+                if ((arrowParams.length > 0 || this.peek().type === TokenType.RIGHT_PAREN)
+                    && this.peek().type === TokenType.RIGHT_PAREN) {
+                    this.advance(); // )
+                    if (this.peek().type === TokenType.ARROW) {
+                        isArrow = true;
+                    }
+                }
+            }
+
+            if (isArrow) {
+                this.advance(); // consume ->
+                const arrowToken = this.previous();
+                const body = this.expression();
+                const ret: Stmt = { kind: "return", keyword: arrowToken, value: body };
+                return { kind: "lambda", funKeyword: arrowToken, params: arrowParams, body: [ret] };
+            }
+
+            // Restore and parse as grouping
+            this.current = savedPos;
             const expr = this.expression();
             this.consume(TokenType.RIGHT_PAREN, "Expected ')' after expression.");
             return { kind: "grouping", expression: expr };
