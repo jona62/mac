@@ -1,0 +1,15 @@
+// Basic lambda
+var double = fun(x) { return x * 2; };
+print double(21);               // expect: 42
+
+// Lambda as argument
+fun apply(fn, val) { return fn(val); }
+print apply(fun(x) { return x + 1; }, 10);  // expect: 11
+
+// Lambda closure
+var x = 10;
+var addX = fun(y) { return x + y; };
+print addX(5);                  // expect: 15
+
+// Immediate invocation
+print fun(a, b) { return a + b; }(3, 4);  // expect: 7

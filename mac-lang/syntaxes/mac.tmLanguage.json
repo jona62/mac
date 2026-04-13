@@ -54,7 +54,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(var|fun|class|for|while|if|else|return|print)\\b"
+      "match": "\\b(var|fun|class|for|while|if|else|return|print|in|break|continue|meme)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",

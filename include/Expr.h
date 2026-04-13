@@ -10,6 +10,11 @@ using std::shared_ptr;
 using std::string;
 using token::Token;
 
+// Forward declare for LambdaExpr
+namespace stmt {
+    template <typename T> class Stmt;
+}
+
 namespace expr {
 
     template <typename T>
@@ -200,6 +205,72 @@ namespace expr {
     };
 
     template <typename T>
+    class ArrayExpr : public Expr<T> {
+    public:
+        ArrayExpr(Token bracket, std::vector<shared_ptr<Expr<T>>> elements)
+            : bracket(bracket), elements(elements) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitArrayExpr(this);
+        }
+        Token bracket;
+        std::vector<shared_ptr<Expr<T>>> elements;
+    };
+
+    template <typename T>
+    class MapExpr : public Expr<T> {
+    public:
+        MapExpr(Token brace, std::vector<Token> keys, std::vector<shared_ptr<Expr<T>>> values)
+            : brace(brace), keys(keys), values(values) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitMapExpr(this);
+        }
+        Token brace;
+        std::vector<Token> keys;
+        std::vector<shared_ptr<Expr<T>>> values;
+    };
+
+    template <typename T>
+    class IndexGet : public Expr<T> {
+    public:
+        IndexGet(shared_ptr<Expr<T>> object, Token bracket, shared_ptr<Expr<T>> index)
+            : object(object), bracket(bracket), index(index) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitIndexGetExpr(this);
+        }
+        shared_ptr<Expr<T>> object;
+        Token bracket;
+        shared_ptr<Expr<T>> index;
+    };
+
+    template <typename T>
+    class IndexSet : public Expr<T> {
+    public:
+        IndexSet(shared_ptr<Expr<T>> object, Token bracket, shared_ptr<Expr<T>> index, shared_ptr<Expr<T>> value)
+            : object(object), bracket(bracket), index(index), value(value) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitIndexSetExpr(this);
+        }
+        shared_ptr<Expr<T>> object;
+        Token bracket;
+        shared_ptr<Expr<T>> index;
+        shared_ptr<Expr<T>> value;
+    };
+
+    template <typename T>
+    class LambdaExpr : public Expr<T> {
+    public:
+        LambdaExpr(Token funKeyword, std::vector<Token> params,
+                   std::vector<shared_ptr<stmt::Stmt<T>>> body)
+            : funKeyword(funKeyword), params(params), body(body) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitLambdaExpr(this);
+        }
+        Token funKeyword;
+        std::vector<Token> params;
+        std::vector<shared_ptr<stmt::Stmt<T>>> body;
+    };
+
+    template <typename T>
     class Visitor {
     public:
         virtual T visitBinaryExpr(Binary<T>* expr) = 0;
@@ -214,6 +285,11 @@ namespace expr {
         virtual T visitSetExpr(Set<T>* expr) = 0;
         virtual T visitThisExpr(This<T>* expr) = 0;
         virtual T visitSuperExpr(Super<T>* expr) = 0;
+        virtual T visitArrayExpr(ArrayExpr<T>* expr) = 0;
+        virtual T visitMapExpr(MapExpr<T>* expr) = 0;
+        virtual T visitIndexGetExpr(IndexGet<T>* expr) = 0;
+        virtual T visitIndexSetExpr(IndexSet<T>* expr) = 0;
+        virtual T visitLambdaExpr(LambdaExpr<T>* expr) = 0;
         virtual ~Visitor() = default;
     };
 }

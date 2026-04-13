@@ -17,6 +17,16 @@ namespace errors {
         }
     };
 
+    class BreakException : public std::exception {
+    public:
+        const char* what() const noexcept override { return "Break"; }
+    };
+
+    class ContinueException : public std::exception {
+    public:
+        const char* what() const noexcept override { return "Continue"; }
+    };
+
 } // namespace errors
 
 #endif // RETURN_H

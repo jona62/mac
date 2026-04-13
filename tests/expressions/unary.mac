@@ -1,0 +1,7 @@
+print -3;           // expect: -3
+print !true;        // expect: false
+print !false;       // expect: true
+print !nil;         // expect: true
+print !0;           // expect: false
+print !"";          // expect: false
+print !!true;       // expect: true

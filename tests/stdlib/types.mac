@@ -1,0 +1,7 @@
+print type(42);             // expect: number
+print type("hi");           // expect: string
+print type(true);           // expect: bool
+print type(nil);            // expect: nil
+print type([1, 2]);         // expect: array
+print type({a: 1});         // expect: map
+print type(fun(x) { return x; }); // expect: function

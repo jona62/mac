@@ -1,0 +1,6 @@
+class Obj {}
+var o = Obj();
+o.name = "test";
+print o.name;             // expect: test
+o.name = "updated";
+print o.name;             // expect: updated

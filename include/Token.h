@@ -29,7 +29,9 @@ namespace token {
 
         // Single-character tokens.
         LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
+        LEFT_BRACKET, RIGHT_BRACKET,
         COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
+        COLON, PERCENT,
 
         // One or two character tokens.
         BANG, BANG_EQUAL,
@@ -41,7 +43,7 @@ namespace token {
         IDENTIFIER, STRING, NUMBER,
 
         // Keywords.
-        AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
+        AND, BREAK, CLASS, CONTINUE, ELSE, FALSE, FUN, FOR, IF, IN, NIL, OR,
         PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
 
         // End of file.
@@ -50,46 +52,19 @@ namespace token {
 
     // The order of this matters
     const char* const TokenTypeNames[] = {
-        "NONE",           // index 0
-        "LEFT_PAREN",     // index 1
-        "RIGHT_PAREN",    // index 2
-        "LEFT_BRACE",     // index 3
-        "RIGHT_BRACE",    // index 4
-        "COMMA",          // index 5
-        "DOT",            // index 6
-        "MINUS",          // index 7
-        "PLUS",           // index 8
-        "SEMICOLON",      // index 9
-        "SLASH",          // index 10
-        "STAR",           // index 11
-        "BANG",           // index 12
-        "BANG_EQUAL",     // index 13
-        "EQUAL",          // index 14
-        "EQUAL_EQUAL",    // index 15
-        "GREATER",        // index 16
-        "GREATER_EQUAL",  // index 17
-        "LESS",           // index 18
-        "LESS_EQUAL",     // index 19
-        "IDENTIFIER",     // index 20
-        "STRING",         // index 21
-        "NUMBER",         // index 22
-        "AND",            // index 23
-        "CLASS",          // index 24
-        "ELSE",           // index 25
-        "FALSE",          // index 26
-        "FUN",            // index 27
-        "FOR",            // index 28
-        "IF",             // index 29
-        "NIL",            // index 30
-        "OR",             // index 31
-        "PRINT",          // index 32
-        "RETURN",         // index 33
-        "SUPER",          // index 34
-        "THIS",           // index 35
-        "TRUE",           // index 36
-        "VAR",            // index 37
-        "WHILE",          // index 38
-        "END_OF_FILE"     // index 39
+        "NONE",
+        "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
+        "LEFT_BRACKET", "RIGHT_BRACKET",
+        "COMMA", "DOT", "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",
+        "COLON", "PERCENT",
+        "BANG", "BANG_EQUAL",
+        "EQUAL", "EQUAL_EQUAL",
+        "GREATER", "GREATER_EQUAL",
+        "LESS", "LESS_EQUAL",
+        "IDENTIFIER", "STRING", "NUMBER",
+        "AND", "BREAK", "CLASS", "CONTINUE", "ELSE", "FALSE", "FUN", "FOR", "IF", "IN", "NIL", "OR",
+        "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
+        "END_OF_FILE"
     };
 
     struct Token {

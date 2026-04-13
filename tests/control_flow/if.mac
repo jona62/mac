@@ -1,0 +1,14 @@
+if (true) print "yes";               // expect: yes
+if (false) print "bad";
+if (true) print "a"; else print "b"; // expect: a
+if (false) print "a"; else print "b"; // expect: b
+
+if (1) print "truthy";               // expect: truthy
+if (nil) print "bad"; else print "falsy"; // expect: falsy
+
+// Nested
+if (true) {
+    if (true) {
+        print "nested";              // expect: nested
+    }
+}

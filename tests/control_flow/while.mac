@@ -1,0 +1,11 @@
+var i = 0;
+while (i < 3) {
+    print i;          // expect: 0
+    i = i + 1;        // expect: 1
+}                     // expect: 2
+
+// Zero iterations
+while (false) {
+    print "bad";
+}
+print "done";         // expect: done

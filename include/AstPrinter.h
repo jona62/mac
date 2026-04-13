@@ -73,6 +73,40 @@ namespace printer {
             return "(super " + get<string>(expr->method.lexeme) + ")";
         }
 
+        string visitArrayExpr(expr::ArrayExpr<T>* expr) override {
+            std::ostringstream out;
+            out << "[";
+            for (size_t i = 0; i < expr->elements.size(); i++) {
+                if (i > 0) out << ", ";
+                out << expr->elements[i]->visit(this->shared_from_this());
+            }
+            out << "]";
+            return out.str();
+        }
+
+        string visitMapExpr(expr::MapExpr<T>* expr) override {
+            std::ostringstream out;
+            out << "{";
+            for (size_t i = 0; i < expr->keys.size(); i++) {
+                if (i > 0) out << ", ";
+                out << get<string>(expr->keys[i].lexeme) << ": " << expr->values[i]->visit(this->shared_from_this());
+            }
+            out << "}";
+            return out.str();
+        }
+
+        string visitIndexGetExpr(expr::IndexGet<T>* expr) override {
+            return expr->object->visit(this->shared_from_this()) + "[" + expr->index->visit(this->shared_from_this()) + "]";
+        }
+
+        string visitIndexSetExpr(expr::IndexSet<T>* expr) override {
+            return expr->object->visit(this->shared_from_this()) + "[" + expr->index->visit(this->shared_from_this()) + "] = " + expr->value->visit(this->shared_from_this());
+        }
+
+        string visitLambdaExpr(expr::LambdaExpr<T>*) override {
+            return "<lambda>";
+        }
+
     private:
         template <typename... Exprs>
         string parenthesize(const std::string& name, shared_ptr<Exprs>... exprs) {

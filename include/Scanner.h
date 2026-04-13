@@ -77,12 +77,15 @@ namespace scanner {
 
             std::unordered_map<string, TokenType> keywords = {
                 {"and", TokenType::AND},
+                {"break", TokenType::BREAK},
                 {"class", TokenType::CLASS},
+                {"continue", TokenType::CONTINUE},
                 {"else", TokenType::ELSE},
                 {"false", TokenType::FALSE},
                 {"fun", TokenType::FUN},
                 {"for", TokenType::FOR},
                 {"if", TokenType::IF},
+                {"in", TokenType::IN},
                 {"nil", TokenType::NIL},
                 {"or", TokenType::OR},
                 {"print", TokenType::PRINT},

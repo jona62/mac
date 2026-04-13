@@ -1,0 +1,7 @@
+print sqrt(9);          // expect: 3
+print sqrt(2);          // expect: 1.41421
+print abs(-5);          // expect: 5
+print abs(5);           // expect: 5
+print pow(2, 10);       // expect: 1024
+print floor(3.7);       // expect: 3
+print ceil(3.2);        // expect: 4

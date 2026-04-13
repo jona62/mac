@@ -1,0 +1,8 @@
+class Greeter {
+    greet(name) {
+        return "Hello, " + name + "!";
+    }
+}
+var g = Greeter();
+print g.greet("Mac");     // expect: Hello, Mac!
+print Greeter;            // expect: Greeter

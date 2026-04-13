@@ -1,0 +1,8 @@
+var x = 10;
+print x;              // expect: 10
+var y;
+print y;              // expect: nil
+var z = "hello";
+print z;              // expect: hello
+x = 20;
+print x;              // expect: 20

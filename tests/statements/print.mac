@@ -1,0 +1,6 @@
+print 42;             // expect: 42
+print "hello";        // expect: hello
+print true;           // expect: true
+print false;          // expect: false
+print nil;            // expect: nil
+print 1 + 2 + 3;     // expect: 6

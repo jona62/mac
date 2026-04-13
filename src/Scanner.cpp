@@ -29,6 +29,10 @@ namespace scanner {
                 case '+': type = TokenType::PLUS; break;
                 case ';': type = TokenType::SEMICOLON; break;
                 case '*': type = TokenType::STAR; break;
+                case '[': type = TokenType::LEFT_BRACKET; break;
+                case ']': type = TokenType::RIGHT_BRACKET; break;
+                case ':': type = TokenType::COLON; break;
+                case '%': type = TokenType::PERCENT; break;
                 default:
                     break;
             }

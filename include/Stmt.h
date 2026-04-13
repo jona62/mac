@@ -154,6 +154,39 @@ namespace stmt {
     };
 
     template <typename T>
+    class ForInStmt : public Stmt<T> {
+    public:
+        ForInStmt(token::Token varName, shared_ptr<expr::Expr<T>> iterable, shared_ptr<Stmt<T>> body)
+            : varName(varName), iterable(iterable), body(body) {}
+        void accept(shared_ptr<StmtVisitor<T>> visitor) override {
+            visitor->visitForInStmt(this);
+        }
+        token::Token varName;
+        shared_ptr<expr::Expr<T>> iterable;
+        shared_ptr<Stmt<T>> body;
+    };
+
+    template <typename T>
+    class BreakStmt : public Stmt<T> {
+    public:
+        BreakStmt(token::Token keyword) : keyword(keyword) {}
+        void accept(shared_ptr<StmtVisitor<T>> visitor) override {
+            visitor->visitBreakStmt(this);
+        }
+        token::Token keyword;
+    };
+
+    template <typename T>
+    class ContinueStmt : public Stmt<T> {
+    public:
+        ContinueStmt(token::Token keyword) : keyword(keyword) {}
+        void accept(shared_ptr<StmtVisitor<T>> visitor) override {
+            visitor->visitContinueStmt(this);
+        }
+        token::Token keyword;
+    };
+
+    template <typename T>
     class StmtVisitor {
     public:
         virtual void visitExpressionStmt(ExpressionStmt<T>* stmt) = 0;
@@ -165,6 +198,9 @@ namespace stmt {
         virtual void visitFunctionStmt(FunctionStmt<T>* stmt) = 0;
         virtual void visitReturnStmt(ReturnStmt<T>* stmt) = 0;
         virtual void visitClassStmt(ClassStmt<T>* stmt) = 0;
+        virtual void visitForInStmt(ForInStmt<T>* stmt) = 0;
+        virtual void visitBreakStmt(BreakStmt<T>* stmt) = 0;
+        virtual void visitContinueStmt(ContinueStmt<T>* stmt) = 0;
         virtual ~StmtVisitor() = default;
     };
 

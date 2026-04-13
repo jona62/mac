@@ -1,0 +1,4 @@
+print len("hello");         // expect: 5
+print len("");             // expect: 0
+print substr("hello", 1, 3); // expect: ell
+print split("a,b,c", ",");   // expect: [a, b, c]

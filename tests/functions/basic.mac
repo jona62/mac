@@ -1,0 +1,22 @@
+fun add(a, b) {
+    return a + b;
+}
+print add(1, 2);          // expect: 3
+
+fun greet(name) {
+    return "hello " + name;
+}
+print greet("Mac");       // expect: hello Mac
+
+// Recursion
+fun fib(n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+print fib(10);            // expect: 55
+
+// No return value
+fun noReturn() {
+    var x = 1;
+}
+print noReturn();         // expect: nil

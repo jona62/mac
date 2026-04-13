@@ -1,0 +1,22 @@
+fun makeCounter() {
+    var count = 0;
+    fun increment() {
+        count = count + 1;
+        return count;
+    }
+    return increment;
+}
+var counter = makeCounter();
+print counter();      // expect: 1
+print counter();      // expect: 2
+print counter();      // expect: 3
+
+fun makeAdder(x) {
+    fun add(y) {
+        return x + y;
+    }
+    return add;
+}
+var add5 = makeAdder(5);
+print add5(3);        // expect: 8
+print add5(10);       // expect: 15

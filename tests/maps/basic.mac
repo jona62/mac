@@ -1,0 +1,16 @@
+var m = {name: "Mac", version: 1};
+print m;                        // expect: {name: Mac, version: 1}
+print m.name;                   // expect: Mac
+print m["version"];             // expect: 1
+m.year = 2026;
+print m.year;                   // expect: 2026
+
+// Empty map
+var empty = {};
+print empty;                    // expect: {}
+
+// Map iteration
+var config = {host: "localhost", port: 8080};
+for (var key in config) print key;
+// expect: host
+// expect: port

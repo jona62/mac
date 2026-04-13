@@ -39,7 +39,12 @@ template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::declaration() {
     try {
         if (match(TokenType::CLASS)) return classDeclaration<T>();
-        if (match(TokenType::FUN)) return functionDeclaration<T>("function");
+        // 2-token lookahead: only treat as function declaration if FUN is followed by IDENTIFIER
+        if (peek().type == TokenType::FUN && current + 1 < tokens.size()
+            && tokens[current + 1].type == TokenType::IDENTIFIER) {
+            advance(); // consume FUN
+            return functionDeclaration<T>("function");
+        }
         if (match(TokenType::VAR)) return varDeclaration<T>();
         return statement<T>();
     } catch (const ParseError& error) {
@@ -122,6 +127,16 @@ shared_ptr<stmt::Stmt<T>> Parser::statement() {
         consume(TokenType::SEMICOLON, "Expected ';' after return value.");
         return make_shared<stmt::ReturnStmt<T>>(keyword, value);
     }
+    if (match(TokenType::BREAK)) {
+        Token keyword = previous();
+        consume(TokenType::SEMICOLON, "Expected ';' after 'break'.");
+        return make_shared<stmt::BreakStmt<T>>(keyword);
+    }
+    if (match(TokenType::CONTINUE)) {
+        Token keyword = previous();
+        consume(TokenType::SEMICOLON, "Expected ';' after 'continue'.");
+        return make_shared<stmt::ContinueStmt<T>>(keyword);
+    }
     if (match(TokenType::WHILE)) return whileStatement<T>();
     if (match(TokenType::FOR)) return forStatement<T>();
     if (match(TokenType::LEFT_BRACE)) return make_shared<stmt::BlockStmt<T>>(block<T>());
@@ -164,24 +179,75 @@ template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::forStatement() {
     consume(TokenType::LEFT_PAREN, "Expected '(' after 'for'.");
 
-    // Initializer
+    // Check for for-in: for (var x in collection)
+    if (match(TokenType::VAR)) {
+        consume(TokenType::IDENTIFIER, "Expected variable name.");
+        Token varName = previous();
+
+        if (match(TokenType::IN)) {
+            // for-in loop
+            auto iterable = expression<T>();
+            consume(TokenType::RIGHT_PAREN, "Expected ')' after for-in clause.");
+            auto body = statement<T>();
+            return make_shared<stmt::ForInStmt<T>>(varName, iterable, body);
+        }
+
+        // C-style for with var initializer — we already consumed VAR and IDENTIFIER
+        shared_ptr<Expr<T>> init = nullptr;
+        if (match(TokenType::EQUAL)) {
+            init = expression<T>();
+        }
+        consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
+        auto initializer = make_shared<stmt::VarStmt<T>>(varName, init);
+
+        // Condition
+        shared_ptr<expr::Expr<T>> condition = nullptr;
+        if (peek().type != TokenType::SEMICOLON) {
+            condition = expression<T>();
+        }
+        consume(TokenType::SEMICOLON, "Expected ';' after loop condition.");
+
+        // Increment
+        shared_ptr<expr::Expr<T>> increment = nullptr;
+        if (peek().type != TokenType::RIGHT_PAREN) {
+            increment = expression<T>();
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected ')' after for clauses.");
+
+        auto body = statement<T>();
+
+        // Desugar
+        if (increment != nullptr) {
+            std::vector<shared_ptr<stmt::Stmt<T>>> bodyStatements;
+            bodyStatements.push_back(body);
+            bodyStatements.push_back(make_shared<stmt::ExpressionStmt<T>>(increment));
+            body = make_shared<stmt::BlockStmt<T>>(bodyStatements);
+        }
+        if (condition == nullptr) {
+            condition = make_shared<expr::Literal<T>>(token::TokenValue(true));
+        }
+        body = make_shared<stmt::WhileStmt<T>>(condition, body);
+
+        std::vector<shared_ptr<stmt::Stmt<T>>> bodyStatements;
+        bodyStatements.push_back(initializer);
+        bodyStatements.push_back(body);
+        return make_shared<stmt::BlockStmt<T>>(bodyStatements);
+    }
+
+    // C-style for without var
     shared_ptr<stmt::Stmt<T>> initializer;
     if (match(TokenType::SEMICOLON)) {
         initializer = nullptr;
-    } else if (match(TokenType::VAR)) {
-        initializer = varDeclaration<T>();
     } else {
         initializer = expressionStatement<T>();
     }
 
-    // Condition
     shared_ptr<expr::Expr<T>> condition = nullptr;
     if (peek().type != TokenType::SEMICOLON) {
         condition = expression<T>();
     }
     consume(TokenType::SEMICOLON, "Expected ';' after loop condition.");
 
-    // Increment
     shared_ptr<expr::Expr<T>> increment = nullptr;
     if (peek().type != TokenType::RIGHT_PAREN) {
         increment = expression<T>();
@@ -190,19 +256,16 @@ shared_ptr<stmt::Stmt<T>> Parser::forStatement() {
 
     auto body = statement<T>();
 
-    // Desugar into while loop
     if (increment != nullptr) {
         std::vector<shared_ptr<stmt::Stmt<T>>> bodyStatements;
         bodyStatements.push_back(body);
         bodyStatements.push_back(make_shared<stmt::ExpressionStmt<T>>(increment));
         body = make_shared<stmt::BlockStmt<T>>(bodyStatements);
     }
-
     if (condition == nullptr) {
         condition = make_shared<expr::Literal<T>>(token::TokenValue(true));
     }
     body = make_shared<stmt::WhileStmt<T>>(condition, body);
-
     if (initializer != nullptr) {
         std::vector<shared_ptr<stmt::Stmt<T>>> bodyStatements;
         bodyStatements.push_back(initializer);
@@ -301,6 +364,23 @@ shared_ptr<Expr<T>> Parser::primary() {
 
     if (match(TokenType::THIS)) return make_shared<expr::This<T>>(previous());
 
+    if (match(TokenType::FUN)) {
+        // Lambda: fun(params) { body }
+        Token funToken = previous();
+        consume(TokenType::LEFT_PAREN, "Expected '(' for lambda.");
+        std::vector<Token> params;
+        if (peek().type != TokenType::RIGHT_PAREN) {
+            do {
+                consume(TokenType::IDENTIFIER, "Expected parameter name.");
+                params.push_back(previous());
+            } while (match(TokenType::COMMA));
+        }
+        consume(TokenType::RIGHT_PAREN, "Expected ')' after lambda parameters.");
+        consume(TokenType::LEFT_BRACE, "Expected '{' before lambda body.");
+        auto body = block<T>();
+        return make_shared<expr::LambdaExpr<T>>(funToken, params, body);
+    }
+
     if (match(TokenType::IDENTIFIER)) return make_shared<expr::Variable<T>>(previous());
 
     if (match(TokenType::LEFT_PAREN)) {
@@ -309,7 +389,45 @@ shared_ptr<Expr<T>> Parser::primary() {
         return make_shared<expr::Grouping<T>>(expr);
     }
 
+    if (match(TokenType::LEFT_BRACKET)) return arrayLiteral<T>();
+
+    if (match(TokenType::LEFT_BRACE)) return mapLiteral<T>();
+
     throw ParseError(peek(), "Expected expression.");
+}
+
+template <typename T>
+shared_ptr<Expr<T>> Parser::arrayLiteral() {
+    Token bracket = previous();
+    std::vector<shared_ptr<Expr<T>>> elements;
+    if (peek().type != TokenType::RIGHT_BRACKET) {
+        do {
+            elements.push_back(expression<T>());
+        } while (match(TokenType::COMMA));
+    }
+    consume(TokenType::RIGHT_BRACKET, "Expected ']' after array elements.");
+    return make_shared<expr::ArrayExpr<T>>(bracket, elements);
+}
+
+template <typename T>
+shared_ptr<Expr<T>> Parser::mapLiteral() {
+    Token brace = previous();
+    std::vector<Token> keys;
+    std::vector<shared_ptr<Expr<T>>> values;
+
+    if (peek().type != TokenType::RIGHT_BRACE) {
+        do {
+            if (match(TokenType::IDENTIFIER) || match(TokenType::STRING)) {
+                keys.push_back(previous());
+            } else {
+                throw ParseError(peek(), "Expected map key (identifier or string).");
+            }
+            consume(TokenType::COLON, "Expected ':' after map key.");
+            values.push_back(expression<T>());
+        } while (match(TokenType::COMMA));
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after map entries.");
+    return make_shared<expr::MapExpr<T>>(brace, keys, values);
 }
 
 template <typename T>
@@ -340,6 +458,11 @@ shared_ptr<Expr<T>> Parser::call() {
             consume(TokenType::IDENTIFIER, "Expected property name after '.'.");
             Token name = previous();
             expr = make_shared<expr::Get<T>>(expr, name);
+        } else if (match(TokenType::LEFT_BRACKET)) {
+            auto index = expression<T>();
+            consume(TokenType::RIGHT_BRACKET, "Expected ']' after index.");
+            Token bracket = previous();
+            expr = make_shared<expr::IndexGet<T>>(expr, bracket, index);
         } else {
             break;
         }
@@ -361,7 +484,7 @@ shared_ptr<Expr<T>> Parser::unary() {
 template <typename T>
 shared_ptr<Expr<T>> Parser::factor() {
     auto expr = unary<T>();
-    while(match(TokenType::SLASH, TokenType::STAR)) {
+    while(match(TokenType::SLASH, TokenType::STAR, TokenType::PERCENT)) {
         Token operation = previous();
         auto rightOperand = unary<T>();
         expr = make_shared<Binary<T>>(expr, operation, rightOperand);
@@ -432,7 +555,6 @@ shared_ptr<Expr<T>> Parser::assignment() {
         Token equals = previous();
         auto value = assignment<T>();
 
-        // Check if the left side is a valid assignment target
         if (auto* varExpr = dynamic_cast<expr::Variable<T>*>(expr.get())) {
             Token name = varExpr->name;
             return make_shared<expr::Assign<T>>(name, value);
@@ -442,7 +564,10 @@ shared_ptr<Expr<T>> Parser::assignment() {
             return make_shared<expr::Set<T>>(getExpr->object, getExpr->name, value);
         }
 
-        // Report but don't throw — this is not a panic-mode error
+        if (auto* indexExpr = dynamic_cast<expr::IndexGet<T>*>(expr.get())) {
+            return make_shared<expr::IndexSet<T>>(indexExpr->object, indexExpr->bracket, indexExpr->index, value);
+        }
+
         std::cerr << ParseError(equals, "Invalid assignment target.").what() << std::endl;
     }
 
@@ -492,6 +617,8 @@ template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::block<MV>();
 template shared_ptr<Expr<MV>> Parser::finishCall<MV>(shared_ptr<Expr<MV>>);
 template shared_ptr<Expr<MV>> Parser::call<MV>();
 template shared_ptr<Expr<MV>> Parser::primary<MV>();
+template shared_ptr<Expr<MV>> Parser::arrayLiteral<MV>();
+template shared_ptr<Expr<MV>> Parser::mapLiteral<MV>();
 template shared_ptr<Expr<MV>> Parser::unary<MV>();
 template shared_ptr<Expr<MV>> Parser::factor<MV>();
 template shared_ptr<Expr<MV>> Parser::term<MV>();

@@ -65,6 +65,10 @@ namespace parser {
         template <typename T>
         shared_ptr<Expr<T>> primary();
         template <typename T>
+        shared_ptr<Expr<T>> arrayLiteral();
+        template <typename T>
+        shared_ptr<Expr<T>> mapLiteral();
+        template <typename T>
         shared_ptr<Expr<T>> unary();
         template <typename T>
         shared_ptr<Expr<T>> factor();

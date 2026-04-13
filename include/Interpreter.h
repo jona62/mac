@@ -1,6 +1,7 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
+#include <cmath>
 #include <memory>
 #include <string>
 #include <variant>
@@ -11,7 +12,11 @@
 #include "MacValue.h"
 #include "MacCallable.h"
 #include "MacFunction.h"
+#include "MacLambda.h"
 #include "MacClass.h"
+#include "MacArray.h"
+#include "MacMap.h"
+#include "MacMeme.h"
 #include "NativeFunctions.h"
 #include "Environment.h"
 #include "RuntimeError.h"
@@ -31,9 +36,25 @@ namespace interpreter {
                         public std::enable_shared_from_this<Interpreter> {
     public:
         Interpreter() : globals(make_shared<environment::Environment>()), env(globals) {
-            // Define native functions
-            globals->define("clock", MacValue(std::static_pointer_cast<callable::MacCallable>(
-                make_shared<callable::ClockFunction>())));
+            auto defn = [&](const string& name, shared_ptr<callable::MacCallable> fn) {
+                globals->define(name, MacValue(fn));
+            };
+            defn("clock", make_shared<callable::ClockFunction>());
+            defn("len", make_shared<callable::LenFunction>());
+            defn("substr", make_shared<callable::SubstrFunction>());
+            defn("split", make_shared<callable::SplitFunction>());
+            defn("type", make_shared<callable::TypeFunction>());
+            defn("sqrt", make_shared<callable::SqrtFunction>());
+            defn("abs", make_shared<callable::AbsFunction>());
+            defn("pow", make_shared<callable::PowFunction>());
+            defn("floor", make_shared<callable::FloorFunction>());
+            defn("ceil", make_shared<callable::CeilFunction>());
+            defn("push", make_shared<callable::PushFunction>());
+            defn("pop", make_shared<callable::PopFunction>());
+            defn("map", make_shared<callable::MapArrayFunction>());
+            defn("filter", make_shared<callable::FilterFunction>());
+            defn("input", make_shared<callable::InputFunction>());
+            defn("meme", make_shared<callable::MemeFunction>());
         }
 
         // --- Expression visitors ---
@@ -78,6 +99,9 @@ namespace interpreter {
                 case token::TokenType::STAR:
                     checkNumberOperands(expr->operatorToken, left, right);
                     return std::get<double>(left) * std::get<double>(right);
+                case token::TokenType::PERCENT:
+                    checkNumberOperands(expr->operatorToken, left, right);
+                    return std::fmod(std::get<double>(left), std::get<double>(right));
                 case token::TokenType::PLUS:
                     if (std::holds_alternative<double>(left) && std::holds_alternative<double>(right)) {
                         return std::get<double>(left) + std::get<double>(right);
@@ -164,17 +188,43 @@ namespace interpreter {
             if (std::holds_alternative<shared_ptr<instance::MacInstance>>(object)) {
                 return std::get<shared_ptr<instance::MacInstance>>(object)->get(expr->name);
             }
-            throw errors::RuntimeError(expr->name, "Only instances have properties.");
+            if (std::holds_alternative<shared_ptr<collection::MacMap>>(object)) {
+                auto map = std::get<shared_ptr<collection::MacMap>>(object);
+                auto key = std::get<string>(expr->name.lexeme);
+                if (!map->has(key)) {
+                    throw errors::RuntimeError(expr->name, "Undefined map key '" + key + "'.");
+                }
+                return map->get(key);
+            }
+            if (std::holds_alternative<shared_ptr<meme::MacMeme>>(object)) {
+                auto m = std::get<shared_ptr<meme::MacMeme>>(object);
+                auto prop = std::get<string>(expr->name.lexeme);
+                if (prop == "template") return MacValue(m->templateName);
+                if (prop == "top") return MacValue(m->topText);
+                if (prop == "bottom") return MacValue(m->bottomText);
+                if (prop == "remix") {
+                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
+                        make_shared<callable::MemeRemixCallable>(m)));
+                }
+                throw errors::RuntimeError(expr->name, "Undefined meme property '" + prop + "'.");
+            }
+            throw errors::RuntimeError(expr->name, "Only instances and maps have properties.");
         }
 
         MacValue visitSetExpr(expr::Set<MacValue>* expr) override {
             MacValue object = evaluate(expr->object);
-            if (!std::holds_alternative<shared_ptr<instance::MacInstance>>(object)) {
-                throw errors::RuntimeError(expr->name, "Only instances have fields.");
+            if (std::holds_alternative<shared_ptr<instance::MacInstance>>(object)) {
+                MacValue value = evaluate(expr->value);
+                std::get<shared_ptr<instance::MacInstance>>(object)->set(expr->name, value);
+                return value;
             }
-            MacValue value = evaluate(expr->value);
-            std::get<shared_ptr<instance::MacInstance>>(object)->set(expr->name, value);
-            return value;
+            if (std::holds_alternative<shared_ptr<collection::MacMap>>(object)) {
+                MacValue value = evaluate(expr->value);
+                auto map = std::get<shared_ptr<collection::MacMap>>(object);
+                map->set(std::get<string>(expr->name.lexeme), value);
+                return value;
+            }
+            throw errors::RuntimeError(expr->name, "Only instances and maps have fields.");
         }
 
         MacValue visitThisExpr(expr::This<MacValue>* expr) override {
@@ -231,7 +281,13 @@ namespace interpreter {
 
         void visitWhileStmt(stmt::WhileStmt<MacValue>* stm) override {
             while (isTruthy(evaluate(stm->condition))) {
-                execute(stm->body);
+                try {
+                    execute(stm->body);
+                } catch (const errors::BreakException&) {
+                    break;
+                } catch (const errors::ContinueException&) {
+                    // continue to next iteration
+                }
             }
         }
 
@@ -287,6 +343,127 @@ namespace interpreter {
             env->assign(stm->name, MacValue(std::static_pointer_cast<callable::MacCallable>(klass)));
         }
 
+        void visitForInStmt(stmt::ForInStmt<MacValue>* stm) override {
+            MacValue iterable = evaluate(stm->iterable);
+
+            if (std::holds_alternative<shared_ptr<collection::MacArray>>(iterable)) {
+                auto arr = std::get<shared_ptr<collection::MacArray>>(iterable);
+                for (auto& elem : arr->elements) {
+                    auto blockEnv = make_shared<environment::Environment>(env);
+                    blockEnv->define(std::get<string>(stm->varName.lexeme), elem);
+                    auto prevEnv = env;
+                    env = blockEnv;
+                    try {
+                        execute(stm->body);
+                    } catch (const errors::BreakException&) {
+                        env = prevEnv;
+                        break;
+                    } catch (const errors::ContinueException&) {
+                        // continue
+                    } catch (...) {
+                        env = prevEnv;
+                        throw;
+                    }
+                    env = prevEnv;
+                }
+            } else if (std::holds_alternative<shared_ptr<collection::MacMap>>(iterable)) {
+                auto map = std::get<shared_ptr<collection::MacMap>>(iterable);
+                for (auto& [key, val] : map->entries) {
+                    auto blockEnv = make_shared<environment::Environment>(env);
+                    blockEnv->define(std::get<string>(stm->varName.lexeme), MacValue(key));
+                    auto prevEnv = env;
+                    env = blockEnv;
+                    try {
+                        execute(stm->body);
+                    } catch (const errors::BreakException&) {
+                        env = prevEnv;
+                        break;
+                    } catch (const errors::ContinueException&) {
+                        // continue
+                    } catch (...) {
+                        env = prevEnv;
+                        throw;
+                    }
+                    env = prevEnv;
+                }
+            } else {
+                throw errors::RuntimeError(stm->varName, "Can only iterate over arrays and maps.");
+            }
+        }
+
+        void visitBreakStmt(stmt::BreakStmt<MacValue>*) override {
+            throw errors::BreakException();
+        }
+
+        void visitContinueStmt(stmt::ContinueStmt<MacValue>*) override {
+            throw errors::ContinueException();
+        }
+
+        MacValue visitArrayExpr(expr::ArrayExpr<MacValue>* expr) override {
+            auto arr = std::make_shared<collection::MacArray>();
+            for (auto& elem : expr->elements) {
+                arr->elements.push_back(evaluate(elem));
+            }
+            return MacValue(arr);
+        }
+
+        MacValue visitMapExpr(expr::MapExpr<MacValue>* expr) override {
+            auto map = std::make_shared<collection::MacMap>();
+            for (size_t i = 0; i < expr->keys.size(); i++) {
+                auto key = std::get<string>(expr->keys[i].lexeme);
+                map->set(key, evaluate(expr->values[i]));
+            }
+            return MacValue(map);
+        }
+
+        MacValue visitIndexGetExpr(expr::IndexGet<MacValue>* expr) override {
+            MacValue object = evaluate(expr->object);
+            MacValue index = evaluate(expr->index);
+
+            if (std::holds_alternative<shared_ptr<collection::MacArray>>(object)) {
+                auto arr = std::get<shared_ptr<collection::MacArray>>(object);
+                if (!std::holds_alternative<double>(index))
+                    throw errors::RuntimeError(expr->bracket, "Array index must be a number.");
+                int idx = static_cast<int>(std::get<double>(index));
+                if (idx < 0 || idx >= static_cast<int>(arr->elements.size()))
+                    throw errors::RuntimeError(expr->bracket, "Array index out of bounds.");
+                return arr->elements[idx];
+            }
+            if (std::holds_alternative<shared_ptr<collection::MacMap>>(object)) {
+                auto map = std::get<shared_ptr<collection::MacMap>>(object);
+                if (!std::holds_alternative<string>(index))
+                    throw errors::RuntimeError(expr->bracket, "Map key must be a string.");
+                return map->get(std::get<string>(index));
+            }
+            throw errors::RuntimeError(expr->bracket, "Only arrays and maps support indexing.");
+        }
+
+        MacValue visitIndexSetExpr(expr::IndexSet<MacValue>* expr) override {
+            MacValue object = evaluate(expr->object);
+            MacValue index = evaluate(expr->index);
+            MacValue val = evaluate(expr->value);
+
+            if (std::holds_alternative<shared_ptr<collection::MacArray>>(object)) {
+                auto arr = std::get<shared_ptr<collection::MacArray>>(object);
+                int idx = static_cast<int>(std::get<double>(index));
+                if (idx < 0 || idx >= static_cast<int>(arr->elements.size()))
+                    throw errors::RuntimeError(expr->bracket, "Array index out of bounds.");
+                arr->elements[idx] = val;
+                return val;
+            }
+            if (std::holds_alternative<shared_ptr<collection::MacMap>>(object)) {
+                auto map = std::get<shared_ptr<collection::MacMap>>(object);
+                map->set(std::get<string>(index), val);
+                return val;
+            }
+            throw errors::RuntimeError(expr->bracket, "Only arrays and maps support index assignment.");
+        }
+
+        MacValue visitLambdaExpr(expr::LambdaExpr<MacValue>* expr) override {
+            auto lambda = make_shared<callable::MacLambda>(expr->params, expr->body, env);
+            return MacValue(std::static_pointer_cast<callable::MacCallable>(lambda));
+        }
+
         // --- Public API ---
 
         void resolve(expr::Expr<MacValue>* expr, int depth) {
@@ -333,6 +510,31 @@ namespace interpreter {
             }
             if (std::holds_alternative<shared_ptr<instance::MacInstance>>(value)) {
                 return std::get<shared_ptr<instance::MacInstance>>(value)->toString();
+            }
+            if (std::holds_alternative<shared_ptr<collection::MacArray>>(value)) {
+                auto arr = std::get<shared_ptr<collection::MacArray>>(value);
+                std::ostringstream ss;
+                ss << "[";
+                for (size_t i = 0; i < arr->elements.size(); i++) {
+                    if (i > 0) ss << ", ";
+                    ss << stringify(arr->elements[i]);
+                }
+                ss << "]";
+                return ss.str();
+            }
+            if (std::holds_alternative<shared_ptr<collection::MacMap>>(value)) {
+                auto map = std::get<shared_ptr<collection::MacMap>>(value);
+                std::ostringstream ss;
+                ss << "{";
+                for (size_t i = 0; i < map->entries.size(); i++) {
+                    if (i > 0) ss << ", ";
+                    ss << map->entries[i].first << ": " << stringify(map->entries[i].second);
+                }
+                ss << "}";
+                return ss.str();
+            }
+            if (std::holds_alternative<shared_ptr<meme::MacMeme>>(value)) {
+                return std::get<shared_ptr<meme::MacMeme>>(value)->toString();
             }
             return std::get<string>(value);
         }
@@ -394,6 +596,25 @@ inline value::MacValue callable::MacFunction::call(
 
     try {
         interpreter->executeBlock(declaration->body, funcEnv);
+    } catch (const errors::Return& returnValue) {
+        return returnValue.returnValue;
+    }
+
+    return std::monostate{};
+}
+
+// MacLambda::call implementation
+inline value::MacValue callable::MacLambda::call(
+    std::shared_ptr<interpreter::Interpreter> interpreter,
+    std::vector<value::MacValue> arguments)
+{
+    auto funcEnv = std::make_shared<environment::Environment>(closure);
+    for (size_t i = 0; i < params.size(); i++) {
+        funcEnv->define(std::get<std::string>(params[i].lexeme), arguments[i]);
+    }
+
+    try {
+        interpreter->executeBlock(body, funcEnv);
     } catch (const errors::Return& returnValue) {
         return returnValue.returnValue;
     }

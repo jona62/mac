@@ -102,6 +102,40 @@ namespace resolver {
             return std::monostate{};
         }
 
+        MV visitArrayExpr(expr::ArrayExpr<MV>* expr) override {
+            for (auto& elem : expr->elements) resolveExpr(elem);
+            return std::monostate{};
+        }
+
+        MV visitMapExpr(expr::MapExpr<MV>* expr) override {
+            for (auto& val : expr->values) resolveExpr(val);
+            return std::monostate{};
+        }
+
+        MV visitIndexGetExpr(expr::IndexGet<MV>* expr) override {
+            resolveExpr(expr->object);
+            resolveExpr(expr->index);
+            return std::monostate{};
+        }
+
+        MV visitIndexSetExpr(expr::IndexSet<MV>* expr) override {
+            resolveExpr(expr->value);
+            resolveExpr(expr->object);
+            resolveExpr(expr->index);
+            return std::monostate{};
+        }
+
+        MV visitLambdaExpr(expr::LambdaExpr<MV>* expr) override {
+            beginScope();
+            for (auto& param : expr->params) {
+                declare(param);
+                define(param);
+            }
+            resolve(expr->body);
+            endScope();
+            return std::monostate{};
+        }
+
         MV visitAssignExpr(expr::Assign<MV>* expr) override {
             resolveExpr(expr->value);
             resolveLocal(expr, expr->name);
@@ -154,6 +188,18 @@ namespace resolver {
                 resolveExpr(stm->value);
             }
         }
+
+        void visitForInStmt(stmt::ForInStmt<MV>* stm) override {
+            resolveExpr(stm->iterable);
+            beginScope();
+            declare(stm->varName);
+            define(stm->varName);
+            resolveStmt(stm->body);
+            endScope();
+        }
+
+        void visitBreakStmt(stmt::BreakStmt<MV>*) override {}
+        void visitContinueStmt(stmt::ContinueStmt<MV>*) override {}
 
         void visitClassStmt(stmt::ClassStmt<MV>* stm) override {
             declare(stm->name);

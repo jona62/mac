@@ -1,0 +1,21 @@
+fun outer() {
+    var x = "outside";
+    fun inner() {
+        print x;
+    }
+    inner();
+}
+outer();                  // expect: outside
+
+// Closure captures variable, not value
+fun makeCounter() {
+    var i = 0;
+    fun count() {
+        i = i + 1;
+        return i;
+    }
+    return count;
+}
+var c = makeCounter();
+print c();                // expect: 1
+print c();                // expect: 2

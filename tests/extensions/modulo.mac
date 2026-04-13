@@ -1,0 +1,4 @@
+print 10 % 3;               // expect: 1
+print 7 % 2;                // expect: 1
+print 8 % 4;                // expect: 0
+print 5.5 % 2;              // expect: 1.5

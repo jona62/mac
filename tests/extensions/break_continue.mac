@@ -1,0 +1,29 @@
+// Break in while
+var i = 0;
+while (true) {
+    if (i == 3) break;
+    print i;
+    i = i + 1;
+}
+// expect: 0
+// expect: 1
+// expect: 2
+
+// Continue in while
+var j = 0;
+while (j < 5) {
+    j = j + 1;
+    if (j % 2 == 0) continue;
+    print j;
+}
+// expect: 1
+// expect: 3
+// expect: 5
+
+// Break in for-in
+for (var x in [1, 2, 3, 4, 5]) {
+    if (x == 3) break;
+    print x;
+}
+// expect: 1
+// expect: 2

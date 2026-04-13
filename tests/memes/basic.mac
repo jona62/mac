@@ -1,0 +1,11 @@
+var m = meme("Drake", "Writing Java", "Writing Mac");
+print m.top;                // expect: Writing Java
+print m.bottom;             // expect: Writing Mac
+print m.template;           // expect: Drake
+print type(m);              // expect: meme
+
+// Remix
+var r = m.remix("Debugging", "Memeing");
+print r.top;                // expect: Debugging
+print r.bottom;             // expect: Memeing
+print r.template;           // expect: Drake

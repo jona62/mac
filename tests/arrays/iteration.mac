@@ -1,0 +1,14 @@
+var fruits = ["apple", "banana", "cherry"];
+for (var f in fruits) print f;
+// expect: apple
+// expect: banana
+// expect: cherry
+
+// For-in with break
+var nums = [1, 2, 3, 4, 5];
+for (var n in nums) {
+    if (n == 3) break;
+    print n;
+}
+// expect: 1
+// expect: 2
