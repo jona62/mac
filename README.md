@@ -74,8 +74,11 @@ See [LANGUAGE.md](LANGUAGE.md) for the full reference.
 The `mac-lang/` directory provides syntax highlighting, LSP (autocomplete, hover, go-to-definition, diagnostics), snippets, and file icons.
 
 ```bash
+cd mac-lang && npm install && npx tsc && cd ..
 ln -sf "$(pwd)/mac-lang" ~/.vscode/extensions/mac-lang
 ```
+
+Reload VS Code (`Cmd+Shift+P` → "Developer: Reload Window") to activate the LSP.
 
 ## Development
 
