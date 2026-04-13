@@ -15,7 +15,7 @@ void fillRect(unsigned char* img, int imgW, int imgH, int x, int y, int w, int h
     }
 }
 
-void createDrake(const char* path) {
+void createTwoPanel(const char* path) {
     int w = 600, h = 600;
     std::vector<unsigned char> img(w * h * 4);
     // Top panel - light red
@@ -27,7 +27,7 @@ void createDrake(const char* path) {
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
-void createDistracted(const char* path) {
+void createThreePanel(const char* path) {
     int w = 800, h = 500;
     std::vector<unsigned char> img(w * h * 4);
     fillRect(img.data(), w, h, 0, 0, w/3, h, 180, 140, 200);
@@ -39,7 +39,7 @@ void createDistracted(const char* path) {
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
-void createChangeMyMind(const char* path) {
+void createBottomText(const char* path) {
     int w = 600, h = 400;
     std::vector<unsigned char> img(w * h * 4);
     fillRect(img.data(), w, h, 0, 0, w, h, 100, 150, 200);
@@ -57,9 +57,9 @@ void createBlank(const char* path) {
 }
 
 int main() {
-    createDrake("../assets/templates/two_panel.png");
-    createDistracted("../assets/templates/three_panel.png");
-    createChangeMyMind("../assets/templates/bottom_text.png");
+    createTwoPanel("../assets/templates/two_panel.png");
+    createThreePanel("../assets/templates/three_panel.png");
+    createBottomText("../assets/templates/bottom_text.png");
     createBlank("../assets/templates/blank.png");
     printf("Generated 4 template images.\n");
     return 0;
