@@ -111,6 +111,29 @@ namespace interpreter {
             defn("_timeline_hold", make_shared<callable::TimelineHoldFunction>());
             defn("_timeline_loop", make_shared<callable::TimelineLoopFunction>());
             defn("_timeline_render", make_shared<callable::TimelineRenderFunction>());
+
+            // Functional toolkit
+            defn("range", make_shared<callable::RangeFunction>());
+            defn("reduce", make_shared<callable::ReduceFunction>());
+            defn("zip", make_shared<callable::ZipFunction>());
+            defn("enumerate", make_shared<callable::EnumerateFunction>());
+            defn("each", make_shared<callable::EachFunction>());
+            defn("flatten", make_shared<callable::FlattenFunction>());
+            defn("flatMap", make_shared<callable::FlatMapFunction>());
+            defn("sort", make_shared<callable::SortFunction>());
+            defn("reverse", make_shared<callable::ReverseFunction>());
+            defn("find", make_shared<callable::FindFunction>());
+            defn("any", make_shared<callable::AnyFunction>());
+            defn("all", make_shared<callable::AllFunction>());
+            defn("take", make_shared<callable::TakeFunction>());
+            defn("drop", make_shared<callable::DropFunction>());
+            defn("join", make_shared<callable::JoinFunction>());
+            defn("upper", make_shared<callable::UpperFunction>());
+            defn("lower", make_shared<callable::LowerFunction>());
+            defn("trim", make_shared<callable::TrimFunction>());
+            defn("replace", make_shared<callable::ReplaceFunction>());
+            defn("animate", make_shared<callable::AnimateFunction>());
+            defn("toGrid", make_shared<callable::ToGridFunction>());
         }
 
         // --- Expression visitors ---
@@ -262,7 +285,7 @@ namespace interpreter {
             }
 
             auto function = std::get<shared_ptr<callable::MacCallable>>(callee);
-            if (static_cast<int>(arguments.size()) != function->arity()) {
+            if (function->arity() != -1 && static_cast<int>(arguments.size()) != function->arity()) {
                 throw errors::RuntimeError(expr->paren,
                     "Expected " + std::to_string(function->arity()) +
                     " arguments but got " + std::to_string(arguments.size()) + ".");

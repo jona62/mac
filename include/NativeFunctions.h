@@ -1,12 +1,15 @@
 #ifndef NATIVE_FUNCTIONS_H
 #define NATIVE_FUNCTIONS_H
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include "MacCallable.h"
 #include "MacArray.h"
@@ -989,6 +992,515 @@ namespace callable {
             return true;
         }
         int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // =======================================================================
+    // Functional Toolkit — Array functions
+    // =======================================================================
+
+    // range(end), range(start, end), range(start, end, step)
+    class RangeFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            if (args.size() < 1 || args.size() > 3)
+                throw std::runtime_error("range() expects 1 to 3 arguments.");
+            double start = 0, end = 0, step = 1;
+            if (args.size() == 1) {
+                end = std::get<double>(args[0]);
+            } else if (args.size() == 2) {
+                start = std::get<double>(args[0]);
+                end = std::get<double>(args[1]);
+            } else {
+                start = std::get<double>(args[0]);
+                end = std::get<double>(args[1]);
+                step = std::get<double>(args[2]);
+            }
+            if (step == 0) throw std::runtime_error("range() step cannot be zero.");
+            auto arr = std::make_shared<collection::MacArray>();
+            if (step > 0) {
+                for (double i = start; i < end; i += step)
+                    arr->elements.push_back(value::MacValue(i));
+            } else {
+                for (double i = start; i > end; i += step)
+                    arr->elements.push_back(value::MacValue(i));
+            }
+            return value::MacValue(arr);
+        }
+        int arity() override { return -1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // reduce(arr, fn, initial)
+    class ReduceFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            value::MacValue result = args[2];
+            for (auto& elem : arr->elements) {
+                result = fn->call(interp, {result, elem});
+            }
+            return result;
+        }
+        int arity() override { return 3; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // zip(arr1, arr2)
+    class ZipFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr1 = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto arr2 = std::get<std::shared_ptr<collection::MacArray>>(args[1]);
+            auto result = std::make_shared<collection::MacArray>();
+            size_t len = std::min(arr1->elements.size(), arr2->elements.size());
+            for (size_t i = 0; i < len; i++) {
+                auto pair = std::make_shared<collection::MacArray>();
+                pair->elements.push_back(arr1->elements[i]);
+                pair->elements.push_back(arr2->elements[i]);
+                result->elements.push_back(value::MacValue(pair));
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // enumerate(arr)
+    class EnumerateFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto result = std::make_shared<collection::MacArray>();
+            for (size_t i = 0; i < arr->elements.size(); i++) {
+                auto pair = std::make_shared<collection::MacArray>();
+                pair->elements.push_back(value::MacValue(static_cast<double>(i)));
+                pair->elements.push_back(arr->elements[i]);
+                result->elements.push_back(value::MacValue(pair));
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // each(arr, fn) — side effects, returns nil
+    class EachFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            for (auto& elem : arr->elements) {
+                fn->call(interp, {elem});
+            }
+            return std::monostate{};
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // flatten(arr) — one level
+    class FlattenFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto result = std::make_shared<collection::MacArray>();
+            for (auto& elem : arr->elements) {
+                if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(elem)) {
+                    auto inner = std::get<std::shared_ptr<collection::MacArray>>(elem);
+                    for (auto& innerElem : inner->elements) {
+                        result->elements.push_back(innerElem);
+                    }
+                } else {
+                    result->elements.push_back(elem);
+                }
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // flatMap(arr, fn)
+    class FlatMapFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            auto mapped = std::make_shared<collection::MacArray>();
+            for (auto& elem : arr->elements) {
+                mapped->elements.push_back(fn->call(interp, {elem}));
+            }
+            // Flatten one level
+            auto result = std::make_shared<collection::MacArray>();
+            for (auto& elem : mapped->elements) {
+                if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(elem)) {
+                    auto inner = std::get<std::shared_ptr<collection::MacArray>>(elem);
+                    for (auto& innerElem : inner->elements) {
+                        result->elements.push_back(innerElem);
+                    }
+                } else {
+                    result->elements.push_back(elem);
+                }
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // sort(arr) or sort(arr, fn)
+    class SortFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            if (args.size() < 1 || args.size() > 2)
+                throw std::runtime_error("sort() expects 1 or 2 arguments.");
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto result = std::make_shared<collection::MacArray>();
+            result->elements = arr->elements; // copy
+
+            if (args.size() == 1) {
+                // Natural order
+                std::sort(result->elements.begin(), result->elements.end(),
+                    [](const value::MacValue& a, const value::MacValue& b) {
+                        if (std::holds_alternative<double>(a) && std::holds_alternative<double>(b))
+                            return std::get<double>(a) < std::get<double>(b);
+                        if (std::holds_alternative<std::string>(a) && std::holds_alternative<std::string>(b))
+                            return std::get<std::string>(a) < std::get<std::string>(b);
+                        return false;
+                    });
+            } else {
+                auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+                std::sort(result->elements.begin(), result->elements.end(),
+                    [&](const value::MacValue& a, const value::MacValue& b) {
+                        auto cmp = fn->call(interp, {a, b});
+                        return std::get<double>(cmp) < 0;
+                    });
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return -1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // reverse(arr)
+    class ReverseFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto result = std::make_shared<collection::MacArray>();
+            result->elements = arr->elements;
+            std::reverse(result->elements.begin(), result->elements.end());
+            return value::MacValue(result);
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // find(arr, fn) — first element where fn(elem) is truthy, or nil
+    class FindFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            for (auto& elem : arr->elements) {
+                auto val = fn->call(interp, {elem});
+                bool truthy = !std::holds_alternative<std::monostate>(val) &&
+                              !(std::holds_alternative<bool>(val) && !std::get<bool>(val));
+                if (truthy) return elem;
+            }
+            return std::monostate{};
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // any(arr, fn)
+    class AnyFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            for (auto& elem : arr->elements) {
+                auto val = fn->call(interp, {elem});
+                bool truthy = !std::holds_alternative<std::monostate>(val) &&
+                              !(std::holds_alternative<bool>(val) && !std::get<bool>(val));
+                if (truthy) return true;
+            }
+            return false;
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // all(arr, fn)
+    class AllFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[1]);
+            for (auto& elem : arr->elements) {
+                auto val = fn->call(interp, {elem});
+                bool truthy = !std::holds_alternative<std::monostate>(val) &&
+                              !(std::holds_alternative<bool>(val) && !std::get<bool>(val));
+                if (!truthy) return false;
+            }
+            return true;
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // take(arr, n)
+    class TakeFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            int n = static_cast<int>(std::get<double>(args[1]));
+            auto result = std::make_shared<collection::MacArray>();
+            for (int i = 0; i < n && i < static_cast<int>(arr->elements.size()); i++) {
+                result->elements.push_back(arr->elements[i]);
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // drop(arr, n)
+    class DropFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            int n = static_cast<int>(std::get<double>(args[1]));
+            auto result = std::make_shared<collection::MacArray>();
+            for (int i = n; i < static_cast<int>(arr->elements.size()); i++) {
+                result->elements.push_back(arr->elements[i]);
+            }
+            return value::MacValue(result);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // Helper: basic stringify for join (avoids needing full Interpreter)
+    static std::string joinStringify(const value::MacValue& val) {
+        if (std::holds_alternative<std::monostate>(val)) return "nil";
+        if (std::holds_alternative<bool>(val))
+            return std::get<bool>(val) ? "true" : "false";
+        if (std::holds_alternative<double>(val)) {
+            std::ostringstream ss;
+            ss << std::get<double>(val);
+            return ss.str();
+        }
+        if (std::holds_alternative<std::string>(val))
+            return std::get<std::string>(val);
+        if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(val)) {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(val);
+            std::ostringstream ss;
+            ss << "[";
+            for (size_t i = 0; i < arr->elements.size(); i++) {
+                if (i > 0) ss << ", ";
+                ss << joinStringify(arr->elements[i]);
+            }
+            ss << "]";
+            return ss.str();
+        }
+        return "<value>";
+    }
+
+    // join(arr, sep)
+    class JoinFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto arr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto sep = std::get<std::string>(args[1]);
+            std::string result;
+            for (size_t i = 0; i < arr->elements.size(); i++) {
+                if (i > 0) result += sep;
+                result += joinStringify(arr->elements[i]);
+            }
+            return result;
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // =======================================================================
+    // Functional Toolkit — String functions
+    // =======================================================================
+
+    // upper(str)
+    class UpperFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto str = std::get<std::string>(args[0]);
+            std::transform(str.begin(), str.end(), str.begin(),
+                [](unsigned char c) { return std::toupper(c); });
+            return str;
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // lower(str)
+    class LowerFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto str = std::get<std::string>(args[0]);
+            std::transform(str.begin(), str.end(), str.begin(),
+                [](unsigned char c) { return std::tolower(c); });
+            return str;
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // trim(str)
+    class TrimFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto str = std::get<std::string>(args[0]);
+            size_t start = str.find_first_not_of(" \t\n\r\f\v");
+            if (start == std::string::npos) return std::string("");
+            size_t end = str.find_last_not_of(" \t\n\r\f\v");
+            return str.substr(start, end - start + 1);
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // replace(str, from, to)
+    class ReplaceFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto str = std::get<std::string>(args[0]);
+            auto from = std::get<std::string>(args[1]);
+            auto to = std::get<std::string>(args[2]);
+            if (from.empty()) return str;
+            size_t pos = 0;
+            while ((pos = str.find(from, pos)) != std::string::npos) {
+                str.replace(pos, from.length(), to);
+                pos += to.length();
+            }
+            return str;
+        }
+        int arity() override { return 3; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // =======================================================================
+    // Functional Toolkit — Meme bridge functions
+    // =======================================================================
+
+    // Helper: extract a MacMeme from a MacInstance (Meme class)
+    static std::shared_ptr<meme::MacMeme> getMemeFromInstance(
+        const std::shared_ptr<instance::MacInstance>& inst) {
+        auto getField = [&](const std::string& name) -> value::MacValue {
+            token::Token t(token::TokenType::IDENTIFIER, token::TokenValue(name), 0);
+            try { return inst->get(t); } catch (...) { return std::monostate{}; }
+        };
+
+        // Get template path
+        std::string templatePath = "";
+        auto templateVal = getField("_template");
+        if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(templateVal)) {
+            auto tmplInst = std::get<std::shared_ptr<instance::MacInstance>>(templateVal);
+            token::Token pathTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("path")), 0);
+            try {
+                templatePath = std::get<std::string>(tmplInst->get(pathTok));
+            } catch (...) {}
+        }
+
+        auto topVal = getField("_top");
+        auto bottomVal = getField("_bottom");
+        auto wVal = getField("_width");
+        auto hVal = getField("_height");
+
+        std::string top = std::holds_alternative<std::string>(topVal) ? std::get<std::string>(topVal) : "";
+        std::string bottom = std::holds_alternative<std::string>(bottomVal) ? std::get<std::string>(bottomVal) : "";
+        int w = std::holds_alternative<double>(wVal) ? static_cast<int>(std::get<double>(wVal)) : 0;
+        int h = std::holds_alternative<double>(hVal) ? static_cast<int>(std::get<double>(hVal)) : 0;
+
+        auto m = std::make_shared<meme::MacMeme>("", top, bottom);
+        m->imagePath = templatePath;
+        m->width = w;
+        m->height = h;
+        return m;
+    }
+
+    // animate(memesArray, duration)
+    class AnimateFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto memesArr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            auto durationInst = std::get<std::shared_ptr<instance::MacInstance>>(args[1]);
+            // Get ms from duration instance
+            token::Token msToken(token::TokenType::IDENTIFIER, token::TokenValue(std::string("ms")), 0);
+            int ms = static_cast<int>(std::get<double>(durationInst->get(msToken)));
+
+            auto gif = std::make_shared<meme::MacGif>();
+            for (auto& memeVal : memesArr->elements) {
+                auto inst = std::get<std::shared_ptr<instance::MacInstance>>(memeVal);
+                auto memeData = getMemeFromInstance(inst);
+                gif->addFrame(memeData, ms);
+            }
+            return value::MacValue(gif);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // toGrid(memesArray, cols, rows)
+    class ToGridFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto memesArr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
+            int cols = static_cast<int>(std::get<double>(args[1]));
+            // args[2] is rows — not directly used by composeGrid (it infers from count/cols)
+
+            std::vector<MemePixelData> images;
+            for (auto& elem : memesArr->elements) {
+                images.push_back(getMemePixels(elem));
+            }
+
+            std::vector<std::pair<const unsigned char*, std::pair<int, int>>> imgPtrs;
+            for (auto& img : images) {
+                imgPtrs.push_back({img.pixels.data(), {img.width, img.height}});
+            }
+
+            int outW, outH;
+            auto result = layout::composeGrid(imgPtrs, cols, outW, outH);
+            auto tempPath = saveTempImage(result, outW, outH);
+            auto map = std::make_shared<collection::MacMap>();
+            map->set("_rendered", value::MacValue(tempPath));
+            map->set("_width", value::MacValue(static_cast<double>(outW)));
+            map->set("_height", value::MacValue(static_cast<double>(outH)));
+            return value::MacValue(map);
+        }
+        int arity() override { return 3; }
         std::string toString() override { return "<native fn>"; }
     };
 

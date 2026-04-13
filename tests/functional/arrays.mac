@@ -1,0 +1,15 @@
+print range(5);                              // expect: [0, 1, 2, 3, 4]
+print range(2, 5);                           // expect: [2, 3, 4]
+print range(0, 10, 3);                       // expect: [0, 3, 6, 9]
+print [1,2,3] |> reduce(fun(a,b){ return a + b; }, 0); // expect: 6
+print zip([1,2], ["a","b"]);                 // expect: [[1, a], [2, b]]
+print ["x","y"] |> enumerate;               // expect: [[0, x], [1, y]]
+print [3,1,2] |> sort;                       // expect: [1, 2, 3]
+print [1,2,3] |> reverse;                   // expect: [3, 2, 1]
+print [1,2,3,4] |> find(fun(x){ return x > 2; }); // expect: 3
+print [1,2,3] |> any(fun(x){ return x > 2; }); // expect: true
+print [1,2,3] |> all(fun(x){ return x > 0; }); // expect: true
+print [1,2,3] |> take(2);                   // expect: [1, 2]
+print [1,2,3] |> drop(1);                   // expect: [2, 3]
+print ["a","b","c"] |> join("-");            // expect: a-b-c
+print [[1,2],[3],[4,5]] |> flatten;          // expect: [1, 2, 3, 4, 5]

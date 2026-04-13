@@ -1,0 +1,5 @@
+print "hello" |> upper;                      // expect: HELLO
+print "HELLO" |> lower;                      // expect: hello
+print "  hi  " |> trim;                     // expect: hi
+print "hello world" |> replace("world", "mac"); // expect: hello mac
+print "a,b,c" |> split(",") |> map(upper) |> join("-"); // expect: A-B-C
