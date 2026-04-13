@@ -24,7 +24,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { Scanner, ScanError } from "./scanner";
 import { Parser, ParseError } from "./parser";
-import { Analyzer, AnalysisResult, Symbol, SymbolReference } from "./analyzer";
+import { Analyzer, AnalysisResult, Symbol, SymbolReference, PropertyReference, PropertyInfo } from "./analyzer";
 
 // ============================================================
 // Setup
@@ -192,6 +192,17 @@ connection.onHover((params: HoverParams): Hover | null => {
         };
     }
 
+    // Try to find a property reference at the cursor position
+    const propRef = findPropertyAtPosition(result.propertyRefs, params.position);
+    if (propRef) {
+        return {
+            contents: {
+                kind: "markdown",
+                value: formatPropertyHover(propRef.info),
+            },
+        };
+    }
+
     return null;
 });
 
@@ -347,6 +358,32 @@ function findSymbolAtPosition(
         }
     }
     return null;
+}
+
+function findPropertyAtPosition(
+    propRefs: PropertyReference[],
+    pos: Position
+): PropertyReference | null {
+    const line = pos.line + 1;
+    const col = pos.character + 1;
+
+    for (const pr of propRefs) {
+        if (pr.token.line !== line) continue;
+        const startCol = pr.token.column;
+        const endCol = startCol + pr.token.lexeme.length;
+        if (col >= startCol && col < endCol) {
+            return pr;
+        }
+    }
+    return null;
+}
+
+function formatPropertyHover(info: PropertyInfo): string {
+    if (info.kind === "method") {
+        const params = info.params?.join(", ") ?? "";
+        return `\`\`\`mac\n.${info.name}(${params})\n\`\`\`\n\n*${info.ownerType}* — ${info.description}`;
+    }
+    return `\`\`\`mac\n.${info.name}\n\`\`\`\n\n*${info.ownerType}* — ${info.description}`;
 }
 
 // ============================================================

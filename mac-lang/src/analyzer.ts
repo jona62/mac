@@ -43,10 +43,24 @@ export interface SymbolReference {
     definition: Symbol | null;
 }
 
+export interface PropertyInfo {
+    name: string;
+    ownerType: string;
+    kind: "method" | "field";
+    params?: string[];
+    description: string;
+}
+
+export interface PropertyReference {
+    token: Token;
+    info: PropertyInfo;
+}
+
 export interface AnalysisResult {
     diagnostics: Diagnostic[];
     symbols: Symbol[];
     references: SymbolReference[];
+    propertyRefs: PropertyReference[];
     scopes: Scope[];
 }
 
@@ -92,10 +106,64 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "_gif_save", arity: 2, description: "Internal: renders and saves animated GIF." },
 ];
 
+// Known properties/methods for built-in types
+const KNOWN_PROPERTIES: PropertyInfo[] = [
+    // Meme
+    { name: "text", ownerType: "Meme", kind: "method", params: ["position", "str"], description: "Add text at a position. Returns a new Meme. Chainable." },
+    { name: "save", ownerType: "Meme", kind: "method", params: ["format", "path"], description: "Render and save the meme to a file. Format is `PNG`, `JPG`, or `GIF`." },
+    { name: "resize", ownerType: "Meme", kind: "method", params: ["size"], description: "Returns a new Meme with the given Size dimensions." },
+    { name: "_top", ownerType: "Meme", kind: "field", description: "The top text string." },
+    { name: "_bottom", ownerType: "Meme", kind: "field", description: "The bottom text string." },
+    { name: "_template", ownerType: "Meme", kind: "field", description: "The Template used by this meme." },
+    { name: "_width", ownerType: "Meme", kind: "field", description: "Output width in pixels (0 = template default)." },
+    { name: "_height", ownerType: "Meme", kind: "field", description: "Output height in pixels (0 = template default)." },
+    // Gif
+    { name: "frame", ownerType: "Gif", kind: "method", params: ["meme", "duration"], description: "Add a frame to the GIF. Returns `this` for chaining." },
+    { name: "save", ownerType: "Gif", kind: "method", params: ["path"], description: "Render all frames and save as an animated GIF." },
+    { name: "_frames", ownerType: "Gif", kind: "field", description: "Array of frame data maps." },
+    // Template
+    { name: "name", ownerType: "Template", kind: "field", description: "The template name or path as provided." },
+    { name: "path", ownerType: "Template", kind: "field", description: "Resolved file path to the template image." },
+    // Size
+    { name: "width", ownerType: "Size", kind: "field", description: "Width in pixels." },
+    { name: "height", ownerType: "Size", kind: "field", description: "Height in pixels." },
+    // Duration
+    { name: "ms", ownerType: "Duration", kind: "field", description: "Duration in milliseconds." },
+    // Frame
+    { name: "meme", ownerType: "Frame", kind: "field", description: "The Meme for this frame." },
+    { name: "duration", ownerType: "Frame", kind: "field", description: "The Duration for this frame." },
+    // Position / Format
+    { name: "name", ownerType: "Position", kind: "field", description: "Position name (\"top\", \"bottom\", or \"center\")." },
+    { name: "name", ownerType: "Format", kind: "field", description: "Format name (\"png\", \"jpg\", or \"gif\")." },
+    // Class instances
+    { name: "init", ownerType: "class", kind: "method", params: ["..."], description: "Constructor — called when the class is instantiated." },
+    // Dunder methods
+    { name: "__add__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `+`." },
+    { name: "__sub__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `-`." },
+    { name: "__mul__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `*`." },
+    { name: "__div__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `/`." },
+    { name: "__mod__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `%`." },
+    { name: "__eq__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `==`." },
+    { name: "__ne__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `!=`." },
+    { name: "__lt__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `<`." },
+    { name: "__gt__", ownerType: "class", kind: "method", params: ["other"], description: "Operator overload for `>`." },
+    { name: "__neg__", ownerType: "class", kind: "method", params: [], description: "Operator overload for unary `-`." },
+    { name: "__not__", ownerType: "class", kind: "method", params: [], description: "Operator overload for `!`." },
+];
+
+// Index for fast lookup by property name
+const PROPERTY_INDEX = new Map<string, PropertyInfo[]>();
+for (const p of KNOWN_PROPERTIES) {
+    const existing = PROPERTY_INDEX.get(p.name) ?? [];
+    existing.push(p);
+    PROPERTY_INDEX.set(p.name, existing);
+}
+
 export class Analyzer {
     private diagnostics: Diagnostic[] = [];
     private allSymbols: Symbol[] = [];
     private references: SymbolReference[] = [];
+    private propertyRefs: PropertyReference[] = [];
     private scopes: Scope[] = [];
     private currentScope: Scope;
     private nativeNames: Set<string>;
@@ -195,6 +263,7 @@ export class Analyzer {
             diagnostics: this.diagnostics,
             symbols: this.allSymbols,
             references: this.references,
+            propertyRefs: this.propertyRefs,
             scopes: this.scopes,
         };
     }
@@ -436,9 +505,17 @@ export class Analyzer {
                 this.analyzeExpr(expr.value);
                 break;
             }
-            case "get":
+            case "get": {
                 this.analyzeExpr(expr.object);
+                const propName = expr.name.lexeme;
+                const infos = PROPERTY_INDEX.get(propName);
+                if (infos && infos.length > 0) {
+                    // Pick the most specific match — prefer typed over generic "class"
+                    const specific = infos.find(i => i.ownerType !== "class") ?? infos[0];
+                    this.propertyRefs.push({ token: expr.name, info: specific });
+                }
                 break;
+            }
             case "set":
                 this.analyzeExpr(expr.object);
                 this.analyzeExpr(expr.value);
