@@ -43,8 +43,8 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" | sort); do
         fi
     done < "$test_file"
 
-    # Run the test
-    actual_stdout=$("$MAC" "$test_file" 2>/tmp/mac_stderr)
+    # Run the test (from build dir so generated files don't clutter the root)
+    actual_stdout=$(cd "$PROJECT_DIR/build" && "$MAC" "$test_file" 2>/tmp/mac_stderr)
     actual_stderr=$(cat /tmp/mac_stderr)
 
     # Compare stdout expectations

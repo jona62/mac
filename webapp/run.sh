@@ -16,7 +16,7 @@ else
     -std=c++23 \
     -O2 \
     -I"$ROOT_DIR/include" \
-    "$ROOT_DIR/main.cpp" \
+    "$ROOT_DIR/src/main.cpp" \
     "$ROOT_DIR/src/Scanner.cpp" \
     "$ROOT_DIR/src/Parser.cpp" \
     "$ROOT_DIR/src/Interpreter.cpp" \

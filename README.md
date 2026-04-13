@@ -83,8 +83,10 @@ Reload VS Code (`Cmd+Shift+P` → "Developer: Reload Window") to activate the LS
 ## Development
 
 ```bash
-cmake --build build && bash tests/run_tests.sh  # 37 tests
+cmake --build build && bash tests/run_tests.sh  # 46 tests
 ```
+
+See [docs/BUILDING.md](docs/BUILDING.md) for detailed build instructions and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for project structure.
 
 ## Web GIF Studio
 

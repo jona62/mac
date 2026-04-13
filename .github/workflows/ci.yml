@@ -32,8 +32,8 @@ jobs:
         run: |
           count=$(bash tests/run_tests.sh 2>&1 | grep "Results:" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+')
           echo "Tests passed: $count"
-          if [ "$count" -lt 37 ]; then
-            echo "ERROR: Expected at least 37 tests, got $count"
+          if [ "$count" -lt 46 ]; then
+            echo "ERROR: Expected at least 46 tests, got $count"
             exit 1
           fi
 

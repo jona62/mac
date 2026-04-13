@@ -1,0 +1,25 @@
+// Quickstart: create your first meme
+var t = Template("two_panel");
+
+// Static meme
+var m = Meme(t)
+    .text(Top, "Before Mac")
+    .text(Bottom, "After Mac");
+m.save(PNG, "my_meme.png");
+print "Saved my_meme.png";
+
+// Animated GIF
+Gif()
+    .frame(Meme(t).text(Top, "Step 1").text(Bottom, "Install Mac"), Duration(800))
+    .frame(Meme(t).text(Top, "Step 2").text(Bottom, "Write memes"), Duration(800))
+    .frame(Meme(t).text(Top, "Step 3").text(Bottom, "Ship it"), Duration(800))
+    .save("my_first.gif");
+print "Saved my_first.gif";
+
+// Apply effects with pipes
+var styled = Meme(t)
+    .text(Top, "Styled")
+    .text(Bottom, "With effects")
+    |> sepia;
+save(styled, "styled.png");
+print "Saved styled.png";

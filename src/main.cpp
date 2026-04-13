@@ -3,9 +3,9 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "include/Scanner.h"
-#include "include/Parser.h"
-#include "include/Resolver.h"
+#include "Scanner.h"
+#include "Parser.h"
+#include "Resolver.h"
 
 using namespace std;
 using namespace token;

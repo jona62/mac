@@ -1,40 +1,94 @@
 # Contributing to Mac
 
-Thank you for your interest in contributing to Mac! We welcome contributions from the community to help improve and enhance the project.
+## Setup
 
-## Getting Started
+See [docs/BUILDING.md](docs/BUILDING.md) for build prerequisites and instructions.
 
-To get started with contributing to Mac, please follow these steps:
+```bash
+git clone https://github.com/jona62/mac.git
+cd mac
+cmake -S . -B build && cmake --build build
+bash tests/run_tests.sh  # should pass all 46 tests
+```
 
-1. Fork the Mac repository on GitHub.
-2. Clone your forked repository to your local machine.
-3. Create a new branch for your changes.
-4. Make your desired changes to the codebase.
-5. Test your changes thoroughly to ensure they do not introduce any issues.
-6. Commit your changes with a clear and descriptive commit message.
-7. Push your changes to your forked repository.
-8. Open a pull request on the main Mac repository.
+## Project Layout
 
-## Code Guidelines
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture overview.
 
-When contributing to Mac, please adhere to the following code guidelines:
+- `src/` — C++ source files (entry point in `main.cpp`)
+- `include/` — C++ headers (most implementation lives here due to templates)
+- `stdlib/prelude.mac` — Standard library loaded before user code
+- `tests/` — Test suite organized by category
+- `mac-lang/` — VS Code extension and LSP server (TypeScript)
+- `webapp/` — Web GIF studio (Python)
 
-- Follow the existing code style and formatting conventions.
-- Write clear and concise code with appropriate comments.
-- Ensure your code is well-tested and does not introduce any regressions.
-- Keep your changes focused and avoid making unrelated modifications.
+## Writing Tests
 
-## Issue Reporting
+Tests are `.mac` files with `// expect:` annotations on output lines:
 
-If you encounter any issues or bugs while using Mac, please report them on the GitHub issue tracker. When reporting an issue, please provide the following information:
+```mac
+print 2 + 2;           // expect: 4
+print "hi" |> upper;   // expect: HI
+```
 
-- A clear and descriptive title for the issue.
-- Steps to reproduce the issue, if applicable.
-- Any relevant error messages or logs.
-- The version of Mac you are using.
+Place tests in the appropriate `tests/<category>/` subdirectory. The test harness (`tests/run_tests.sh`) runs each file and compares stdout against expected output.
 
-## Contact
+Run the full suite: `bash tests/run_tests.sh`
 
-If you have any questions or need further assistance, feel free to reach out to us on the Mac mailing list or join our community Discord server.
+## Adding a Native Function
 
-We appreciate your contributions to Mac and look forward to working with you!
+1. Define a class in `include/NativeFunctions.h` extending `MacCallable`:
+   ```cpp
+   class MyFunction : public MacCallable {
+   public:
+       value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                            std::vector<value::MacValue> args) override {
+           // implementation
+       }
+       int arity() override { return 1; }  // use -1 for variable arity
+       std::string toString() override { return "<native fn my_func>"; }
+   };
+   ```
+
+2. Register it in the `Interpreter` constructor in `include/Interpreter.h`:
+   ```cpp
+   defn("my_func", make_shared<callable::MyFunction>());
+   ```
+
+3. Add hover documentation in `mac-lang/src/analyzer.ts` (the `NATIVE_FUNCTIONS` array).
+
+4. Write a test in `tests/` to verify the function works.
+
+## Adding an Effect
+
+Effects use two patterns in `include/NativeFunctions.h`:
+
+- **Parameterized** (e.g., `blur(5)`): use `ParamEffectCreator`
+- **Direct** (e.g., `sepia`): use `DirectEffect`
+
+Register in `include/Interpreter.h`:
+```cpp
+defn("my_effect", make_shared<callable::ParamEffectCreator>("my_effect"));
+// or
+defn("my_effect", make_shared<callable::DirectEffect>("my_effect"));
+```
+
+Then implement the pixel transform in `include/MemeEffects.h`.
+
+## Pull Request Workflow
+
+1. Create a branch from `main`
+2. Make your changes
+3. Run `bash tests/run_tests.sh` — all tests must pass
+4. Run `cd mac-lang && npx tsc --noEmit` — LSP must typecheck (if you touched TypeScript)
+5. Commit with a descriptive message
+6. Open a PR against `main`
+
+CI runs tests on Ubuntu and macOS, plus LSP typechecking.
+
+## Code Style
+
+- Follow existing patterns — the codebase is consistent
+- Headers are template-heavy and contain most implementation; this is deliberate
+- Native functions follow the `MacCallable` class pattern
+- Tests use the `// expect:` annotation convention
