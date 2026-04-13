@@ -1,11 +1,12 @@
-var m = meme("Drake", "Writing Java", "Writing Mac");
-print m.top;                // expect: Writing Java
-print m.bottom;             // expect: Writing Mac
-print m.template;           // expect: Drake
-print type(m);              // expect: meme
+// Basic typed meme API
+var drake = Template("drake");
+var m = Meme(drake).text(Top, "Writing Java").text(Bottom, "Writing Mac");
+print m._top;               // expect: Writing Java
+print m._bottom;            // expect: Writing Mac
+print m._template.name;     // expect: drake
 
-// Remix
-var r = m.remix("Debugging", "Memeing");
-print r.top;                // expect: Debugging
-print r.bottom;             // expect: Memeing
-print r.template;           // expect: Drake
+// Position/Format types
+print Top.name;             // expect: top
+print PNG.name;             // expect: png
+print Top == Top;           // expect: true
+print Top == Bottom;        // expect: false

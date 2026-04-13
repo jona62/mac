@@ -1,0 +1,123 @@
+// stdlib/prelude.mac
+// Mac Standard Library — loaded before user code
+
+class Size {
+    init(w, h) {
+        this.width = w;
+        this.height = h;
+    }
+    __add__(other) {
+        return Size(this.width + other.width, this.height + other.height);
+    }
+    __mul__(n) {
+        return Size(this.width * n, this.height * n);
+    }
+    __eq__(other) {
+        return this.width == other.width and this.height == other.height;
+    }
+}
+
+class Duration {
+    init(ms) {
+        this.ms = ms;
+    }
+    __add__(other) {
+        return Duration(this.ms + other.ms);
+    }
+    __mul__(n) {
+        return Duration(this.ms * n);
+    }
+    __eq__(other) {
+        return this.ms == other.ms;
+    }
+}
+
+class Position {
+    init(name) { this.name = name; }
+    __eq__(other) { return this.name == other.name; }
+}
+var Top = Position("top");
+var Bottom = Position("bottom");
+var Center = Position("center");
+
+class Format {
+    init(name) { this.name = name; }
+    __eq__(other) { return this.name == other.name; }
+}
+var PNG = Format("png");
+var JPG = Format("jpg");
+var GIF = Format("gif");
+
+class Template {
+    init(nameOrPath) {
+        this.name = nameOrPath;
+        this.path = _resolve_template(nameOrPath);
+    }
+}
+
+class Frame {
+    init(memeObj, duration) {
+        this.meme = memeObj;
+        this.duration = duration;
+    }
+}
+
+class Meme {
+    init(template) {
+        this._template = template;
+        this._top = "";
+        this._bottom = "";
+        this._width = 0;
+        this._height = 0;
+    }
+    text(position, str) {
+        var m = Meme(this._template);
+        m._top = this._top;
+        m._bottom = this._bottom;
+        m._width = this._width;
+        m._height = this._height;
+        if (position == Top) m._top = str;
+        if (position == Bottom) m._bottom = str;
+        if (position == Center) m._bottom = str;
+        return m;
+    }
+    save(format, path) {
+        _meme_save(this._template.path, this._top, this._bottom,
+                   this._width, this._height, path);
+    }
+    resize(size) {
+        var m = Meme(this._template);
+        m._top = this._top;
+        m._bottom = this._bottom;
+        m._width = size.width;
+        m._height = size.height;
+        return m;
+    }
+    __add__(other) {
+        return Frame(this, other);
+    }
+}
+
+class Gif {
+    init() {
+        this._frames = [];
+    }
+    frame(memeObj, duration) {
+        push(this._frames, {
+            path: memeObj._template.path,
+            top: memeObj._top,
+            bottom: memeObj._bottom,
+            width: memeObj._width,
+            height: memeObj._height,
+            duration: duration.ms
+        });
+        return this;
+    }
+    save(path) {
+        _gif_save(this._frames, path);
+    }
+    __add__(other) {
+        this.frame(other.meme, other.duration);
+        return this;
+    }
+}

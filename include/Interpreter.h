@@ -55,10 +55,9 @@ namespace interpreter {
             defn("map", make_shared<callable::MapArrayFunction>());
             defn("filter", make_shared<callable::FilterFunction>());
             defn("input", make_shared<callable::InputFunction>());
-            defn("meme", make_shared<callable::MemeFunction>());
-            defn("addTemplate", make_shared<callable::AddTemplateFunction>());
-            defn("gifMeme", make_shared<callable::GifMemeFunction>());
-            defn("saveGif", make_shared<callable::SaveGifFunction>());
+            defn("_resolve_template", make_shared<callable::ResolveTemplateFunction>());
+            defn("_meme_save", make_shared<callable::MemeRenderSaveFunction>());
+            defn("_gif_save", make_shared<callable::GifRenderSaveFunction>());
         }
 
         // --- Expression visitors ---
@@ -73,6 +72,24 @@ namespace interpreter {
 
         MacValue visitUnaryExpr(expr::Unary<MacValue>* expr) override {
             MacValue right = evaluate(expr->right);
+
+            // Operator overloading: check for dunder methods on class instances
+            if (std::holds_alternative<shared_ptr<instance::MacInstance>>(right)) {
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(right);
+                std::string dunder;
+                switch (expr->operatorToken.type) {
+                    case token::TokenType::MINUS: dunder = "__neg__"; break;
+                    case token::TokenType::BANG:  dunder = "__not__"; break;
+                    default: break;
+                }
+                if (!dunder.empty()) {
+                    auto method = inst->getClass()->findMethod(dunder);
+                    if (method) {
+                        auto bound = method->bind(inst);
+                        return bound->call(shared_from_this(), {});
+                    }
+                }
+            }
 
             switch (expr->operatorToken.type) {
                 case token::TokenType::MINUS:
@@ -89,6 +106,33 @@ namespace interpreter {
         MacValue visitBinaryExpr(expr::Binary<MacValue>* expr) override {
             MacValue left = evaluate(expr->left);
             MacValue right = evaluate(expr->right);
+
+            // Operator overloading: check for dunder methods on class instances
+            if (std::holds_alternative<shared_ptr<instance::MacInstance>>(left)) {
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(left);
+                std::string dunder;
+                switch (expr->operatorToken.type) {
+                    case token::TokenType::PLUS:          dunder = "__add__"; break;
+                    case token::TokenType::MINUS:         dunder = "__sub__"; break;
+                    case token::TokenType::STAR:          dunder = "__mul__"; break;
+                    case token::TokenType::SLASH:         dunder = "__div__"; break;
+                    case token::TokenType::PERCENT:       dunder = "__mod__"; break;
+                    case token::TokenType::EQUAL_EQUAL:   dunder = "__eq__"; break;
+                    case token::TokenType::BANG_EQUAL:     dunder = "__ne__"; break;
+                    case token::TokenType::LESS:          dunder = "__lt__"; break;
+                    case token::TokenType::GREATER:       dunder = "__gt__"; break;
+                    case token::TokenType::LESS_EQUAL:    dunder = "__le__"; break;
+                    case token::TokenType::GREATER_EQUAL: dunder = "__ge__"; break;
+                    default: break;
+                }
+                if (!dunder.empty()) {
+                    auto method = inst->getClass()->findMethod(dunder);
+                    if (method) {
+                        auto bound = method->bind(inst);
+                        return bound->call(shared_from_this(), {right});
+                    }
+                }
+            }
 
             switch (expr->operatorToken.type) {
                 case token::TokenType::MINUS:
@@ -199,42 +243,6 @@ namespace interpreter {
                     throw errors::RuntimeError(expr->name, "Undefined map key '" + key + "'.");
                 }
                 return map->get(key);
-            }
-            if (std::holds_alternative<shared_ptr<meme::MacMeme>>(object)) {
-                auto m = std::get<shared_ptr<meme::MacMeme>>(object);
-                auto prop = std::get<string>(expr->name.lexeme);
-                if (prop == "template") return MacValue(m->templateName);
-                if (prop == "top") return MacValue(m->topText);
-                if (prop == "bottom") return MacValue(m->bottomText);
-                if (prop == "remix") {
-                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
-                        make_shared<callable::MemeRemixCallable>(m)));
-                }
-                if (prop == "save") {
-                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
-                        make_shared<callable::MemeSaveCallable>(m)));
-                }
-                if (prop == "width") return MacValue(static_cast<double>(m->width));
-                if (prop == "height") return MacValue(static_cast<double>(m->height));
-                if (prop == "resize") {
-                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
-                        make_shared<callable::MemeResizeCallable>(m)));
-                }
-                throw errors::RuntimeError(expr->name, "Undefined meme property '" + prop + "'.");
-            }
-            if (std::holds_alternative<shared_ptr<meme::MacGif>>(object)) {
-                auto g = std::get<shared_ptr<meme::MacGif>>(object);
-                auto prop = std::get<string>(expr->name.lexeme);
-                if (prop == "addFrame") {
-                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
-                        make_shared<callable::GifAddFrameCallable>(g)));
-                }
-                if (prop == "save") {
-                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
-                        make_shared<callable::GifSaveCallable>(g)));
-                }
-                if (prop == "frameCount") return MacValue(static_cast<double>(g->frameCount()));
-                throw errors::RuntimeError(expr->name, "Undefined gif property '" + prop + "'.");
             }
             throw errors::RuntimeError(expr->name, "Only instances and maps have properties.");
         }

@@ -1,0 +1,13 @@
+var drake = Template("drake");
+var m = Meme(drake)
+    .text(Top, "Writing Java")
+    .text(Bottom, "Writing Mac");
+print m._top;                    // expect: Writing Java
+print m._bottom;                 // expect: Writing Mac
+
+m.save(PNG, "typed_meme.png");
+print "saved";                   // expect: saved
+
+var small = m.resize(Size(200, 200));
+small.save(JPG, "typed_small.jpg");
+print "resized";                 // expect: resized

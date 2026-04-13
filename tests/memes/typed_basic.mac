@@ -1,0 +1,8 @@
+print Top.name;              // expect: top
+print Bottom.name;           // expect: bottom
+print PNG.name;              // expect: png
+print Top == Top;            // expect: true
+print Top == Bottom;         // expect: false
+
+var drake = Template("drake");
+print drake.name;            // expect: drake

@@ -87,7 +87,9 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "map", arity: 2, description: "Applies a function to each element: map(array, fn)." },
     { name: "filter", arity: 2, description: "Filters elements by predicate: filter(array, fn)." },
     { name: "input", arity: 1, description: "Reads a line of input, displaying the given prompt." },
-    { name: "meme", arity: 3, description: "Creates a meme: meme(template, topText, bottomText)." },
+    { name: "_resolve_template", arity: 1, description: "Internal: resolves template name to file path." },
+    { name: "_meme_save", arity: 6, description: "Internal: renders and saves meme image." },
+    { name: "_gif_save", arity: 2, description: "Internal: renders and saves animated GIF." },
 ];
 
 export class Analyzer {
@@ -119,6 +121,25 @@ export class Analyzer {
             this.currentScope.symbols.set(def.name, sym);
             this.allSymbols.push(sym);
             this.nativeNames.add(def.name);
+        }
+
+        // Stdlib prelude types and constants (defined in Mac, loaded at startup)
+        const preludeNames = [
+            "Size", "Duration", "Position", "Format", "Template",
+            "Meme", "Frame", "Gif",
+            "Top", "Bottom", "Center",
+            "PNG", "JPG", "GIF",
+        ];
+        for (const name of preludeNames) {
+            this.nativeNames.add(name);
+            const sym: Symbol = {
+                name,
+                kind: "native",
+                token: nativeToken(name),
+                description: `Stdlib: ${name}`,
+            };
+            this.currentScope.symbols.set(name, sym);
+            this.allSymbols.push(sym);
         }
     }
 

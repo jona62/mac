@@ -1,0 +1,12 @@
+var s = Size(100, 200);
+print s.width;           // expect: 100
+print s.height;          // expect: 200
+var s2 = s * 2;
+print s2.width;          // expect: 200
+var s3 = s + Size(50, 50);
+print s3.width;          // expect: 150
+
+var d = Duration(300);
+print d.ms;              // expect: 300
+var d2 = d + Duration(200);
+print d2.ms;             // expect: 500

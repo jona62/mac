@@ -1,17 +1,9 @@
-// Meme image generation
-var m = meme("drake", "Writing Java", "Writing Mac");
-print type(m);              // expect: meme
-print m.template;           // expect: drake
-print m.top;                // expect: Writing Java
-m.save("test_meme.png");
+// Meme image generation with typed API
+var drake = Template("drake");
+var m = Meme(drake).text(Top, "Writing Java").text(Bottom, "Writing Mac");
+m.save(PNG, "test_meme.png");
 print "png saved";          // expect: png saved
 
-// Resize
-var small = m.resize(200, 200);
-small.save("test_small.jpg");
+var small = m.resize(Size(200, 200));
+small.save(JPG, "test_small.jpg");
 print "jpg saved";          // expect: jpg saved
-
-// Custom template
-addTemplate("custom", "assets/templates/blank.png");
-var c = meme("custom", "Custom", "Template");
-print c.template;           // expect: custom

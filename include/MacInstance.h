@@ -18,6 +18,8 @@ namespace instance {
     public:
         MacInstance(std::shared_ptr<callable::MacClass> klass) : klass(klass) {}
 
+        std::shared_ptr<callable::MacClass> getClass() const { return klass; }
+
         value::MacValue get(const token::Token& name);
 
         void set(const token::Token& name, const value::MacValue& val) {

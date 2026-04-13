@@ -1,12 +1,10 @@
-// GIF creation
-var g = gifMeme();
-print type(g);                  // expect: gif
-print g.frameCount;             // expect: 0
+// GIF creation with typed API
+var drake = Template("drake");
+var m1 = Meme(drake).text(Top, "Frame 1");
+var m2 = Meme(drake).text(Top, "Frame 2");
 
-// Chainable addFrame
-g.addFrame(meme("drake", "Frame 1", ""), 300)
- .addFrame(meme("drake", "Frame 2", ""), 300);
-print g.frameCount;             // expect: 2
-
+var g = Gif()
+    .frame(m1, Duration(300))
+    .frame(m2, Duration(300));
 g.save("test_anim.gif");
 print "gif saved";              // expect: gif saved

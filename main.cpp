@@ -12,15 +12,47 @@ using namespace token;
 
 static auto interp = make_shared<interpreter::Interpreter>();
 
+// Keep prelude AST alive so resolver entries (raw pointers) remain valid
+static vector<shared_ptr<stmt::Stmt<interpreter::MacValue>>> preludeStatements;
+
 void run(string source);
 void run_file(const char *path);
 void run_prompt();
+
+void loadPrelude() {
+    std::ifstream prelude("stdlib/prelude.mac");
+    if (!prelude.is_open()) return;
+    std::ostringstream ss;
+    std::string buf;
+    while (std::getline(prelude, buf)) ss << buf << '\n';
+    prelude.close();
+
+    string src = ss.str();
+    scanner::Scanner scanner(src);
+    vector<Token> tokens;
+    for (auto& token : scanner) {
+        tokens.push_back(token);
+    }
+
+    parser::Parser parser(tokens);
+    preludeStatements = parser.parse<interpreter::MacValue>();
+    if (preludeStatements.empty()) return;
+
+    auto resolverInstance = make_shared<resolver::Resolver>(interp);
+    resolverInstance->resolve(preludeStatements);
+
+    interp->interpret(preludeStatements);
+}
 
 int main(int argc, char **argv) {
     if (argc > 2) {
         cout << "Usage: mac [script]" << endl;
         return 1;
-    } else if (argc == 2) {
+    }
+
+    loadPrelude();
+
+    if (argc == 2) {
         run_file(argv[1]);
         return 0;
     } else {
