@@ -8,6 +8,7 @@ export enum TokenType {
 
     // One or two character tokens
     BANG, BANG_EQUAL, EQUAL, EQUAL_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL,
+    PIPE, COMPOSE,
 
     // Literals
     IDENTIFIER, STRING, NUMBER,
@@ -114,7 +115,24 @@ export class Scanner {
                 this.addToken(this.match("=") ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
                 break;
             case ">":
-                this.addToken(this.match("=") ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+                if (this.match("=")) {
+                    this.addToken(TokenType.GREATER_EQUAL);
+                } else if (this.match(">")) {
+                    this.addToken(TokenType.COMPOSE);
+                } else {
+                    this.addToken(TokenType.GREATER);
+                }
+                break;
+            case "|":
+                if (this.match(">")) {
+                    this.addToken(TokenType.PIPE);
+                } else {
+                    this.errors.push({
+                        line: this.line,
+                        column: this.startColumn,
+                        message: `Unexpected character '${c}'.`,
+                    });
+                }
                 break;
             case "<":
                 this.addToken(this.match("=") ? TokenType.LESS_EQUAL : TokenType.LESS);

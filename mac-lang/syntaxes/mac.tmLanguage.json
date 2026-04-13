@@ -97,7 +97,7 @@
     },
     "operators": {
       "name": "keyword.operator.mac",
-      "match": "==|!=|<=|>=|[+\\-*/!<>=%]"
+      "match": "\\|>|>>|==|!=|<=|>=|[+\\-*/!<>=%]"
     },
     "punctuation": {
       "patterns": [

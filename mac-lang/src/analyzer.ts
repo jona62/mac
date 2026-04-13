@@ -559,6 +559,14 @@ export class Analyzer {
                 }
                 this.endScope();
                 break;
+            case "pipe":
+                this.analyzeExpr(expr.value);
+                this.analyzeExpr(expr.func);
+                break;
+            case "compose":
+                this.analyzeExpr(expr.left);
+                this.analyzeExpr(expr.right);
+                break;
         }
     }
 }

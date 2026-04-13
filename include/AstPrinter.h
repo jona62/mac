@@ -107,6 +107,14 @@ namespace printer {
             return "<lambda>";
         }
 
+        string visitPipeExpr(expr::PipeExpr<T>* expr) override {
+            return "(" + expr->value->visit(this->shared_from_this()) + " |> " + expr->func->visit(this->shared_from_this()) + ")";
+        }
+
+        string visitComposeExpr(expr::ComposeExpr<T>* expr) override {
+            return "(" + expr->left->visit(this->shared_from_this()) + " >> " + expr->right->visit(this->shared_from_this()) + ")";
+        }
+
     private:
         template <typename... Exprs>
         string parenthesize(const std::string& name, shared_ptr<Exprs>... exprs) {

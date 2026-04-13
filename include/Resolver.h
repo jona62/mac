@@ -136,6 +136,18 @@ namespace resolver {
             return std::monostate{};
         }
 
+        MV visitPipeExpr(expr::PipeExpr<MV>* expr) override {
+            resolveExpr(expr->value);
+            resolveExpr(expr->func);
+            return std::monostate{};
+        }
+
+        MV visitComposeExpr(expr::ComposeExpr<MV>* expr) override {
+            resolveExpr(expr->left);
+            resolveExpr(expr->right);
+            return std::monostate{};
+        }
+
         MV visitAssignExpr(expr::Assign<MV>* expr) override {
             resolveExpr(expr->value);
             resolveLocal(expr, expr->name);

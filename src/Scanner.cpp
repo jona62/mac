@@ -61,8 +61,15 @@ namespace scanner {
                 case '>':
                     if (match('=')) {
                         type = TokenType::GREATER_EQUAL;
+                    } else if (match('>')) {
+                        type = TokenType::COMPOSE;
                     } else {
                         type = TokenType::GREATER;
+                    }
+                    break;
+                case '|':
+                    if (match('>')) {
+                        type = TokenType::PIPE;
                     }
                     break;
                 case '<':

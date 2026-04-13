@@ -24,7 +24,9 @@ export type Expr =
     | MapExpr
     | IndexGetExpr
     | IndexSetExpr
-    | LambdaExpr;
+    | LambdaExpr
+    | PipeExpr
+    | ComposeExpr;
 
 export interface BinaryExpr {
     kind: "binary";
@@ -132,6 +134,20 @@ export interface LambdaExpr {
     funKeyword: Token;
     params: Token[];
     body: Stmt[];
+}
+
+export interface PipeExpr {
+    kind: "pipe";
+    value: Expr;
+    operator: Token;
+    func: Expr;
+}
+
+export interface ComposeExpr {
+    kind: "compose";
+    left: Expr;
+    operator: Token;
+    right: Expr;
 }
 
 // ============================================================
@@ -530,7 +546,31 @@ export class Parser {
     // --- Expression parsing ---
 
     private expression(): Expr {
-        return this.assignment();
+        return this.pipe();
+    }
+
+    private pipe(): Expr {
+        let expr = this.compose();
+
+        while (this.match(TokenType.PIPE)) {
+            const operator = this.previous();
+            const right = this.compose();
+            expr = { kind: "pipe", value: expr, operator, func: right };
+        }
+
+        return expr;
+    }
+
+    private compose(): Expr {
+        let expr = this.assignment();
+
+        while (this.match(TokenType.COMPOSE)) {
+            const operator = this.previous();
+            const right = this.assignment();
+            expr = { kind: "compose", left: expr, operator, right };
+        }
+
+        return expr;
     }
 
     private assignment(): Expr {

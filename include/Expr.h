@@ -271,6 +271,32 @@ namespace expr {
     };
 
     template <typename T>
+    class PipeExpr : public Expr<T> {
+    public:
+        PipeExpr(shared_ptr<Expr<T>> value, Token op, shared_ptr<Expr<T>> func)
+            : value(value), op(op), func(func) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitPipeExpr(this);
+        }
+        shared_ptr<Expr<T>> value;
+        Token op;
+        shared_ptr<Expr<T>> func;
+    };
+
+    template <typename T>
+    class ComposeExpr : public Expr<T> {
+    public:
+        ComposeExpr(shared_ptr<Expr<T>> left, Token op, shared_ptr<Expr<T>> right)
+            : left(left), op(op), right(right) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitComposeExpr(this);
+        }
+        shared_ptr<Expr<T>> left;
+        Token op;
+        shared_ptr<Expr<T>> right;
+    };
+
+    template <typename T>
     class Visitor {
     public:
         virtual T visitBinaryExpr(Binary<T>* expr) = 0;
@@ -290,6 +316,8 @@ namespace expr {
         virtual T visitIndexGetExpr(IndexGet<T>* expr) = 0;
         virtual T visitIndexSetExpr(IndexSet<T>* expr) = 0;
         virtual T visitLambdaExpr(LambdaExpr<T>* expr) = 0;
+        virtual T visitPipeExpr(PipeExpr<T>* expr) = 0;
+        virtual T visitComposeExpr(ComposeExpr<T>* expr) = 0;
         virtual ~Visitor() = default;
     };
 }

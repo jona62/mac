@@ -32,6 +32,8 @@ namespace token {
         LEFT_BRACKET, RIGHT_BRACKET,
         COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
         COLON, PERCENT,
+        PIPE,    // |>
+        COMPOSE, // >>
 
         // One or two character tokens.
         BANG, BANG_EQUAL,
@@ -57,6 +59,7 @@ namespace token {
         "LEFT_BRACKET", "RIGHT_BRACKET",
         "COMMA", "DOT", "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",
         "COLON", "PERCENT",
+        "PIPE", "COMPOSE",
         "BANG", "BANG_EQUAL",
         "EQUAL", "EQUAL_EQUAL",
         "GREATER", "GREATER_EQUAL",

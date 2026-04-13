@@ -575,8 +575,34 @@ shared_ptr<Expr<T>> Parser::assignment() {
 }
 
 template <typename T>
+shared_ptr<Expr<T>> Parser::compose() {
+    auto expr = assignment<T>();
+
+    while (match(TokenType::COMPOSE)) {
+        Token op = previous();
+        auto right = assignment<T>();
+        expr = make_shared<expr::ComposeExpr<T>>(expr, op, right);
+    }
+
+    return expr;
+}
+
+template <typename T>
+shared_ptr<Expr<T>> Parser::pipe() {
+    auto expr = compose<T>();
+
+    while (match(TokenType::PIPE)) {
+        Token op = previous();
+        auto right = compose<T>();
+        expr = make_shared<expr::PipeExpr<T>>(expr, op, right);
+    }
+
+    return expr;
+}
+
+template <typename T>
 shared_ptr<Expr<T>> Parser::expression() {
-    return assignment<T>();
+    return pipe<T>();
 }
 
 void Parser::synchronize() {
@@ -627,6 +653,8 @@ template shared_ptr<Expr<MV>> Parser::equality<MV>();
 template shared_ptr<Expr<MV>> Parser::logicalOr<MV>();
 template shared_ptr<Expr<MV>> Parser::logicalAnd<MV>();
 template shared_ptr<Expr<MV>> Parser::assignment<MV>();
+template shared_ptr<Expr<MV>> Parser::compose<MV>();
+template shared_ptr<Expr<MV>> Parser::pipe<MV>();
 template shared_ptr<Expr<MV>> Parser::expression<MV>();
 
 } // namespace parser

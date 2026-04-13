@@ -85,6 +85,10 @@ namespace parser {
         template <typename T>
         shared_ptr<Expr<T>> assignment();
         template <typename T>
+        shared_ptr<Expr<T>> compose();
+        template <typename T>
+        shared_ptr<Expr<T>> pipe();
+        template <typename T>
         shared_ptr<Expr<T>> expression();
 
         void synchronize();

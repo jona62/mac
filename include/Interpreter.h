@@ -28,6 +28,24 @@ using std::make_shared;
 using std::string;
 using std::monostate;
 
+namespace callable {
+    class ComposedFunction : public MacCallable {
+    public:
+        ComposedFunction(std::shared_ptr<MacCallable> first, std::shared_ptr<MacCallable> second)
+            : first(first), second(second) {}
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            auto intermediate = first->call(interp, args);
+            return second->call(interp, {intermediate});
+        }
+        int arity() override { return first->arity(); }
+        std::string toString() override { return "<composed>"; }
+    private:
+        std::shared_ptr<MacCallable> first;
+        std::shared_ptr<MacCallable> second;
+    };
+}
+
 namespace interpreter {
 
     using MacValue = value::MacValue;
@@ -498,6 +516,46 @@ namespace interpreter {
         MacValue visitLambdaExpr(expr::LambdaExpr<MacValue>* expr) override {
             auto lambda = make_shared<callable::MacLambda>(expr->params, expr->body, env);
             return MacValue(std::static_pointer_cast<callable::MacCallable>(lambda));
+        }
+
+        MacValue visitPipeExpr(expr::PipeExpr<MacValue>* expr) override {
+            MacValue value = evaluate(expr->value);
+
+            // If right side is a Call expr, prepend the piped value to args
+            if (auto* callExpr = dynamic_cast<expr::Call<MacValue>*>(expr->func.get())) {
+                MacValue callee = evaluate(callExpr->callee);
+                std::vector<MacValue> args;
+                args.push_back(value); // prepend piped value
+                for (auto& arg : callExpr->arguments) {
+                    args.push_back(evaluate(arg));
+                }
+                if (!std::holds_alternative<shared_ptr<callable::MacCallable>>(callee)) {
+                    throw errors::RuntimeError(expr->op, "Pipe target must be callable.");
+                }
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(callee);
+                return fn->call(shared_from_this(), args);
+            }
+
+            // Otherwise evaluate as callable and call with the value
+            MacValue func = evaluate(expr->func);
+            if (!std::holds_alternative<shared_ptr<callable::MacCallable>>(func)) {
+                throw errors::RuntimeError(expr->op, "Pipe target must be callable.");
+            }
+            auto fn = std::get<shared_ptr<callable::MacCallable>>(func);
+            return fn->call(shared_from_this(), {value});
+        }
+
+        MacValue visitComposeExpr(expr::ComposeExpr<MacValue>* expr) override {
+            MacValue left = evaluate(expr->left);
+            MacValue right = evaluate(expr->right);
+            if (!std::holds_alternative<shared_ptr<callable::MacCallable>>(left) ||
+                !std::holds_alternative<shared_ptr<callable::MacCallable>>(right)) {
+                throw errors::RuntimeError(expr->op, "Compose (>>) requires two callable values.");
+            }
+            auto fn1 = std::get<shared_ptr<callable::MacCallable>>(left);
+            auto fn2 = std::get<shared_ptr<callable::MacCallable>>(right);
+            auto composed = make_shared<callable::ComposedFunction>(fn1, fn2);
+            return MacValue(std::static_pointer_cast<callable::MacCallable>(composed));
         }
 
         // --- Public API ---
