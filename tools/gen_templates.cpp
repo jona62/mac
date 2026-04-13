@@ -57,9 +57,9 @@ void createBlank(const char* path) {
 }
 
 int main() {
-    createDrake("../assets/templates/drake.png");
-    createDistracted("../assets/templates/distracted.png");
-    createChangeMyMind("../assets/templates/change_my_mind.png");
+    createDrake("../assets/templates/two_panel.png");
+    createDistracted("../assets/templates/three_panel.png");
+    createChangeMyMind("../assets/templates/bottom_text.png");
     createBlank("../assets/templates/blank.png");
     printf("Generated 4 template images.\n");
     return 0;

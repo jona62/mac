@@ -4,5 +4,5 @@ print PNG.name;              // expect: png
 print Top == Top;            // expect: true
 print Top == Bottom;         // expect: false
 
-var drake = Template("drake");
-print drake.name;            // expect: drake
+var tmpl = Template("two_panel");
+print tmpl.name;             // expect: two_panel

@@ -1,6 +1,6 @@
-var drake = Template("drake");
-var m1 = Meme(drake).text(Top, "Frame 1");
-var m2 = Meme(drake).text(Top, "Frame 2");
+var tmpl = Template("two_panel");
+var m1 = Meme(tmpl).text(Top, "Frame 1");
+var m2 = Meme(tmpl).text(Top, "Frame 2");
 
 var g = Gif()
     .frame(m1, Duration(300))

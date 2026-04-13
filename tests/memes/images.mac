@@ -1,6 +1,6 @@
 // Meme image generation with typed API
-var drake = Template("drake");
-var m = Meme(drake).text(Top, "Writing Java").text(Bottom, "Writing Mac");
+var tmpl = Template("two_panel");
+var m = Meme(tmpl).text(Top, "Writing Java").text(Bottom, "Writing Mac");
 m.save(PNG, "test_meme.png");
 print "png saved";          // expect: png saved
 

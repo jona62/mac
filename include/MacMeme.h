@@ -28,9 +28,9 @@ namespace meme {
         // Known template map + custom templates
         static std::unordered_map<std::string, std::string>& templateMap() {
             static std::unordered_map<std::string, std::string> map = {
-                {"drake",          "assets/templates/drake.png"},
-                {"distracted",     "assets/templates/distracted.png"},
-                {"change_my_mind", "assets/templates/change_my_mind.png"},
+                {"two_panel",      "assets/templates/two_panel.png"},
+                {"three_panel",    "assets/templates/three_panel.png"},
+                {"bottom_text",    "assets/templates/bottom_text.png"},
                 {"blank",          "assets/templates/blank.png"}
             };
             return map;

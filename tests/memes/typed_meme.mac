@@ -1,5 +1,5 @@
-var drake = Template("drake");
-var m = Meme(drake)
+var tmpl = Template("two_panel");
+var m = Meme(tmpl)
     .text(Top, "Writing Java")
     .text(Bottom, "Writing Mac");
 print m._top;                    // expect: Writing Java
