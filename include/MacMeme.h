@@ -31,7 +31,9 @@ namespace meme {
                 {"two_panel",      "assets/templates/two_panel.png"},
                 {"three_panel",    "assets/templates/three_panel.png"},
                 {"bottom_text",    "assets/templates/bottom_text.png"},
-                {"blank",          "assets/templates/blank.png"}
+                {"blank",          "assets/templates/blank.png"},
+                {"caption_bar",    "assets/templates/caption_bar.png"},
+                {"four_panel",     "assets/templates/four_panel.png"}
             };
             return map;
         }

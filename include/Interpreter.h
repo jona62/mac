@@ -134,6 +134,7 @@ namespace interpreter {
             defn("replace", make_shared<callable::ReplaceFunction>());
             defn("animate", make_shared<callable::AnimateFunction>());
             defn("toGrid", make_shared<callable::ToGridFunction>());
+            defn("save", make_shared<callable::SaveFunction>());
         }
 
         // --- Expression visitors ---

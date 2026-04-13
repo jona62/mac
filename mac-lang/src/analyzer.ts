@@ -1,4 +1,4 @@
-// Mac Language Analyzer — scope-aware symbol table and diagnostic collector
+// Mac Language Analyzer — scope-aware symbol table, diagnostic collector, and type inference
 
 import { Token, TokenType } from "./scanner";
 import {
@@ -21,6 +21,7 @@ export interface Symbol {
     superclass?: string;
     methods?: string[];
     description?: string;
+    type?: MacType;
 }
 
 export interface Scope {
@@ -65,6 +66,43 @@ export interface AnalysisResult {
 }
 
 // ============================================================
+// Type Inference
+// ============================================================
+
+export type MacType =
+    | { tag: "number" }
+    | { tag: "string" }
+    | { tag: "bool" }
+    | { tag: "nil" }
+    | { tag: "array"; elementType: MacType }
+    | { tag: "map"; valueType: MacType }
+    | { tag: "instance"; className: string }
+    | { tag: "function"; paramCount: number }
+    | { tag: "class"; className: string }
+    | { tag: "unknown" };
+
+const T_NUMBER:  MacType = { tag: "number" };
+const T_STRING:  MacType = { tag: "string" };
+const T_BOOL:    MacType = { tag: "bool" };
+const T_NIL:     MacType = { tag: "nil" };
+const T_UNKNOWN: MacType = { tag: "unknown" };
+
+export function formatMacType(t: MacType): string {
+    switch (t.tag) {
+        case "number": return "number";
+        case "string": return "string";
+        case "bool": return "bool";
+        case "nil": return "nil";
+        case "array": return `[${formatMacType(t.elementType)}]`;
+        case "map": return `{${formatMacType(t.valueType)}}`;
+        case "instance": return t.className;
+        case "function": return `fun(${t.paramCount})`;
+        case "class": return `class ${t.className}`;
+        case "unknown": return "unknown";
+    }
+}
+
+// ============================================================
 // Analyzer
 // ============================================================
 
@@ -104,6 +142,11 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "_resolve_template", arity: 1, description: "Internal: resolves template name to file path." },
     { name: "_meme_save", arity: 6, description: "Internal: renders and saves meme image." },
     { name: "_gif_save", arity: 2, description: "Internal: renders and saves animated GIF." },
+    { name: "_save_rendered", arity: 2, description: "Internal: copies a rendered temp image to an output path." },
+    { name: "_apply_effect", arity: 8, description: "Internal: applies a named effect to a meme image." },
+    { name: "_compose_layout", arity: 14, description: "Internal: composes two meme images with a layout." },
+    { name: "_add_padding", arity: 7, description: "Internal: adds white padding around a meme image." },
+    { name: "_add_border", arity: 7, description: "Internal: adds a black border around a meme image." },
     // Functional toolkit — Array
     { name: "range", arity: -1, description: "range(end), range(start, end), or range(start, end, step) — Generate an array of numbers." },
     { name: "reduce", arity: 3, description: "reduce(arr, fn, initial) — Fold array: result = fn(result, element) for each element." },
@@ -128,6 +171,8 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     // Functional toolkit — Meme bridge
     { name: "animate", arity: 2, description: "animate(memesArray, duration) — Create animated GIF from array of Memes. Pipeable." },
     { name: "toGrid", arity: 3, description: "toGrid(memesArray, cols, rows) — Arrange memes in a grid layout. Pipeable." },
+    // Save
+    { name: "save", arity: 2, description: "save(thing, path) — Save a Meme, Gif, Timeline, or effect result to a file." },
     // Effects
     { name: "blur", arity: 1, description: "blur(radius) — Box blur effect. Returns Meme → Meme. Pipeable." },
     { name: "pixelate", arity: 1, description: "pixelate(blockSize) — Pixelation effect. Returns Meme → Meme." },
@@ -143,10 +188,16 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     // Layout
     { name: "beside", arity: 2, description: "beside(meme1, meme2) — Side-by-side layout. Pipeable: m1 |> beside(m2)." },
     { name: "stack", arity: 2, description: "stack(meme1, meme2) — Vertical stack layout. Pipeable: m1 |> stack(m2)." },
-    { name: "grid", arity: 3, description: "grid(cols, rows, memesArray) — Grid layout." },
+    { name: "grid", arity: 2, description: "grid(cols, memesArray) — Grid layout." },
     { name: "pad", arity: 2, description: "pad(meme, pixels) — Add white padding. Pipeable." },
     { name: "border", arity: 2, description: "border(meme, pixels) — Add black border. Pipeable." },
     // Timeline
+    { name: "timeline", arity: 0, description: "Internal: creates a raw timeline object." },
+    { name: "_timeline_keyframe", arity: 2, description: "Internal: adds a keyframe to a timeline." },
+    { name: "_timeline_transition", arity: 3, description: "Internal: adds a transition to a timeline." },
+    { name: "_timeline_hold", arity: 2, description: "Internal: holds the last frame on a timeline." },
+    { name: "_timeline_loop", arity: 2, description: "Internal: sets the loop count on a timeline." },
+    { name: "_timeline_render", arity: 2, description: "Internal: renders a timeline to an animated GIF." },
     { name: "Timeline", arity: 0, description: "Timeline() — Create an empty animation timeline." },
     { name: "at", arity: 3, description: "at(timeline, timeMs, meme) — Add keyframe. Returns timeline. Pipeable." },
     { name: "transition", arity: 3, description: "transition(timeline, durationMs, type) — Add transition. Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe." },
@@ -208,6 +259,127 @@ for (const p of KNOWN_PROPERTIES) {
     PROPERTY_INDEX.set(p.name, existing);
 }
 
+// ============================================================
+// Native function return type resolution
+// ============================================================
+
+const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
+    // Primitives
+    ["clock",     () => T_NUMBER],
+    ["len",       () => T_NUMBER],
+    ["substr",    () => T_STRING],
+    ["split",     () => ({ tag: "array", elementType: T_STRING })],
+    ["type",      () => T_STRING],
+    ["sqrt",      () => T_NUMBER],
+    ["abs",       () => T_NUMBER],
+    ["pow",       () => T_NUMBER],
+    ["floor",     () => T_NUMBER],
+    ["ceil",      () => T_NUMBER],
+    ["input",     () => T_STRING],
+    ["range",     () => ({ tag: "array", elementType: T_NUMBER })],
+    ["join",      () => T_STRING],
+    ["any",       () => T_BOOL],
+    ["all",       () => T_BOOL],
+    ["upper",     () => T_STRING],
+    ["lower",     () => T_STRING],
+    ["trim",      () => T_STRING],
+    ["replace",   () => T_STRING],
+    ["save",      () => T_BOOL],
+    ["render",    () => T_BOOL],
+    ["push",      () => T_NIL],
+    ["each",      () => T_NIL],
+    ["reduce",    () => T_UNKNOWN],
+
+    // Array-preserving (return type matches first arg)
+    ["filter",  (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
+    ["sort",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
+    ["reverse", (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
+    ["take",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
+    ["drop",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
+
+    // Array-returning with unknown elements
+    ["map",       () => ({ tag: "array", elementType: T_UNKNOWN })],
+    ["flatMap",   () => ({ tag: "array", elementType: T_UNKNOWN })],
+    ["flatten",   (args) => {
+        if (args[0]?.tag === "array" && args[0].elementType.tag === "array") {
+            return { tag: "array" as const, elementType: args[0].elementType.elementType };
+        }
+        return { tag: "array", elementType: T_UNKNOWN };
+    }],
+    ["zip",       () => ({ tag: "array", elementType: { tag: "array" as const, elementType: T_UNKNOWN } })],
+    ["enumerate", () => ({ tag: "array", elementType: { tag: "array" as const, elementType: T_UNKNOWN } })],
+
+    // Element-extracting
+    ["find", (args) => args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN],
+    ["pop",  (args) => args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN],
+
+    // Timeline
+    ["Timeline",  () => ({ tag: "instance", className: "Timeline" })],
+    ["timeline",  () => ({ tag: "instance", className: "Timeline" })],
+    ["at",        () => ({ tag: "instance", className: "Timeline" })],
+    ["transition",() => ({ tag: "instance", className: "Timeline" })],
+    ["hold",      () => ({ tag: "instance", className: "Timeline" })],
+    ["loop",      () => ({ tag: "instance", className: "Timeline" })],
+
+    // Effects (parameterized) — return a Meme→Meme function
+    ["blur",       () => ({ tag: "function", paramCount: 1 })],
+    ["pixelate",   () => ({ tag: "function", paramCount: 1 })],
+    ["noise",      () => ({ tag: "function", paramCount: 1 })],
+    ["saturate",   () => ({ tag: "function", paramCount: 1 })],
+    ["contrast",   () => ({ tag: "function", paramCount: 1 })],
+    ["brightness", () => ({ tag: "function", paramCount: 1 })],
+    ["jpeg",       () => ({ tag: "function", paramCount: 1 })],
+
+    // Effects (direct) — Meme → Meme
+    ["invert",   () => ({ tag: "instance", className: "Meme" })],
+    ["sepia",    () => ({ tag: "instance", className: "Meme" })],
+    ["sharpen",  () => ({ tag: "instance", className: "Meme" })],
+    ["vignette", () => ({ tag: "instance", className: "Meme" })],
+
+    // Layout — returns rendered Meme
+    ["beside",  () => ({ tag: "instance", className: "Meme" })],
+    ["stack",   () => ({ tag: "instance", className: "Meme" })],
+    ["grid",    () => ({ tag: "instance", className: "Meme" })],
+    ["pad",     () => ({ tag: "instance", className: "Meme" })],
+    ["border",  () => ({ tag: "instance", className: "Meme" })],
+
+    // Meme bridge
+    ["animate", () => ({ tag: "instance", className: "Gif" })],
+    ["toGrid",  () => ({ tag: "instance", className: "Meme" })],
+]);
+
+// Method return types keyed by "ClassName.method"
+const METHOD_RETURN_TYPES = new Map<string, MacType>([
+    ["Meme.text",   { tag: "instance", className: "Meme" }],
+    ["Meme.resize", { tag: "instance", className: "Meme" }],
+    ["Meme.save",   T_NIL],
+    ["Gif.frame",   { tag: "instance", className: "Gif" }],
+    ["Gif.save",    T_NIL],
+]);
+
+// Field types keyed by "ClassName.field"
+const FIELD_TYPES = new Map<string, MacType>([
+    ["Meme._template",  { tag: "instance", className: "Template" }],
+    ["Meme._top",       T_STRING],
+    ["Meme._bottom",    T_STRING],
+    ["Meme._width",     T_NUMBER],
+    ["Meme._height",    T_NUMBER],
+    ["Template.name",   T_STRING],
+    ["Template.path",   T_STRING],
+    ["Size.width",      T_NUMBER],
+    ["Size.height",     T_NUMBER],
+    ["Duration.ms",     T_NUMBER],
+    ["Position.name",   T_STRING],
+    ["Format.name",     T_STRING],
+    ["Frame.meme",      { tag: "instance", className: "Meme" }],
+    ["Frame.duration",  { tag: "instance", className: "Duration" }],
+    ["Gif._frames",     { tag: "array", elementType: T_UNKNOWN }],
+]);
+
+// ============================================================
+// Analyzer class
+// ============================================================
+
 export class Analyzer {
     private diagnostics: Diagnostic[] = [];
     private allSymbols: Symbol[] = [];
@@ -216,6 +388,7 @@ export class Analyzer {
     private scopes: Scope[] = [];
     private currentScope: Scope;
     private nativeNames: Set<string>;
+    private currentClassName: string | null = null;
 
     constructor() {
         // Create global scope with native functions
@@ -234,6 +407,7 @@ export class Analyzer {
                 token: nativeToken(def.name),
                 params,
                 description: def.description,
+                type: { tag: "function", paramCount: Math.max(0, def.arity) },
             };
             this.currentScope.symbols.set(def.name, sym);
             this.allSymbols.push(sym);
@@ -241,60 +415,68 @@ export class Analyzer {
         }
 
         // Stdlib prelude types (defined in Mac, loaded at startup)
-        const preludeTypes: { name: string; kind: SymbolKind; params?: string[]; description: string }[] = [
+        const preludeTypes: { name: string; kind: SymbolKind; params?: string[]; description: string; type?: MacType }[] = [
             {
                 name: "Size", kind: "class",
                 params: ["width", "height"],
                 description: "Pixel dimensions. Supports `+`, `*`, `==` operators.",
+                type: { tag: "class", className: "Size" },
             },
             {
                 name: "Duration", kind: "class",
                 params: ["ms"],
                 description: "Time in milliseconds. Supports `+`, `*`, `==` operators.",
+                type: { tag: "class", className: "Duration" },
             },
             {
                 name: "Position", kind: "class",
                 params: ["name"],
                 description: "Text position on a meme. Use the constants `Top`, `Bottom`, `Center`.",
+                type: { tag: "class", className: "Position" },
             },
             {
                 name: "Format", kind: "class",
                 params: ["name"],
                 description: "Image output format. Use the constants `PNG`, `JPG`, `GIF`.",
+                type: { tag: "class", className: "Format" },
             },
             {
                 name: "Template", kind: "class",
                 params: ["nameOrPath"],
                 description: "Meme template image. Pass a built-in name (`two_panel`, `three_panel`, `bottom_text`, `blank`) or a file path.",
+                type: { tag: "class", className: "Template" },
             },
             {
                 name: "Meme", kind: "class",
                 params: ["template"],
                 description: "Meme builder. Chain `.text(position, str)` to add text, `.save(format, path)` to export, `.resize(size)` to resize. `Meme + Duration` creates a Frame.",
+                type: { tag: "class", className: "Meme" },
             },
             {
                 name: "Frame", kind: "class",
                 params: ["meme", "duration"],
                 description: "A single animation frame pairing a Meme with a Duration. Created by `Meme + Duration`.",
+                type: { tag: "class", className: "Frame" },
             },
             {
                 name: "Gif", kind: "class",
                 params: [],
                 description: "Animated GIF builder. Chain `.frame(meme, duration)` to add frames, `.save(path)` to export. `Gif + Frame` adds a frame.",
+                type: { tag: "class", className: "Gif" },
             },
-            { name: "Top", kind: "variable", description: "Position constant — top of the meme." },
-            { name: "Bottom", kind: "variable", description: "Position constant — bottom of the meme." },
-            { name: "Center", kind: "variable", description: "Position constant — center of the meme." },
-            { name: "PNG", kind: "variable", description: "Format constant — PNG image output." },
-            { name: "JPG", kind: "variable", description: "Format constant — JPG image output." },
-            { name: "GIF", kind: "variable", description: "Format constant — GIF image output." },
-            { name: "deepfry", kind: "variable", description: "Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)." },
-            { name: "crossfade", kind: "variable", description: "Timeline transition — cross-fade between frames." },
-            { name: "slideLeft", kind: "variable", description: "Timeline transition — slide left." },
-            { name: "slideRight", kind: "variable", description: "Timeline transition — slide right." },
-            { name: "slideUp", kind: "variable", description: "Timeline transition — slide up." },
-            { name: "slideDown", kind: "variable", description: "Timeline transition — slide down." },
-            { name: "wipe", kind: "variable", description: "Timeline transition — wipe reveal." },
+            { name: "Top", kind: "variable", description: "Position constant — top of the meme.", type: { tag: "instance", className: "Position" } },
+            { name: "Bottom", kind: "variable", description: "Position constant — bottom of the meme.", type: { tag: "instance", className: "Position" } },
+            { name: "Center", kind: "variable", description: "Position constant — center of the meme.", type: { tag: "instance", className: "Position" } },
+            { name: "PNG", kind: "variable", description: "Format constant — PNG image output.", type: { tag: "instance", className: "Format" } },
+            { name: "JPG", kind: "variable", description: "Format constant — JPG image output.", type: { tag: "instance", className: "Format" } },
+            { name: "GIF", kind: "variable", description: "Format constant — GIF image output.", type: { tag: "instance", className: "Format" } },
+            { name: "deepfry", kind: "variable", description: "Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1).", type: { tag: "function", paramCount: 1 } },
+            { name: "crossfade", kind: "variable", description: "Timeline transition — cross-fade between frames.", type: T_STRING },
+            { name: "slideLeft", kind: "variable", description: "Timeline transition — slide left.", type: T_STRING },
+            { name: "slideRight", kind: "variable", description: "Timeline transition — slide right.", type: T_STRING },
+            { name: "slideUp", kind: "variable", description: "Timeline transition — slide up.", type: T_STRING },
+            { name: "slideDown", kind: "variable", description: "Timeline transition — slide down.", type: T_STRING },
+            { name: "wipe", kind: "variable", description: "Timeline transition — wipe reveal.", type: T_STRING },
         ];
         for (const def of preludeTypes) {
             this.nativeNames.add(def.name);
@@ -305,6 +487,7 @@ export class Analyzer {
                 token: nativeToken(def.name),
                 params: params.length > 0 ? params : undefined,
                 description: def.description,
+                type: def.type,
             };
             this.currentScope.symbols.set(def.name, sym);
             this.allSymbols.push(sym);
@@ -397,32 +580,41 @@ export class Analyzer {
             case "class":
                 this.analyzeClassStmt(stmt);
                 break;
-            case "forIn":
-                this.analyzeExpr(stmt.iterable);
+            case "forIn": {
+                const iterableType = this.analyzeExpr(stmt.iterable);
                 this.beginScope();
+                let elemType: MacType = T_UNKNOWN;
+                if (iterableType.tag === "array") {
+                    elemType = iterableType.elementType;
+                } else if (iterableType.tag === "map") {
+                    elemType = T_STRING; // for-in over map yields string keys
+                }
                 this.define(stmt.varName.lexeme, {
                     name: stmt.varName.lexeme,
                     kind: "variable",
                     token: stmt.varName,
+                    type: elemType,
                 });
                 this.analyzeStmt(stmt.body);
                 this.endScope();
                 break;
+            }
             case "break":
             case "continue":
-                // Nothing to analyze
                 break;
         }
     }
 
     private analyzeVarStmt(stmt: { kind: "var"; name: Token; initializer: Expr | null }): void {
+        let inferredType: MacType = T_UNKNOWN;
         if (stmt.initializer) {
-            this.analyzeExpr(stmt.initializer);
+            inferredType = this.analyzeExpr(stmt.initializer);
         }
         this.define(stmt.name.lexeme, {
             name: stmt.name.lexeme,
             kind: "variable",
             token: stmt.name,
+            type: inferredType,
         });
     }
 
@@ -433,6 +625,7 @@ export class Analyzer {
             kind: "function",
             token: stmt.name,
             params,
+            type: { tag: "function", paramCount: params.length },
         });
 
         this.beginScope();
@@ -462,10 +655,10 @@ export class Analyzer {
             token: stmt.name,
             superclass: stmt.superclass ? stmt.superclass.name.lexeme : undefined,
             methods: methodNames,
+            type: { tag: "class", className: stmt.name.lexeme },
         });
 
         if (stmt.superclass) {
-            // Resolve the superclass reference
             const def = this.resolve(stmt.superclass.name.lexeme);
             this.references.push({ token: stmt.superclass.name, definition: def });
             if (!def && !this.nativeNames.has(stmt.superclass.name.lexeme)) {
@@ -479,16 +672,18 @@ export class Analyzer {
             }
         }
 
+        const prevClassName = this.currentClassName;
+        this.currentClassName = stmt.name.lexeme;
+
         this.beginScope();
-        // Define "this" inside the class scope
         this.define("this", {
             name: "this",
             kind: "variable",
             token: stmt.name,
+            type: { tag: "instance", className: stmt.name.lexeme },
         });
 
         for (const method of stmt.methods) {
-            // Define the method as a method-kind symbol in class scope
             this.define(method.name.lexeme, {
                 name: method.name.lexeme,
                 kind: "method",
@@ -496,7 +691,6 @@ export class Analyzer {
                 params: method.params,
             });
 
-            // Analyze the method body like a function
             this.beginScope();
             for (const param of method.params) {
                 this.define(param.lexeme, {
@@ -512,22 +706,23 @@ export class Analyzer {
         }
 
         this.endScope();
+        this.currentClassName = prevClassName;
     }
 
-    // --- Expression analysis ---
+    // --- Expression analysis with type inference ---
 
-    private analyzeExpr(expr: Expr): void {
+    private analyzeExpr(expr: Expr): MacType {
         switch (expr.kind) {
-            case "binary":
-                this.analyzeExpr(expr.left);
-                this.analyzeExpr(expr.right);
-                break;
-            case "unary":
-                this.analyzeExpr(expr.right);
-                break;
-            case "literal":
-                // Nothing to analyze
-                break;
+            case "literal": {
+                if (expr.value === null) return T_NIL;
+                switch (typeof expr.value) {
+                    case "number": return T_NUMBER;
+                    case "string": return T_STRING;
+                    case "boolean": return T_BOOL;
+                    default: return T_NIL;
+                }
+            }
+
             case "variable": {
                 const def = this.resolve(expr.name.lexeme);
                 this.references.push({ token: expr.name, definition: def });
@@ -540,68 +735,139 @@ export class Analyzer {
                         severity: "warning",
                     });
                 }
-                break;
+                if (def?.type) return def.type;
+                if (def?.kind === "class") return { tag: "class", className: def.name };
+                if (def?.kind === "function" || def?.kind === "native") {
+                    return { tag: "function", paramCount: def.params?.length ?? 0 };
+                }
+                return T_UNKNOWN;
             }
+
             case "grouping":
-                this.analyzeExpr(expr.expression);
-                break;
-            case "logical":
+                return this.analyzeExpr(expr.expression);
+
+            case "binary": {
+                const leftType = this.analyzeExpr(expr.left);
+                const rightType = this.analyzeExpr(expr.right);
+                switch (expr.operator.type) {
+                    case TokenType.PLUS:
+                        if (leftType.tag === "string" || rightType.tag === "string") return T_STRING;
+                        if (leftType.tag === "number" && rightType.tag === "number") return T_NUMBER;
+                        return T_UNKNOWN;
+                    case TokenType.MINUS:
+                    case TokenType.STAR:
+                    case TokenType.SLASH:
+                    case TokenType.PERCENT:
+                        return T_NUMBER;
+                    case TokenType.EQUAL_EQUAL:
+                    case TokenType.BANG_EQUAL:
+                    case TokenType.GREATER:
+                    case TokenType.GREATER_EQUAL:
+                    case TokenType.LESS:
+                    case TokenType.LESS_EQUAL:
+                        return T_BOOL;
+                    default:
+                        return T_UNKNOWN;
+                }
+            }
+
+            case "unary": {
+                this.analyzeExpr(expr.right);
+                if (expr.operator.type === TokenType.MINUS) return T_NUMBER;
+                if (expr.operator.type === TokenType.BANG) return T_BOOL;
+                return T_UNKNOWN;
+            }
+
+            case "logical": {
                 this.analyzeExpr(expr.left);
                 this.analyzeExpr(expr.right);
-                break;
-            case "call":
-                this.analyzeExpr(expr.callee);
+                return T_BOOL;
+            }
+
+            case "call": {
+                const calleeType = this.analyzeExpr(expr.callee);
+                const argTypes: MacType[] = [];
                 for (const arg of expr.args) {
-                    this.analyzeExpr(arg);
+                    argTypes.push(this.analyzeExpr(arg));
                 }
-                break;
+                return this.inferCallType(expr, calleeType, argTypes);
+            }
+
             case "assign": {
                 const assignDef = this.resolve(expr.name.lexeme);
                 this.references.push({ token: expr.name, definition: assignDef });
-                this.analyzeExpr(expr.value);
-                break;
+                return this.analyzeExpr(expr.value);
             }
+
             case "get": {
-                this.analyzeExpr(expr.object);
+                const objectType = this.analyzeExpr(expr.object);
                 const propName = expr.name.lexeme;
                 const infos = PROPERTY_INDEX.get(propName);
                 if (infos && infos.length > 0) {
-                    // Pick the most specific match — prefer typed over generic "class"
                     const specific = infos.find(i => i.ownerType !== "class") ?? infos[0];
                     this.propertyRefs.push({ token: expr.name, info: specific });
                 }
-                break;
+                // Infer field type from known types
+                if (objectType.tag === "instance") {
+                    const key = `${objectType.className}.${propName}`;
+                    const fieldType = FIELD_TYPES.get(key);
+                    if (fieldType) return fieldType;
+                }
+                return T_UNKNOWN;
             }
-            case "set":
+
+            case "set": {
                 this.analyzeExpr(expr.object);
-                this.analyzeExpr(expr.value);
-                break;
-            case "this":
-                // Nothing extra to analyze — "this" is resolved in scope
-                break;
+                return this.analyzeExpr(expr.value);
+            }
+
+            case "this": {
+                if (this.currentClassName) {
+                    return { tag: "instance", className: this.currentClassName };
+                }
+                return T_UNKNOWN;
+            }
+
             case "super":
-                // Nothing extra to analyze
-                break;
-            case "array":
-                for (const elem of expr.elements) {
-                    this.analyzeExpr(elem);
+                return T_UNKNOWN;
+
+            case "array": {
+                if (expr.elements.length > 0) {
+                    const firstType = this.analyzeExpr(expr.elements[0]);
+                    for (let i = 1; i < expr.elements.length; i++) {
+                        this.analyzeExpr(expr.elements[i]);
+                    }
+                    return { tag: "array", elementType: firstType };
                 }
-                break;
-            case "map":
-                for (const val of expr.values) {
-                    this.analyzeExpr(val);
+                return { tag: "array", elementType: T_UNKNOWN };
+            }
+
+            case "map": {
+                if (expr.values.length > 0) {
+                    const firstValType = this.analyzeExpr(expr.values[0]);
+                    for (let i = 1; i < expr.values.length; i++) {
+                        this.analyzeExpr(expr.values[i]);
+                    }
+                    return { tag: "map", valueType: firstValType };
                 }
-                break;
-            case "indexGet":
+                return { tag: "map", valueType: T_UNKNOWN };
+            }
+
+            case "indexGet": {
+                const objType = this.analyzeExpr(expr.object);
+                this.analyzeExpr(expr.index);
+                if (objType.tag === "array") return objType.elementType;
+                if (objType.tag === "map") return objType.valueType;
+                return T_UNKNOWN;
+            }
+
+            case "indexSet": {
                 this.analyzeExpr(expr.object);
                 this.analyzeExpr(expr.index);
-                break;
-            case "indexSet":
-                this.analyzeExpr(expr.object);
-                this.analyzeExpr(expr.index);
-                this.analyzeExpr(expr.value);
-                break;
-            case "lambda":
+                return this.analyzeExpr(expr.value);
+            }
+
+            case "lambda": {
                 this.beginScope();
                 for (const param of expr.params) {
                     this.define(param.lexeme, {
@@ -614,15 +880,99 @@ export class Analyzer {
                     this.analyzeStmt(s);
                 }
                 this.endScope();
-                break;
-            case "pipe":
-                this.analyzeExpr(expr.value);
+                return { tag: "function", paramCount: expr.params.length };
+            }
+
+            case "pipe": {
+                const inputType = this.analyzeExpr(expr.value);
                 this.analyzeExpr(expr.func);
-                break;
-            case "compose":
+                return this.inferPipeType(expr.func, inputType);
+            }
+
+            case "compose": {
                 this.analyzeExpr(expr.left);
                 this.analyzeExpr(expr.right);
-                break;
+                return { tag: "function", paramCount: 1 };
+            }
         }
+    }
+
+    // --- Type inference helpers ---
+
+    private inferCallType(expr: { callee: Expr; args: Expr[] }, calleeType: MacType, argTypes: MacType[]): MacType {
+        // Direct function/class call: foo(...)
+        if (expr.callee.kind === "variable") {
+            const name = expr.callee.name.lexeme;
+
+            // Class constructor → instance
+            const def = this.resolve(name);
+            if (def?.kind === "class") {
+                return { tag: "instance", className: name };
+            }
+
+            // Native function return type
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) return resolver(argTypes);
+        }
+
+        // Method call: obj.method(...)
+        if (expr.callee.kind === "get") {
+            const methodName = expr.callee.name.lexeme;
+            // Infer object type from the get's object
+            // We already analyzed it, but we need the type. Re-derive from AST.
+            const objExpr = expr.callee.object;
+            let objectType: MacType = T_UNKNOWN;
+            if (objExpr.kind === "variable") {
+                const objDef = this.resolve(objExpr.name.lexeme);
+                if (objDef?.type) objectType = objDef.type;
+            } else if (objExpr.kind === "call") {
+                // Chained call: Meme(t).text(...)
+                // The callee type is the return type of the inner call
+                // We can infer via the callee type that was already computed
+                objectType = calleeType; // This is the type of the `get` expr which we returned T_UNKNOWN for methods
+                // Better: check the inner call's callee
+                if (objExpr.callee.kind === "variable") {
+                    const innerDef = this.resolve(objExpr.callee.name.lexeme);
+                    if (innerDef?.kind === "class") {
+                        objectType = { tag: "instance", className: innerDef.name };
+                    }
+                }
+            }
+
+            if (objectType.tag === "instance") {
+                const key = `${objectType.className}.${methodName}`;
+                const retType = METHOD_RETURN_TYPES.get(key);
+                if (retType) return retType;
+            }
+        }
+
+        return T_UNKNOWN;
+    }
+
+    private inferPipeType(func: Expr, inputType: MacType): MacType {
+        // x |> name
+        if (func.kind === "variable") {
+            const name = func.name.lexeme;
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) return resolver([inputType]);
+            const def = this.resolve(name);
+            if (def?.kind === "class") return { tag: "instance", className: def.name };
+            return T_UNKNOWN;
+        }
+
+        // x |> name(args) — pipe inserts x as first arg
+        if (func.kind === "call" && func.callee.kind === "variable") {
+            const name = func.callee.name.lexeme;
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) return resolver([inputType]);
+            return T_UNKNOWN;
+        }
+
+        // Effect pipeline: Meme piped through a function → Meme
+        if (inputType.tag === "instance" && inputType.className === "Meme") {
+            return inputType;
+        }
+
+        return T_UNKNOWN;
     }
 }

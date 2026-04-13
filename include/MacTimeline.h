@@ -74,7 +74,7 @@ namespace meme {
                 // Add hold frame for this keyframe
                 int holdMs = 0;
                 if (i < holds.size()) holdMs = holds[i];
-                if (holdMs <= 0) holdMs = 500; // default 500ms hold
+                if (holdMs <= 0) holdMs = 2000; // default 2s hold for readable text
 
                 // Add the keyframe as a static frame
                 auto resized = resizeToTarget(keyframes[i].pixels, keyframes[i].width,
@@ -85,7 +85,7 @@ namespace meme {
                 if (i + 1 < keyframes.size() && i < transitions.size()) {
                     auto& trans = transitions[i];
                     int transMs = trans.durationMs;
-                    if (transMs <= 0) transMs = 500;
+                    if (transMs <= 0) transMs = 150;
                     int fps = 15;
                     int frameCount = std::max(2, transMs * fps / 1000);
                     int frameDelayCs = transMs / (frameCount * 10);

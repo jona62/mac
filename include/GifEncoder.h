@@ -54,13 +54,40 @@ namespace meme {
         void addFrame(const unsigned char* rgba, int delayCs) {
             if (!fp) return;
 
-            // Quantize RGBA to palette indices
-            std::vector<unsigned char> indexed(width * height);
+            // Floyd-Steinberg dithering + quantization
+            std::vector<float> buf(width * height * 3);
             for (int i = 0; i < width * height; ++i) {
-                int r = rgba[i * 4 + 0];
-                int g = rgba[i * 4 + 1];
-                int b = rgba[i * 4 + 2];
-                indexed[i] = findClosestColor(r, g, b);
+                buf[i * 3 + 0] = rgba[i * 4 + 0];
+                buf[i * 3 + 1] = rgba[i * 4 + 1];
+                buf[i * 3 + 2] = rgba[i * 4 + 2];
+            }
+
+            std::vector<unsigned char> indexed(width * height);
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    int i = y * width + x;
+                    int r = std::max(0, std::min(255, static_cast<int>(buf[i * 3 + 0] + 0.5f)));
+                    int g = std::max(0, std::min(255, static_cast<int>(buf[i * 3 + 1] + 0.5f)));
+                    int b = std::max(0, std::min(255, static_cast<int>(buf[i * 3 + 2] + 0.5f)));
+                    unsigned char idx = findClosestColor(r, g, b);
+                    indexed[i] = idx;
+
+                    float errR = r - palette[idx * 3 + 0];
+                    float errG = g - palette[idx * 3 + 1];
+                    float errB = b - palette[idx * 3 + 2];
+
+                    auto diffuse = [&](int nx, int ny, float w) {
+                        if (nx < 0 || nx >= width || ny >= height) return;
+                        int ni = (ny * width + nx) * 3;
+                        buf[ni + 0] += errR * w;
+                        buf[ni + 1] += errG * w;
+                        buf[ni + 2] += errB * w;
+                    };
+                    diffuse(x + 1, y,     7.0f / 16.0f);
+                    diffuse(x - 1, y + 1, 3.0f / 16.0f);
+                    diffuse(x,     y + 1, 5.0f / 16.0f);
+                    diffuse(x + 1, y + 1, 1.0f / 16.0f);
+                }
             }
 
             // --- Graphic Control Extension ---
@@ -151,6 +178,11 @@ namespace meme {
                     prefixes[i] = -1;
                     suffixes[i] = static_cast<unsigned char>(i);
                 }
+                // Mark clear code and EOI entries so find() never matches them
+                prefixes[clearCode] = -2;
+                suffixes[clearCode] = 0;
+                prefixes[clearCode + 1] = -2;
+                suffixes[clearCode + 1] = 0;
             }
 
             int find(int prefix, unsigned char suffix) const {

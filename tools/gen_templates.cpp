@@ -18,34 +18,29 @@ void fillRect(unsigned char* img, int imgW, int imgH, int x, int y, int w, int h
 void createTwoPanel(const char* path) {
     int w = 600, h = 600;
     std::vector<unsigned char> img(w * h * 4);
-    // Top panel - light red
-    fillRect(img.data(), w, h, 0, 0, w, h/2, 200, 100, 100);
-    // Bottom panel - light green
-    fillRect(img.data(), w, h, 0, h/2, w, h/2, 100, 200, 100);
-    // Divider
-    fillRect(img.data(), w, h, 0, h/2-2, w, 4, 40, 40, 40);
+    fillRect(img.data(), w, h, 0, 0, w, h/2, 58, 58, 58);
+    fillRect(img.data(), w, h, 0, h/2, w, h/2, 69, 69, 69);
+    fillRect(img.data(), w, h, 0, h/2-2, w, 4, 32, 32, 32);
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
 void createThreePanel(const char* path) {
     int w = 800, h = 500;
     std::vector<unsigned char> img(w * h * 4);
-    fillRect(img.data(), w, h, 0, 0, w/3, h, 180, 140, 200);
-    fillRect(img.data(), w, h, w/3, 0, w/3, h, 200, 180, 140);
-    fillRect(img.data(), w, h, 2*w/3, 0, w/3, h, 140, 200, 180);
-    // Dividers
-    fillRect(img.data(), w, h, w/3-2, 0, 4, h, 40, 40, 40);
-    fillRect(img.data(), w, h, 2*w/3-2, 0, 4, h, 40, 40, 40);
+    fillRect(img.data(), w, h, 0, 0, w/3, h, 56, 56, 56);
+    fillRect(img.data(), w, h, w/3, 0, w/3, h, 72, 72, 72);
+    fillRect(img.data(), w, h, 2*w/3, 0, w/3, h, 56, 56, 56);
+    fillRect(img.data(), w, h, w/3-2, 0, 4, h, 32, 32, 32);
+    fillRect(img.data(), w, h, 2*w/3-2, 0, 4, h, 32, 32, 32);
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
 void createBottomText(const char* path) {
     int w = 600, h = 400;
     std::vector<unsigned char> img(w * h * 4);
-    fillRect(img.data(), w, h, 0, 0, w, h, 100, 150, 200);
-    // Bottom text area
+    fillRect(img.data(), w, h, 0, 0, w, h, 53, 53, 53);
     fillRect(img.data(), w, h, 0, h*2/3, w, h/3, 240, 240, 240);
-    fillRect(img.data(), w, h, 0, h*2/3-2, w, 4, 40, 40, 40);
+    fillRect(img.data(), w, h, 0, h*2/3-2, w, 4, 32, 32, 32);
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
@@ -56,11 +51,36 @@ void createBlank(const char* path) {
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
+void createCaptionBar(const char* path) {
+    int w = 600, h = 500;
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, w, h * 7 / 10, 64, 64, 64);
+    fillRect(img.data(), w, h, 0, h * 7 / 10, w, h * 3 / 10, 240, 240, 240);
+    fillRect(img.data(), w, h, 0, h * 7 / 10 - 2, w, 4, 32, 32, 32);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
+void createFourPanel(const char* path) {
+    int w = 600, h = 600;
+    int half = w / 2;
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, half, half, 58, 58, 58);
+    fillRect(img.data(), w, h, half, 0, half, half, 72, 72, 72);
+    fillRect(img.data(), w, h, 0, half, half, half, 72, 72, 72);
+    fillRect(img.data(), w, h, half, half, half, half, 58, 58, 58);
+    // Dividers
+    fillRect(img.data(), w, h, half - 2, 0, 4, h, 32, 32, 32);
+    fillRect(img.data(), w, h, 0, half - 2, w, 4, 32, 32, 32);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
 int main() {
     createTwoPanel("../assets/templates/two_panel.png");
     createThreePanel("../assets/templates/three_panel.png");
     createBottomText("../assets/templates/bottom_text.png");
     createBlank("../assets/templates/blank.png");
-    printf("Generated 4 template images.\n");
+    createCaptionBar("../assets/templates/caption_bar.png");
+    createFourPanel("../assets/templates/four_panel.png");
+    printf("Generated 6 template images.\n");
     return 0;
 }

@@ -24,7 +24,7 @@ import { TextDocument } from "vscode-languageserver-textdocument";
 
 import { Scanner, ScanError } from "./scanner";
 import { Parser, ParseError } from "./parser";
-import { Analyzer, AnalysisResult, Symbol, SymbolReference, PropertyReference, PropertyInfo } from "./analyzer";
+import { Analyzer, AnalysisResult, Symbol, SymbolReference, PropertyReference, PropertyInfo, formatMacType } from "./analyzer";
 
 // ============================================================
 // Setup
@@ -231,8 +231,13 @@ function formatSymbolHover(sym: Symbol): string {
         }
         case "variable":
         case "parameter":
-        default:
-            return `\`\`\`mac\n${sym.name}\n\`\`\`${desc}`;
+        default: {
+            const typeStr = sym.type && sym.type.tag !== "unknown"
+                ? `: ${formatMacType(sym.type)}`
+                : "";
+            const prefix = sym.kind === "parameter" ? "param" : "var";
+            return `\`\`\`mac\n${prefix} ${sym.name}${typeStr}\n\`\`\`${desc}`;
+        }
     }
 }
 
@@ -261,6 +266,9 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     const result = analysisCache.get(params.textDocument.uri);
     if (result) {
         for (const sym of result.symbols) {
+            // Hide internal/private symbols from completions
+            if (sym.name.startsWith("_")) continue;
+
             let kind: CompletionItemKind;
             let detail: string;
             switch (sym.kind) {

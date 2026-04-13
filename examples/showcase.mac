@@ -7,11 +7,11 @@ var blank = Template("blank");
 
 // Data-driven meme generation with arrows
 var captions = [
-    ["When you write Java", "vs when you write Mac"],
-    ["Debugging at 2am", "It was a missing semicolon"],
-    ["Manager: use patterns", "Me: meme |> deepfry"],
-    ["Before functional", "After functional"],
-    ["Writing loops", "Writing pipelines"]
+    ["Me: it works on my machine", "Prod: lol no"],
+    ["Senior dev: we need tests", "The tests:"],
+    ["git push --force", "The intern's branch:"],
+    ["Me explaining my code", "Me reading it 2 weeks later"],
+    ["Stack Overflow: just use regex", "The regex:"]
 ];
 
 var memes = captions
@@ -20,8 +20,8 @@ var memes = captions
         .text(Bottom, pair[1]));
 
 // Create effect presets using compose
-var glitch = pixelate(6) >> contrast(1.8) >> noise(0.2);
-var vintage = sepia >> vignette >> brightness(0.9);
+var glitch = contrast(1.8) >> noise(0.2) >> pixelate(4);
+var vintage = sepia >> brightness(0.9);
 var clean = sharpen >> contrast(1.1);
 
 // Apply different effects to each frame
@@ -33,18 +33,19 @@ var styled = [
     memes[4] |> invert
 ];
 
-// Build animation with timeline
+// Build animation with timeline — long holds so text is readable
 Timeline()
     |> at(0, styled[0])
-    |> transition(400, crossfade)
-    |> at(800, styled[1])
-    |> transition(400, slideLeft)
-    |> at(1600, styled[2])
-    |> transition(400, crossfade)
-    |> at(2400, styled[3])
-    |> transition(400, slideRight)
-    |> at(3200, styled[4])
-    |> hold(800)
+    |> hold(2500)
+    |> at(0, styled[1])
+    |> hold(2500)
+    |> at(0, styled[2])
+    |> hold(2500)
+    |> transition(150, crossfade)
+    |> at(0, styled[3])
+    |> hold(2500)
+    |> at(0, styled[4])
+    |> hold(2000)
     |> loop(0)
     |> render("showcase.gif");
 
@@ -57,14 +58,14 @@ var grid = [clean, vintage, glitch, deepfry]
     |> pad(5)
     |> border(2);
 
-_save_rendered(grid["_rendered"], "showcase_grid.png");
+save(grid, "showcase_grid.png");
 print "Grid saved!";
 
 // Countdown using simple Gif builder
 var countdown = Gif();
 var nums = ["5", "4", "3", "2", "1", "GO!"];
 for (var i = 0; i < 6; i = i + 1) {
-    countdown.frame(Meme(blank).text(Center, nums[i]), Duration(500));
+    countdown.frame(Meme(blank).text(Center, nums[i]), Duration(1000));
 }
 countdown.save("countdown.gif");
 print "Countdown saved!";

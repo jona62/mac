@@ -110,23 +110,55 @@ namespace meme {
                 throw std::runtime_error("MemeRenderer: cannot init font");
             }
 
-            // Draw top text (upper third)
+            // Draw top text (upper half)
             if (!topText.empty()) {
                 int regionY = 0;
-                int regionH = h / 3;
+                int regionH = h / 2;
                 drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH);
             }
 
-            // Draw bottom text (lower third)
+            // Draw bottom text (lower half)
             if (!bottomText.empty()) {
-                int regionY = h * 2 / 3;
-                int regionH = h / 3;
+                int regionY = h / 2;
+                int regionH = h / 2;
                 drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH);
             }
 
             outWidth = w;
             outHeight = h;
             return pixels;
+        }
+
+        // Word-wrap text to fit within maxWidth
+        static std::vector<std::string> wrapText(stbtt_fontinfo& fontInfo,
+                                                  const std::string& text,
+                                                  float scale, float maxWidth) {
+            std::vector<std::string> lines;
+            std::vector<std::string> words;
+            // Split on spaces
+            std::string word;
+            for (char c : text) {
+                if (c == ' ') {
+                    if (!word.empty()) { words.push_back(word); word.clear(); }
+                } else {
+                    word += c;
+                }
+            }
+            if (!word.empty()) words.push_back(word);
+            if (words.empty()) return lines;
+
+            std::string line = words[0];
+            for (size_t i = 1; i < words.size(); ++i) {
+                std::string candidate = line + " " + words[i];
+                if (measureText(fontInfo, candidate, scale) <= maxWidth) {
+                    line = candidate;
+                } else {
+                    lines.push_back(line);
+                    line = words[i];
+                }
+            }
+            lines.push_back(line);
+            return lines;
         }
 
         // Draw text centered in a horizontal strip of the image
@@ -138,51 +170,64 @@ namespace meme {
                                  int regionY, int regionH) {
 
             std::string upper = toUpper(text);
-
-            // Auto-size: start at regionH * 0.7, shrink until text fits within 90% of image width
             float maxWidth = imgW * 0.9f;
             float fontSize = regionH * 0.7f;
             if (fontSize < 10.0f) fontSize = 10.0f;
 
             float scale = 0;
-            float textWidth = 0;
+            std::vector<std::string> lines;
 
+            // Auto-size: shrink until all wrapped lines fit width and block fits height
             while (fontSize >= 8.0f) {
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                textWidth = measureText(fontInfo, upper, scale);
-                if (textWidth <= maxWidth) break;
+                lines = wrapText(fontInfo, upper, scale, maxWidth);
+                float lineHeight = fontSize * 1.2f;
+                float blockHeight = lines.size() * lineHeight;
+                // Check: widest line fits and total block fits in region
+                bool fits = (blockHeight <= regionH * 0.85f);
+                if (fits) {
+                    for (auto& l : lines) {
+                        if (measureText(fontInfo, l, scale) > maxWidth) { fits = false; break; }
+                    }
+                }
+                if (fits) break;
                 fontSize -= 2.0f;
             }
 
             if (fontSize < 8.0f) {
                 fontSize = 8.0f;
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                textWidth = measureText(fontInfo, upper, scale);
+                lines = wrapText(fontInfo, upper, scale, maxWidth);
             }
 
             // Vertical metrics
             int ascent, descent, lineGap;
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
             float ascentPx = ascent * scale;
+            float lineHeight = fontSize * 1.2f;
+            float blockHeight = lines.size() * lineHeight;
+            float blockStartY = regionY + (regionH - blockHeight) / 2.0f;
 
-            // Centered position
-            int startX = static_cast<int>((imgW - textWidth) / 2.0f);
-            int startY = static_cast<int>(regionY + (regionH - fontSize) / 2.0f + ascentPx);
+            // Draw each line
+            for (size_t li = 0; li < lines.size(); ++li) {
+                float lineWidth = measureText(fontInfo, lines[li], scale);
+                int startX = static_cast<int>((imgW - lineWidth) / 2.0f);
+                int startY = static_cast<int>(blockStartY + li * lineHeight + ascentPx);
 
-            // Draw outline (black) -- 4 offsets + 4 diagonal
-            int offsets[][2] = {
-                {-2, -2}, {-2, 0}, {-2, 2},
-                { 0, -2},          { 0, 2},
-                { 2, -2}, { 2, 0}, { 2, 2}
-            };
-            for (auto& off : offsets) {
-                drawTextLine(pixels, imgW, imgH, fontInfo, upper, scale,
-                             startX + off[0], startY + off[1], 0, 0, 0, 255);
+                // Draw outline (black) -- radius 3 for thick meme look
+                for (int ox = -3; ox <= 3; ++ox) {
+                    for (int oy = -3; oy <= 3; ++oy) {
+                        if (ox == 0 && oy == 0) continue;
+                        if (ox * ox + oy * oy > 9) continue;
+                        drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                                     startX + ox, startY + oy, 0, 0, 0, 255);
+                    }
+                }
+
+                // Draw text (white)
+                drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                             startX, startY, 255, 255, 255, 255);
             }
-
-            // Draw text (white)
-            drawTextLine(pixels, imgW, imgH, fontInfo, upper, scale,
-                         startX, startY, 255, 255, 255, 255);
         }
 
         // Measure total width of a string in pixels

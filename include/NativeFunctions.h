@@ -1504,6 +1504,85 @@ namespace callable {
         std::string toString() override { return "<native fn>"; }
     };
 
+    // =======================================================================
+    // Public save(thing, path) — unified save for all exportable types
+    // Handles: Meme instances, Gif, Timeline, rendered maps (from effects/layout)
+    // =======================================================================
+
+    class SaveFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto& target = args[0];
+            auto outputPath = std::get<std::string>(args[1]);
+
+            // Timeline → render frames and save as GIF
+            if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(target)) {
+                auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(target);
+                auto frames = tl->renderFrames();
+                if (frames.empty()) return false;
+                int w = frames[0].width;
+                int h = frames[0].height;
+                meme::GifEncoder enc(outputPath, w, h);
+                for (auto& frame : frames) {
+                    enc.addFrame(frame.pixels.data(), frame.delayCs);
+                }
+                enc.finish();
+                return true;
+            }
+
+            // Gif → save as animated GIF
+            if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(target)) {
+                auto gif = std::get<std::shared_ptr<meme::MacGif>>(target);
+                return gif->save(outputPath);
+            }
+
+            // Rendered map (from effects/layout pipeline) → copy temp image to output
+            if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(target)) {
+                auto map = std::get<std::shared_ptr<collection::MacMap>>(target);
+                if (map->has("_rendered")) {
+                    auto tempPath = std::get<std::string>(map->get("_rendered"));
+                    int w, h, c;
+                    unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
+                    if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
+                    std::vector<unsigned char> pixels(data, data + w * h * 4);
+                    stbi_image_free(data);
+                    return meme::MemeRenderer::saveImage(pixels, w, h, outputPath);
+                }
+                throw std::runtime_error("save() map does not contain rendered image data.");
+            }
+
+            // Meme instance → render from template and save
+            if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(target)) {
+                auto inst = std::get<std::shared_ptr<instance::MacInstance>>(target);
+
+                // Check for _rendered field (already processed by effects)
+                token::Token renderedTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("_rendered")), 0);
+                value::MacValue renderedVal;
+                try { renderedVal = inst->get(renderedTok); } catch (...) { renderedVal = std::monostate{}; }
+
+                if (std::holds_alternative<std::string>(renderedVal)) {
+                    auto tempPath = std::get<std::string>(renderedVal);
+                    int w, h, c;
+                    unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
+                    if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
+                    std::vector<unsigned char> pixels(data, data + w * h * 4);
+                    stbi_image_free(data);
+                    return meme::MemeRenderer::saveImage(pixels, w, h, outputPath);
+                }
+
+                // Render from template
+                auto memeData = getMemeFromInstance(inst);
+                return memeData->save(outputPath);
+            }
+
+            throw std::runtime_error("save() expects a Meme, Gif, Timeline, or rendered result.");
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
 } // namespace callable
 
 #endif // NATIVE_FUNCTIONS_H
