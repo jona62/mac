@@ -123,22 +123,66 @@ export class Analyzer {
             this.nativeNames.add(def.name);
         }
 
-        // Stdlib prelude types and constants (defined in Mac, loaded at startup)
-        const preludeNames = [
-            "Size", "Duration", "Position", "Format", "Template",
-            "Meme", "Frame", "Gif",
-            "Top", "Bottom", "Center",
-            "PNG", "JPG", "GIF",
+        // Stdlib prelude types (defined in Mac, loaded at startup)
+        const preludeTypes: { name: string; kind: SymbolKind; params?: string[]; description: string }[] = [
+            {
+                name: "Size", kind: "class",
+                params: ["width", "height"],
+                description: "Pixel dimensions. Supports `+`, `*`, `==` operators.",
+            },
+            {
+                name: "Duration", kind: "class",
+                params: ["ms"],
+                description: "Time in milliseconds. Supports `+`, `*`, `==` operators.",
+            },
+            {
+                name: "Position", kind: "class",
+                params: ["name"],
+                description: "Text position on a meme. Use the constants `Top`, `Bottom`, `Center`.",
+            },
+            {
+                name: "Format", kind: "class",
+                params: ["name"],
+                description: "Image output format. Use the constants `PNG`, `JPG`, `GIF`.",
+            },
+            {
+                name: "Template", kind: "class",
+                params: ["nameOrPath"],
+                description: "Meme template image. Pass a built-in name (`two_panel`, `three_panel`, `bottom_text`, `blank`) or a file path.",
+            },
+            {
+                name: "Meme", kind: "class",
+                params: ["template"],
+                description: "Meme builder. Chain `.text(position, str)` to add text, `.save(format, path)` to export, `.resize(size)` to resize. `Meme + Duration` creates a Frame.",
+            },
+            {
+                name: "Frame", kind: "class",
+                params: ["meme", "duration"],
+                description: "A single animation frame pairing a Meme with a Duration. Created by `Meme + Duration`.",
+            },
+            {
+                name: "Gif", kind: "class",
+                params: [],
+                description: "Animated GIF builder. Chain `.frame(meme, duration)` to add frames, `.save(path)` to export. `Gif + Frame` adds a frame.",
+            },
+            { name: "Top", kind: "variable", description: "Position constant — top of the meme." },
+            { name: "Bottom", kind: "variable", description: "Position constant — bottom of the meme." },
+            { name: "Center", kind: "variable", description: "Position constant — center of the meme." },
+            { name: "PNG", kind: "variable", description: "Format constant — PNG image output." },
+            { name: "JPG", kind: "variable", description: "Format constant — JPG image output." },
+            { name: "GIF", kind: "variable", description: "Format constant — GIF image output." },
         ];
-        for (const name of preludeNames) {
-            this.nativeNames.add(name);
+        for (const def of preludeTypes) {
+            this.nativeNames.add(def.name);
+            const params: Token[] = (def.params ?? []).map(p => nativeToken(p));
             const sym: Symbol = {
-                name,
-                kind: "native",
-                token: nativeToken(name),
-                description: `Stdlib: ${name}`,
+                name: def.name,
+                kind: def.kind,
+                token: nativeToken(def.name),
+                params: params.length > 0 ? params : undefined,
+                description: def.description,
             };
-            this.currentScope.symbols.set(name, sym);
+            this.currentScope.symbols.set(def.name, sym);
             this.allSymbols.push(sym);
         }
     }

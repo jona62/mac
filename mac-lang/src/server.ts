@@ -196,28 +196,32 @@ connection.onHover((params: HoverParams): Hover | null => {
 });
 
 function formatSymbolHover(sym: Symbol): string {
+    const desc = sym.description ? `\n\n${sym.description}` : "";
     switch (sym.kind) {
         case "native": {
             const args = sym.params
                 ? sym.params.map((p) => p.lexeme).join(", ")
                 : "";
-            const desc = sym.description ?? "";
-            return `**native** ${sym.name}(${args}) \u2014 ${desc}`;
+            return `\`\`\`mac\n${sym.name}(${args})\n\`\`\`${desc}`;
         }
         case "function":
         case "method": {
             const params = sym.params
                 ? sym.params.map((p) => p.lexeme).join(", ")
                 : "";
-            return `**fun** ${sym.name}(${params})`;
+            return `\`\`\`mac\nfun ${sym.name}(${params})\n\`\`\`${desc}`;
         }
         case "class": {
-            return `**class** ${sym.name}`;
+            const params = sym.params
+                ? sym.params.map((p) => p.lexeme).join(", ")
+                : "";
+            const sig = params ? `${sym.name}(${params})` : sym.name;
+            return `\`\`\`mac\nclass ${sig}\n\`\`\`${desc}`;
         }
         case "variable":
         case "parameter":
         default:
-            return `**var** ${sym.name}`;
+            return `\`\`\`mac\n${sym.name}\n\`\`\`${desc}`;
     }
 }
 
