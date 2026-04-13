@@ -20,6 +20,7 @@ namespace collection {
 
 namespace meme {
     class MacMeme;
+    class MacGif;
 }
 
 namespace value {
@@ -28,7 +29,8 @@ namespace value {
                                   std::shared_ptr<instance::MacInstance>,
                                   std::shared_ptr<collection::MacArray>,
                                   std::shared_ptr<collection::MacMap>,
-                                  std::shared_ptr<meme::MacMeme>>;
+                                  std::shared_ptr<meme::MacMeme>,
+                                  std::shared_ptr<meme::MacGif>>;
 }
 
 #endif // MAC_VALUE_H

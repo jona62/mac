@@ -9,6 +9,7 @@
 #include "MacArray.h"
 #include "MacMap.h"
 #include "MacMeme.h"
+#include "MacGif.h"
 
 namespace callable {
 
@@ -90,6 +91,7 @@ namespace callable {
             if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(val)) return std::string("array");
             if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(val)) return std::string("map");
             if (std::holds_alternative<std::shared_ptr<meme::MacMeme>>(val)) return std::string("meme");
+            if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) return std::string("gif");
             return std::string("unknown");
         }
         int arity() override { return 1; }
@@ -235,7 +237,53 @@ namespace callable {
             auto tmpl = std::get<std::string>(args[0]);
             auto top = std::get<std::string>(args[1]);
             auto bottom = std::get<std::string>(args[2]);
-            return value::MacValue(std::make_shared<meme::MacMeme>(tmpl, top, bottom));
+            auto m = std::make_shared<meme::MacMeme>(tmpl, top, bottom);
+            m->imagePath = meme::MacMeme::resolveTemplate(tmpl);
+            return value::MacValue(m);
+        }
+        int arity() override { return 3; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // --- addTemplate(name, path) ---
+
+    class AddTemplateFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto name = std::get<std::string>(args[0]);
+            auto path = std::get<std::string>(args[1]);
+            meme::MacMeme::addTemplate(name, path);
+            return std::monostate{};
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // --- gifMeme() -> creates empty MacGif ---
+
+    class GifMemeFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue>) override {
+            return value::MacValue(std::make_shared<meme::MacGif>());
+        }
+        int arity() override { return 0; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
+    // --- saveGif(gifObj, durationMs, path) shorthand ---
+
+    class SaveGifFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto gif = std::get<std::shared_ptr<meme::MacGif>>(args[0]);
+            // durationMs is unused here -- frames already have their own durations
+            // but kept for API compat
+            auto path = std::get<std::string>(args[2]);
+            bool ok = gif->save(path);
+            return ok;
         }
         int arity() override { return 3; }
         std::string toString() override { return "<native fn>"; }
@@ -256,6 +304,75 @@ namespace callable {
         std::string toString() override { return "<native fn>"; }
     private:
         std::shared_ptr<meme::MacMeme> memeObj;
+    };
+
+    // --- Meme .save callable ---
+
+    class MemeSaveCallable : public MacCallable {
+    public:
+        MemeSaveCallable(std::shared_ptr<meme::MacMeme> m) : memeObj(m) {}
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto path = std::get<std::string>(args[0]);
+            bool ok = memeObj->save(path);
+            return ok;
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    private:
+        std::shared_ptr<meme::MacMeme> memeObj;
+    };
+
+    // --- Meme .resize callable ---
+
+    class MemeResizeCallable : public MacCallable {
+    public:
+        MemeResizeCallable(std::shared_ptr<meme::MacMeme> m) : memeObj(m) {}
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            int w = static_cast<int>(std::get<double>(args[0]));
+            int h = static_cast<int>(std::get<double>(args[1]));
+            return value::MacValue(memeObj->resize(w, h));
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    private:
+        std::shared_ptr<meme::MacMeme> memeObj;
+    };
+
+    // --- Gif .addFrame callable ---
+
+    class GifAddFrameCallable : public MacCallable {
+    public:
+        GifAddFrameCallable(std::shared_ptr<meme::MacGif> g) : gifObj(g) {}
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto m = std::get<std::shared_ptr<meme::MacMeme>>(args[0]);
+            int durationMs = static_cast<int>(std::get<double>(args[1]));
+            gifObj->addFrame(m, durationMs);
+            return value::MacValue(gifObj);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    private:
+        std::shared_ptr<meme::MacGif> gifObj;
+    };
+
+    // --- Gif .save callable ---
+
+    class GifSaveCallable : public MacCallable {
+    public:
+        GifSaveCallable(std::shared_ptr<meme::MacGif> g) : gifObj(g) {}
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto path = std::get<std::string>(args[0]);
+            bool ok = gifObj->save(path);
+            return ok;
+        }
+        int arity() override { return 1; }
+        std::string toString() override { return "<native fn>"; }
+    private:
+        std::shared_ptr<meme::MacGif> gifObj;
     };
 
 } // namespace callable

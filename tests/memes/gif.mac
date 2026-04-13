@@ -1,0 +1,12 @@
+// GIF creation
+var g = gifMeme();
+print type(g);                  // expect: gif
+print g.frameCount;             // expect: 0
+
+// Chainable addFrame
+g.addFrame(meme("drake", "Frame 1", ""), 300)
+ .addFrame(meme("drake", "Frame 2", ""), 300);
+print g.frameCount;             // expect: 2
+
+g.save("test_anim.gif");
+print "gif saved";              // expect: gif saved

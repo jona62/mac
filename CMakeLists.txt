@@ -14,10 +14,14 @@ set(SOURCES
     src/Scanner.cpp  # Scanner implementation is in src/Scanner.cpp
     src/Parser.cpp # Parser implementation is in src/Parser.cpp
     src/Interpreter.cpp # Interpreter implementation is in src/Interpreter.cpp
+    src/stb_impl.cpp # stb library implementations
 )
 
 # Create the executable
 add_executable(mac ${SOURCES})
+
+# Copy assets to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
 
 # Custom target to run the executable
 add_custom_target(run

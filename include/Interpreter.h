@@ -17,6 +17,7 @@
 #include "MacArray.h"
 #include "MacMap.h"
 #include "MacMeme.h"
+#include "MacGif.h"
 #include "NativeFunctions.h"
 #include "Environment.h"
 #include "RuntimeError.h"
@@ -55,6 +56,9 @@ namespace interpreter {
             defn("filter", make_shared<callable::FilterFunction>());
             defn("input", make_shared<callable::InputFunction>());
             defn("meme", make_shared<callable::MemeFunction>());
+            defn("addTemplate", make_shared<callable::AddTemplateFunction>());
+            defn("gifMeme", make_shared<callable::GifMemeFunction>());
+            defn("saveGif", make_shared<callable::SaveGifFunction>());
         }
 
         // --- Expression visitors ---
@@ -206,7 +210,31 @@ namespace interpreter {
                     return MacValue(std::static_pointer_cast<callable::MacCallable>(
                         make_shared<callable::MemeRemixCallable>(m)));
                 }
+                if (prop == "save") {
+                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
+                        make_shared<callable::MemeSaveCallable>(m)));
+                }
+                if (prop == "width") return MacValue(static_cast<double>(m->width));
+                if (prop == "height") return MacValue(static_cast<double>(m->height));
+                if (prop == "resize") {
+                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
+                        make_shared<callable::MemeResizeCallable>(m)));
+                }
                 throw errors::RuntimeError(expr->name, "Undefined meme property '" + prop + "'.");
+            }
+            if (std::holds_alternative<shared_ptr<meme::MacGif>>(object)) {
+                auto g = std::get<shared_ptr<meme::MacGif>>(object);
+                auto prop = std::get<string>(expr->name.lexeme);
+                if (prop == "addFrame") {
+                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
+                        make_shared<callable::GifAddFrameCallable>(g)));
+                }
+                if (prop == "save") {
+                    return MacValue(std::static_pointer_cast<callable::MacCallable>(
+                        make_shared<callable::GifSaveCallable>(g)));
+                }
+                if (prop == "frameCount") return MacValue(static_cast<double>(g->frameCount()));
+                throw errors::RuntimeError(expr->name, "Undefined gif property '" + prop + "'.");
             }
             throw errors::RuntimeError(expr->name, "Only instances and maps have properties.");
         }
@@ -535,6 +563,9 @@ namespace interpreter {
             }
             if (std::holds_alternative<shared_ptr<meme::MacMeme>>(value)) {
                 return std::get<shared_ptr<meme::MacMeme>>(value)->toString();
+            }
+            if (std::holds_alternative<shared_ptr<meme::MacGif>>(value)) {
+                return std::get<shared_ptr<meme::MacGif>>(value)->toString();
             }
             return std::get<string>(value);
         }
