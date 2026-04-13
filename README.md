@@ -1,38 +1,140 @@
 # Mac
 
-Welcome to Meme as code(Mac)! This is a repository for the C++ implementation of the Mac programming language.
+A dynamically typed scripting language with memes as first-class citizens.
 
-## About Mac
+## Install
 
-Mac is a dynamically typed scripting language created by Jonathan Mshelia. It is designed to be simple yet powerful for meme creation, with a focus on readability and expressiveness. Mac supports features such as variables, control flow statements, functions, and object-oriented programming and supports memes as first class citizens.
-
-## Getting Started
-
-To get started with Mac, follow these steps:
-
-1. Clone this repository to your local machine.
-2. Build the project using your preferred C++ compiler using the following command
 ```bash
-$ cmake -S . -B build
-$ cmake --build build --clean-first
-$ cd build
-$ make && ./mac ../expression_file.mac
-$ make && ./mac ../token_file.mac
+curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash
 ```
-3. Run the executable to start the Mac interpreter.
 
-## Features
+Or build from source:
 
-- Dynamic typing
-- Lexical scoping
-- First-class functions
-- Garbage collection
-- Error handling
+```bash
+cmake -S . -B build && cmake --build build
+cd build && ./mac
+```
 
-## Contributing
+## Usage
 
-Contributions are welcome! If you would like to contribute to Mac, please follow the guidelines outlined in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+```bash
+mac script.mac    # run a file
+mac               # start the REPL
+```
+
+## Language
+
+```mac
+// Variables and types
+var name = "Mac";
+var nums = [1, 2, 3];
+var config = {host: "localhost", port: 8080};
+
+// Functions and closures
+fun greet(who) { return "Hello, " + who + "!"; }
+print greet(name);
+
+// Lambdas
+var double = fun(x) { return x * 2; };
+print map([1, 2, 3], double);  // [2, 4, 6]
+
+// Classes with inheritance
+class Animal {
+    init(name) { this.name = name; }
+    speak() { return "..."; }
+}
+class Dog < Animal {
+    speak() { return "Woof!"; }
+}
+print Dog("Rex").speak();
+
+// Operator overloading
+class Vec {
+    init(x, y) { this.x = x; this.y = y; }
+    __add__(other) { return Vec(this.x + other.x, this.y + other.y); }
+}
+var v = Vec(1, 2) + Vec(3, 4);
+
+// Control flow
+for (var i = 0; i < 5; i = i + 1) print i;
+for (var x in [10, 20, 30]) print x;
+while (true) { break; }
+
+// Memes
+var m = Meme(Template("two_panel"))
+    .text(Top, "Writing Java")
+    .text(Bottom, "Writing Mac");
+m.save(PNG, "meme.png");
+
+// Animated GIFs
+Gif()
+    .frame(m, Duration(300))
+    .frame(m.text(Top, "Frame 2"), Duration(300))
+    .save("animated.gif");
+```
+
+## Standard Library
+
+### Built-in Functions
+
+| Function | Description |
+|----------|-------------|
+| `print x;` | Print a value (statement) |
+| `clock()` | Unix timestamp in seconds |
+| `type(x)` | Type name as string |
+| `len(x)` | Length of string or array |
+| `input(prompt)` | Read line from stdin |
+
+### Strings
+
+`substr(str, start, len)` `split(str, delim)`
+
+### Math
+
+`sqrt(n)` `abs(n)` `pow(base, exp)` `floor(n)` `ceil(n)`
+
+### Arrays
+
+`push(arr, val)` `pop(arr)` `map(arr, fn)` `filter(arr, fn)`
+
+### Types (from stdlib prelude)
+
+| Type | Example | Operators |
+|------|---------|-----------|
+| `Size` | `Size(400, 300)` | `+`, `*`, `==` |
+| `Duration` | `Duration(300)` | `+`, `*`, `==` |
+| `Position` | `Top`, `Bottom`, `Center` | `==` |
+| `Format` | `PNG`, `JPG`, `GIF` | `==` |
+| `Template` | `Template("two_panel")` | — |
+| `Meme` | `Meme(tmpl).text(Top, "hi")` | `+ Duration` = Frame |
+| `Frame` | `meme + Duration(300)` | — |
+| `Gif` | `Gif().frame(m, dur)` | `+ Frame` |
+
+### Built-in Templates
+
+`two_panel` `three_panel` `bottom_text` `blank`
+
+## VS Code Extension
+
+The `mac-lang/` directory contains a VS Code extension with:
+
+- Syntax highlighting
+- Autocomplete, hover, and go-to-definition (LSP)
+- Code snippets (`fun`, `class`, `for`, `if`, `var`, etc.)
+- File icon for `.mac` files
+
+Install: symlink `mac-lang/` into `~/.vscode/extensions/` and reload VS Code.
+
+## Development
+
+```bash
+cmake -S . -B build
+cmake --build build
+bash tests/run_tests.sh          # 37 tests
+```
+
+CI runs on every push — builds and tests on macOS and Linux. Tagged releases (`v*`) produce downloadable binaries for macOS ARM64, macOS x86_64, and Linux x86_64.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+MIT
