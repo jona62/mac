@@ -1,2 +1,9 @@
 .vscode/
 build/
+.cache/
+.DS_Store
+tools/gen_templates
+*.png
+*.jpg
+*.gif
+!assets/templates/*.png
