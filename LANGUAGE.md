@@ -53,8 +53,8 @@ print pipeline(5);  // 11
 Compose is used heavily for effect presets:
 
 ```mac
-var glitch = pixelate(6) >> contrast(1.8) >> noise(0.2);
-var vintage = sepia >> vignette >> brightness(0.9);
+var glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+var vintage = sepia >> brightness(0.9);
 ```
 
 ## Control Flow
@@ -249,6 +249,54 @@ for (var x in a) print x;
 for (var key in m) print key;
 ```
 
+## Templates
+
+Templates define the background canvas for memes. Use a built-in name or a path to a custom image.
+
+| Template       | Size    | Description                                    |
+| -------------- | ------- | ---------------------------------------------- |
+| `two_panel`    | 600x600 | Top and bottom panels with divider             |
+| `three_panel`  | 800x500 | Three vertical panels                          |
+| `bottom_text`  | 600x400 | Image area on top, text area at bottom         |
+| `blank`        | 600x600 | Plain white canvas                             |
+| `caption_bar`  | 600x500 | 70% image area, 30% white caption bar          |
+| `four_panel`   | 600x600 | 2x2 grid with dividers                         |
+
+```mac
+var t = Template("two_panel");
+var custom = Template("path/to/image.png");
+```
+
+## Memes
+
+```mac
+var t = Template("two_panel");
+var m = Meme(t)
+    .text(Top, "Top caption")
+    .text(Bottom, "Bottom caption");
+
+m.save(PNG, "output.png");
+```
+
+Text positions: `Top`, `Bottom`, `Center`
+
+Output formats: `PNG`, `JPG`, `GIF`
+
+### Saving
+
+The `save()` function works with any exportable type — memes, GIFs, timelines, and effect/layout results:
+
+```mac
+save(meme |> sepia, "sepia.png");
+save(grid_result, "grid.png");
+```
+
+### Resizing
+
+```mac
+m.resize(Size(400, 400));
+```
+
 ## Effects
 
 Effects are pure functions that transform meme pixel data. They work with the pipe operator and can be composed with `>>`.
@@ -259,7 +307,7 @@ These return a partial effect when called with a parameter, ready to be piped or
 
 | Effect              | Description                          |
 | ------------------- | ------------------------------------ |
-| `blur(radius)`      | Gaussian blur                        |
+| `blur(radius)`      | Box blur                             |
 | `pixelate(size)`    | Pixelation at given block size       |
 | `noise(amount)`     | Random noise (0.0 - 1.0)            |
 | `saturate(factor)`  | Color saturation multiplier          |
@@ -283,8 +331,8 @@ These take no parameters and can be used directly.
 Compose effects into reusable presets:
 
 ```mac
-var glitch = pixelate(6) >> contrast(1.8) >> noise(0.2);
-var vintage = sepia >> vignette >> brightness(0.9);
+var glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+var vintage = sepia >> brightness(0.9);
 var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
 
 Meme(t).text(Top, "hello") |> glitch;
@@ -298,7 +346,7 @@ Layout functions combine multiple rendered memes into composite images.
 | ------------------- | -------------------------------------- |
 | `beside(a, b)`      | Place two memes side by side           |
 | `stack(a, b)`       | Stack two memes vertically             |
-| `grid(memes, c, r)` | Arrange memes in a cols x rows grid    |
+| `grid(cols, arr)`   | Arrange array of memes in a grid       |
 | `toGrid(arr, c, r)` | Pipeline-friendly grid from array      |
 | `pad(meme, px)`     | Add padding around a meme              |
 | `border(meme, px)`  | Add a border around a meme             |
@@ -307,6 +355,9 @@ Layout functions combine multiple rendered memes into composite images.
 var a = Meme(t).text(Top, "Left");
 var b = Meme(t).text(Top, "Right");
 beside(a, b) |> pad(5) |> border(2);
+
+// Grid from array
+[m1, m2, m3, m4] |> toGrid(2, 2) |> pad(5);
 ```
 
 ## Timeline & Animation
@@ -318,11 +369,12 @@ var t = Template("two_panel");
 
 Timeline()
     |> at(0, Meme(t).text(Top, "Frame 1") |> clean)
-    |> transition(400, crossfade)
-    |> at(800, Meme(t).text(Top, "Frame 2") |> vintage)
-    |> transition(400, slideLeft)
-    |> at(1600, Meme(t).text(Top, "Frame 3") |> glitch)
-    |> hold(800)
+    |> hold(2500)
+    |> at(0, Meme(t).text(Top, "Frame 2") |> vintage)
+    |> hold(2500)
+    |> transition(150, crossfade)
+    |> at(0, Meme(t).text(Top, "Frame 3") |> glitch)
+    |> hold(2000)
     |> loop(0)
     |> render("animation.gif");
 ```
@@ -332,11 +384,13 @@ Timeline()
 | Function                    | Description                           |
 | --------------------------- | ------------------------------------- |
 | `Timeline()`                | Create a new timeline                 |
-| `at(tl, timeMs, meme)`     | Add a keyframe at a time offset       |
+| `at(tl, timeMs, meme)`     | Add a keyframe                        |
 | `transition(tl, ms, type)` | Add transition between keyframes      |
 | `hold(tl, ms)`             | Hold the current frame                |
 | `loop(tl, count)`          | Set loop count (0 = infinite)         |
 | `render(tl, path)`         | Render timeline to GIF                |
+
+Default hold: 2000ms. Default transition: 150ms.
 
 ### Transition Types
 
@@ -348,8 +402,8 @@ For straightforward frame-by-frame GIFs without transitions:
 
 ```mac
 Gif()
-    .frame(Meme(t).text(Top, "1"), Duration(500))
-    .frame(Meme(t).text(Top, "2"), Duration(500))
+    .frame(Meme(t).text(Top, "1"), Duration(1000))
+    .frame(Meme(t).text(Top, "2"), Duration(1000))
     .save("countdown.gif");
 ```
 
