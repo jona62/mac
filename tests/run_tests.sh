@@ -17,6 +17,7 @@ fi
 PASS=0
 FAIL=0
 TOTAL=0
+BUILD_DIR="$PROJECT_DIR/build"
 
 # Find all .mac files in test subdirectories (skip old phase*.mac files in tests root)
 for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" | sort); do
@@ -43,8 +44,8 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" | sort); do
         fi
     done < "$test_file"
 
-    # Run the test (from build dir so generated files don't clutter the root)
-    actual_stdout=$(cd "$PROJECT_DIR/build" && "$MAC" "$test_file" 2>/tmp/mac_stderr)
+    # Run the test from build dir so generated files stay out of the project root
+    actual_stdout=$(cd "$BUILD_DIR" && "$MAC" "$test_file" 2>/tmp/mac_stderr)
     actual_stderr=$(cat /tmp/mac_stderr)
 
     # Compare stdout expectations
@@ -95,6 +96,9 @@ done
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed, $TOTAL total"
+
+# Clean up generated test artifacts from build dir (only root-level images, not assets/)
+find "$BUILD_DIR" -maxdepth 1 \( -name '*.gif' -o -name '*.png' -o -name '*.jpg' \) -delete 2>/dev/null
 
 if [ $FAIL -gt 0 ]; then
     exit 1
