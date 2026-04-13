@@ -1,8 +1,8 @@
 {
   "name": "mac-lang",
   "displayName": "Mac Language",
-  "description": "Syntax highlighting, language configuration, and snippets for the Mac programming language",
-  "version": "0.1.0",
+  "description": "Syntax highlighting, language configuration, snippets, and LSP for the Mac programming language",
+  "version": "0.2.0",
   "publisher": "jona62",
   "engines": {
     "vscode": "^1.75.0"
@@ -12,6 +12,12 @@
     "Themes"
   ],
   "icon": "icons/mac-file.svg",
+  "main": "./out/extension.js",
+  "activationEvents": ["onLanguage:mac"],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
   "contributes": {
     "languages": [
       {
@@ -45,5 +51,15 @@
         "path": "./mac-icon-theme.json"
       }
     ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/vscode": "^1.115.0",
+    "typescript": "^6.0.2"
   }
 }
