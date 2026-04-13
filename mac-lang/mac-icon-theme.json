@@ -1,0 +1,10 @@
+{
+  "iconDefinitions": {
+    "mac-file-icon": {
+      "iconPath": "./icons/mac-file.svg"
+    }
+  },
+  "fileExtensions": {
+    "mac": "mac-file-icon"
+  }
+}

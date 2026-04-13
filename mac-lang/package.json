@@ -8,15 +8,21 @@
     "vscode": "^1.75.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Themes"
   ],
+  "icon": "icons/mac-file.svg",
   "contributes": {
     "languages": [
       {
         "id": "mac",
         "aliases": ["Mac", "mac"],
         "extensions": [".mac"],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/mac-file.svg",
+          "dark": "./icons/mac-file.svg"
+        }
       }
     ],
     "grammars": [
@@ -30,6 +36,13 @@
       {
         "language": "mac",
         "path": "./snippets/mac.snippets.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "mac-icons",
+        "label": "Mac File Icons",
+        "path": "./mac-icon-theme.json"
       }
     ]
   }
