@@ -12,6 +12,7 @@ jobs:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
 
@@ -24,12 +25,38 @@ jobs:
       - name: Build
         run: cmake --build build
 
-      - name: Run tests
+      - name: Run unit tests
         run: bash tests/run_tests.sh
+
+      - name: Verify test count
+        run: |
+          count=$(bash tests/run_tests.sh 2>&1 | grep "Results:" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+')
+          echo "Tests passed: $count"
+          if [ "$count" -lt 37 ]; then
+            echo "ERROR: Expected at least 37 tests, got $count"
+            exit 1
+          fi
+
+  lint-lsp:
+    name: Typecheck LSP
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: cd mac-lang && npm ci
+
+      - name: Typecheck
+        run: cd mac-lang && npx tsc --noEmit
 
   release:
     name: Release (${{ matrix.target }})
-    needs: test
+    needs: [test, lint-lsp]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -37,13 +64,10 @@ jobs:
         include:
           - os: macos-latest
             target: mac-macos-arm64
-            arch_flag: ""
           - os: macos-13
             target: mac-macos-x86_64
-            arch_flag: ""
           - os: ubuntu-latest
             target: mac-linux-x86_64
-            arch_flag: ""
 
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +77,9 @@ jobs:
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Run tests on release build
+        run: bash tests/run_tests.sh
 
       - name: Package
         run: |
