@@ -289,7 +289,39 @@ namespace analyzer {
         }
         // --- Mac v2 syntax nodes ---
         else if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
-            for (auto& entry : p->entries) analyzeExpr(entry.value.get());
+            // Emit reference for the template name (resolves to Template class)
+            auto templateDef = resolve("Template");
+            if (templateDef) {
+                int c = p->templateName.column > 0 ? p->templateName.column : 1;
+                auto tname = tokName(p->templateName);
+                int ec = c + static_cast<int>(tname.size());
+                // Semantic token for template name
+                if (p->templateName.line > 0 && currentSource == "user") {
+                    result.semanticTokens.push_back({p->templateName.line, c,
+                        static_cast<int>(tname.size()), "class", currentSource});
+                }
+            }
+            // Emit references for position keys (top, bottom, center -> Position constants)
+            for (auto& entry : p->entries) {
+                auto keyName = tokName(entry.key);
+                // Map position key to the constant name
+                std::string constName;
+                if (keyName == "top") constName = "Top";
+                else if (keyName == "bottom") constName = "Bottom";
+                else if (keyName == "center") constName = "Center";
+                if (!constName.empty()) {
+                    auto* posDef = resolve(constName);
+                    if (posDef) {
+                        int c = entry.key.column > 0 ? entry.key.column : 1;
+                        result.references.push_back({entry.key.line, c,
+                            c + static_cast<int>(keyName.size()),
+                            posDef->line, posDef->col, posDef->endCol,
+                            posDef->name, currentSource, posDef->source,
+                            posDef->visibility, posDef->ownerType});
+                    }
+                }
+                analyzeExpr(entry.value.get());
+            }
         }
         else if (auto* p = dynamic_cast<expr::SaveExpr<MV>*>(e)) {
             analyzeExpr(p->value.get());
@@ -299,7 +331,17 @@ namespace analyzer {
             for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
         }
         else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
-            for (auto& entry : p->entries) analyzeExpr(entry.frame.meme.get());
+            for (auto& entry : p->entries) {
+                analyzeExpr(entry.frame.meme.get());
+                // Transition type references (crossfade, slideLeft, etc.)
+                if (entry.transition) {
+                    auto* transDef = resolve(entry.transition->type);
+                    if (transDef) {
+                        // We don't have token positions for transition types in the AST
+                        // but the type string is resolved
+                    }
+                }
+            }
         }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
             for (auto& entry : p->entries) analyzeExpr(entry.get());
