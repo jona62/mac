@@ -304,26 +304,50 @@ const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
     ["take",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
     ["drop",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
 
-    // Array-returning — infer element type from callback context
+    // Array-transforming — element type depends on callback or structure
     ["map",       (args) => {
-        // If mapping over an array and the callback is an effect (Meme→Meme), preserve Meme type
+        // map(arr, fn) — if input is [Meme] and fn is an effect, preserve Meme
         if (args[0]?.tag === "array" && args[0].elementType.tag === "instance" && args[0].elementType.className === "Meme") {
             return { tag: "array" as const, elementType: args[0].elementType };
         }
-        // If callback return type is known (e.g. from arrow returning a constructor), try to use it
         if (args[1]?.tag === "instance") return { tag: "array" as const, elementType: args[1] };
-        if (args[1]?.tag === "function") return { tag: "array" as const, elementType: T_UNKNOWN };
         return { tag: "array" as const, elementType: T_UNKNOWN };
     }],
-    ["flatMap",   () => ({ tag: "array", elementType: T_UNKNOWN })],
+    ["flatMap",   (args) => {
+        // flatMap(arr, fn) — map then flatten. If input is [[A]], result is [A]
+        if (args[0]?.tag === "array" && args[0].elementType.tag === "array") {
+            return { tag: "array" as const, elementType: args[0].elementType.elementType };
+        }
+        // If input is [Meme] and fn is an effect, preserve
+        if (args[0]?.tag === "array" && args[0].elementType.tag === "instance" && args[0].elementType.className === "Meme") {
+            return { tag: "array" as const, elementType: args[0].elementType };
+        }
+        return { tag: "array" as const, elementType: T_UNKNOWN };
+    }],
     ["flatten",   (args) => {
         if (args[0]?.tag === "array" && args[0].elementType.tag === "array") {
             return { tag: "array" as const, elementType: args[0].elementType.elementType };
         }
-        return { tag: "array", elementType: T_UNKNOWN };
+        return { tag: "array" as const, elementType: T_UNKNOWN };
     }],
-    ["zip",       () => ({ tag: "array", elementType: { tag: "array" as const, elementType: T_UNKNOWN } })],
-    ["enumerate", () => ({ tag: "array", elementType: { tag: "array" as const, elementType: T_UNKNOWN } })],
+    ["zip",       (args) => {
+        // zip(a, b) — if both arrays have the same element type, preserve it
+        if (args[0]?.tag === "array" && args[1]?.tag === "array") {
+            const a = args[0].elementType, b = args[1].elementType;
+            if (a.tag === b.tag && a.tag === "instance" && b.tag === "instance" && a.className === b.className) {
+                return { tag: "array" as const, elementType: { tag: "array" as const, elementType: a } };
+            }
+        }
+        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: T_UNKNOWN } };
+    }],
+    ["enumerate", (args) => {
+        // enumerate(arr) — inner arrays are [number, element] but we can't express tuples
+        // Best effort: if input element is known, propagate it as inner array element
+        if (args[0]?.tag === "array" && args[0].elementType.tag !== "unknown") {
+            return { tag: "array" as const, elementType: { tag: "array" as const, elementType: args[0].elementType } };
+        }
+        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: T_UNKNOWN } };
+    }],
 
     // Element-extracting
     ["find", (args) => args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN],
@@ -977,41 +1001,46 @@ export class Analyzer {
         return T_UNKNOWN;
     }
 
+    // HOFs that take a callback and transform array elements
+    private static readonly MAPPING_HOFS = new Set(["map", "flatMap"]);
+    // HOFs that take a callback + initial value (fold)
+    private static readonly FOLDING_HOFS = new Set(["reduce"]);
+
     private inferPipeType(func: Expr, inputType: MacType): MacType {
-        // x |> name
+        // x |> name — bare function (no args)
         if (func.kind === "variable") {
             const name = func.name.lexeme;
             const resolver = NATIVE_RETURN_TYPES.get(name);
             if (resolver) return resolver([inputType]);
             const def = this.resolve(name);
             if (def?.kind === "class") return { tag: "instance", className: def.name };
-            // Meme piped through any callable (user-defined effect, composed function) → Meme
+            // Meme piped through any callable → Meme
             if (inputType.tag === "instance" && inputType.className === "Meme") return inputType;
             return T_UNKNOWN;
         }
 
-        // x |> name(args) — pipe inserts x as first arg
+        // x |> name(args) — function call with pipe prepending x
         if (func.kind === "call" && func.callee.kind === "variable") {
             const name = func.callee.name.lexeme;
 
-            // reduce(fn, initial) — return type matches the initial value
-            if (name === "reduce" && func.args.length >= 2) {
+            // Folding HOFs: reduce(fn, initial) — return type = initial value type
+            if (Analyzer.FOLDING_HOFS.has(name) && func.args.length >= 2) {
                 const initType = this.analyzeExpr(func.args[1]);
                 if (initType.tag !== "unknown") return initType;
             }
 
-            // map/filter with lambda — try to infer element type from lambda body
-            if (name === "map" && func.args.length >= 1 && func.args[0].kind === "lambda") {
-                const lambdaBody = func.args[0].body;
-                const lastStmt = lambdaBody[lambdaBody.length - 1];
-                if (lastStmt) {
-                    const bodyType = this.inferLambdaReturnType(lastStmt);
-                    if (bodyType.tag !== "unknown") {
-                        return { tag: "array", elementType: bodyType };
-                    }
+            // Mapping HOFs: map(fn), flatMap(fn) — infer element type from callback
+            if (Analyzer.MAPPING_HOFS.has(name) && func.args.length >= 1) {
+                const cbReturnType = this.inferCallbackReturnType(func.args[0], inputType);
+                if (cbReturnType.tag !== "unknown") {
+                    const elemType = name === "flatMap" && cbReturnType.tag === "array"
+                        ? cbReturnType.elementType  // flatMap flattens one level
+                        : cbReturnType;
+                    return { tag: "array", elementType: elemType };
                 }
             }
 
+            // Fall through to native resolver (handles filter, sort, find, etc.)
             const resolver = NATIVE_RETURN_TYPES.get(name);
             if (resolver) return resolver([inputType]);
             // Meme piped through any callable → Meme
@@ -1019,9 +1048,56 @@ export class Analyzer {
             return T_UNKNOWN;
         }
 
-        // Effect pipeline: Meme piped through anything → Meme
+        // Meme piped through anything → Meme
         if (inputType.tag === "instance" && inputType.className === "Meme") {
             return inputType;
+        }
+
+        return T_UNKNOWN;
+    }
+
+    /** Infer what a callback function returns when called with elements of inputType */
+    private inferCallbackReturnType(callback: Expr, inputType: MacType): MacType {
+        // Lambda/arrow: trace the body
+        if (callback.kind === "lambda") {
+            const lastStmt = callback.body[callback.body.length - 1];
+            if (lastStmt) {
+                const bodyType = this.inferLambdaReturnType(lastStmt);
+                if (bodyType.tag !== "unknown") return bodyType;
+            }
+        }
+
+        // Variable callback: check if it's a known native or effect
+        if (callback.kind === "variable") {
+            const name = callback.name.lexeme;
+            // Native function used as callback: map(arr, upper) → string
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) {
+                const elemType = inputType.tag === "array" ? inputType.elementType : inputType;
+                return resolver([elemType]);
+            }
+            // User-defined variable — if input elements are Memes, effects preserve them
+            if (inputType.tag === "array" && inputType.elementType.tag === "instance"
+                && inputType.elementType.className === "Meme") {
+                return inputType.elementType;
+            }
+        }
+
+        // Call expression as callback: map(arr, blur(5)) — parameterized effect
+        if (callback.kind === "call" && callback.callee.kind === "variable") {
+            const name = callback.callee.name.lexeme;
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) {
+                const resultType = resolver([]);
+                // Parameterized effects return a function; the function returns Meme
+                if (resultType.tag === "function") {
+                    if (inputType.tag === "array" && inputType.elementType.tag === "instance"
+                        && inputType.elementType.className === "Meme") {
+                        return inputType.elementType;
+                    }
+                }
+                return resultType;
+            }
         }
 
         return T_UNKNOWN;
