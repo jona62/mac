@@ -229,8 +229,8 @@ connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] => {
     const endLine = params.range.end.line + 1;
 
     for (const sym of result.symbols) {
-        // Only show hints for user-defined variables and parameters in the visible range
-        if (sym.kind !== "variable" && sym.kind !== "parameter") continue;
+        // Only show hints for user-defined variables (not params, classes, methods)
+        if (sym.kind !== "variable") continue;
         if (sym.token.line < startLine || sym.token.line > endLine) continue;
         if (sym.token.line <= 0) continue; // skip native/prelude symbols
         if (!sym.type || sym.type.tag === "unknown") continue;

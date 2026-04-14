@@ -205,7 +205,7 @@ export class Analyzer {
         this.currentClassName = stmt.name.lexeme;
         this.beginScope();
         this.define("this", {
-            name: "this", kind: "variable", token: stmt.name,
+            name: "this", kind: "variable", token: nativeToken("this"),
             type: { tag: "instance", className: stmt.name.lexeme },
         });
         for (const method of stmt.methods) {
