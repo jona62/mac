@@ -627,14 +627,19 @@ export class Analyzer {
 
     private analyzeVarStmt(stmt: { kind: "var"; name: Token; initializer: Expr | null }): void {
         let inferredType: MacType = T_UNKNOWN;
+        let description: string | undefined;
         if (stmt.initializer) {
             inferredType = this.analyzeExpr(stmt.initializer);
+            if (stmt.initializer.kind === "compose") {
+                description = this.describeComposeChain(stmt.initializer);
+            }
         }
         this.define(stmt.name.lexeme, {
             name: stmt.name.lexeme,
             kind: "variable",
             token: stmt.name,
             type: inferredType,
+            description,
         });
     }
 
@@ -1023,6 +1028,50 @@ export class Analyzer {
             return this.inferExprType(stmt.expression);
         }
         return T_UNKNOWN;
+    }
+
+    private describeComposeChain(expr: Expr): string {
+        const parts: string[] = [];
+        this.collectComposeParts(expr, parts);
+        return parts.join(" >> ");
+    }
+
+    private collectComposeParts(expr: Expr, parts: string[]): void {
+        if (expr.kind === "compose") {
+            this.collectComposeParts(expr.left, parts);
+            this.collectComposeParts(expr.right, parts);
+        } else {
+            parts.push(this.exprToString(expr));
+        }
+    }
+
+    private exprToString(expr: Expr): string {
+        switch (expr.kind) {
+            case "variable": return expr.name.lexeme;
+            case "call": {
+                const callee = this.exprToString(expr.callee);
+                const args = expr.args.map(a => this.exprToString(a)).join(", ");
+                return args ? `${callee}(${args})` : `${callee}()`;
+            }
+            case "get": return `${this.exprToString(expr.object)}.${expr.name.lexeme}`;
+            case "binary": return `${this.exprToString(expr.left)} ${expr.operator.lexeme} ${this.exprToString(expr.right)}`;
+            case "unary": return `${expr.operator.lexeme}${this.exprToString(expr.right)}`;
+            case "grouping": return `(${this.exprToString(expr.expression)})`;
+            case "indexGet": return `${this.exprToString(expr.object)}[${this.exprToString(expr.index)}]`;
+            case "literal": {
+                if (typeof expr.value === "string") return `"${expr.value}"`;
+                if (typeof expr.value === "number") return String(expr.value);
+                if (typeof expr.value === "boolean") return String(expr.value);
+                return "nil";
+            }
+            case "lambda": {
+                const params = expr.params.map(p => p.lexeme).join(", ");
+                const body = expr.body.length === 1 && expr.body[0].kind === "return" && expr.body[0].value
+                    ? this.exprToString(expr.body[0].value) : "...";
+                return params.includes(",") ? `(${params}) -> ${body}` : `${params} -> ${body}`;
+            }
+            default: return "...";
+        }
     }
 
     private inferExprType(expr: Expr): MacType {
