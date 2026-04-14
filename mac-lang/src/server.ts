@@ -33,8 +33,13 @@ interface Reference {
 interface AnalysisDiag {
     line: number; col: number; endCol: number; message: string; severity: string;
 }
+interface PropertyRef {
+    line: number; col: number; endCol: number;
+    name: string; ownerType: string; kind: string; description: string;
+}
 interface AnalysisResult {
     symbols: SymbolDef[]; references: Reference[]; diagnostics: AnalysisDiag[];
+    properties: PropertyRef[];
 }
 
 const analysisCache = new Map<string, AnalysisResult>();
@@ -174,6 +179,10 @@ connection.onHover((params: HoverParams): Hover | null => {
     const sym = findSymAt(result.symbols, params.position);
     if (sym) return { contents: { kind: "markdown", value: formatHover(sym) } };
 
+    // Check property accesses (.text, .frame, .transition, etc.)
+    const prop = findPropAt(result.properties, params.position);
+    if (prop) return { contents: { kind: "markdown", value: formatPropHover(prop) } };
+
     return null;
 });
 
@@ -272,6 +281,19 @@ function findSymAt(syms: SymbolDef[], pos: Position): SymbolDef | null {
         if (col >= s.col && col < s.endCol) return s;
     }
     return null;
+}
+
+function findPropAt(props: PropertyRef[], pos: Position): PropertyRef | null {
+    const line = pos.line + 1, col = pos.character + 1;
+    for (const p of props) {
+        if (p.line !== line) continue;
+        if (col >= p.col && col < p.endCol) return p;
+    }
+    return null;
+}
+
+function formatPropHover(prop: PropertyRef): string {
+    return `\`\`\`mac\n.${prop.name}\n\`\`\`\n\n*${prop.ownerType}* — ${prop.description}`;
 }
 
 function formatHover(sym: SymbolDef): string {

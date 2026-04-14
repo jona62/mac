@@ -31,10 +31,16 @@ namespace analyzer {
         std::string message, severity;
     };
 
+    struct PropertyRef {
+        int line, col, endCol;
+        std::string name, ownerType, kind, description;
+    };
+
     struct AnalysisResult {
         std::vector<SymbolDef> symbols;
         std::vector<Reference> references;
         std::vector<Diagnostic> diagnostics;
+        std::vector<PropertyRef> properties;
     };
 
     struct Scope {
@@ -47,6 +53,7 @@ namespace analyzer {
         MacAnalyzer() : currentScope(&globalScope) {
             registerNatives();
             registerPreludeTypes();
+            registerProperties();
         }
 
         AnalysisResult analyze(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& stmts) {
@@ -81,6 +88,16 @@ namespace analyzer {
                   << ",\"endCol\":" << d.endCol << ",\"message\":" << J(d.message)
                   << ",\"severity\":" << J(d.severity) << "}";
             }
+            o << "],\"properties\":[";
+            for (size_t i = 0; i < result.properties.size(); i++) {
+                auto& p = result.properties[i];
+                if (i) o << ",";
+                o << "{\"line\":" << p.line << ",\"col\":" << p.col
+                  << ",\"endCol\":" << p.endCol << ",\"name\":" << J(p.name)
+                  << ",\"ownerType\":" << J(p.ownerType)
+                  << ",\"kind\":" << J(p.kind)
+                  << ",\"description\":" << J(p.description) << "}";
+            }
             o << "]}";
             return o.str();
         }
@@ -90,6 +107,10 @@ namespace analyzer {
         Scope globalScope;
         Scope* currentScope;
         std::unordered_set<std::string> nativeNames;
+
+        struct PropInfo { std::string ownerType, kind, description; };
+        // key: "OwnerType.propName"
+        std::unordered_map<std::string, PropInfo> knownProps;
 
         // --- AST walking ---
 
@@ -165,7 +186,19 @@ namespace analyzer {
                 analyzeExpr(p->callee.get());
                 for (auto& a : p->arguments) analyzeExpr(a.get());
             }
-            else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) { analyzeExpr(p->object.get()); }
+            else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) {
+                analyzeExpr(p->object.get());
+                auto propName = tokName(p->name);
+                auto objType = inferType(p->object.get());
+                auto key = objType + "." + propName;
+                auto it = knownProps.find(key);
+                if (it != knownProps.end()) {
+                    int c = p->name.column > 0 ? p->name.column : 1;
+                    int ec = c + static_cast<int>(propName.size());
+                    result.properties.push_back({p->name.line, c, ec,
+                        propName, it->second.ownerType, it->second.kind, it->second.description});
+                }
+            }
             else if (auto* p = dynamic_cast<expr::Set<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->value.get()); }
             else if (auto* p = dynamic_cast<expr::ArrayExpr<MV>*>(e)) { for (auto& el : p->elements) analyzeExpr(el.get()); }
             else if (auto* p = dynamic_cast<expr::MapExpr<MV>*>(e)) { for (auto& v : p->values) analyzeExpr(v.get()); }
@@ -587,6 +620,40 @@ namespace analyzer {
             reg("slideUp","variable","string","Transition type.");
             reg("slideDown","variable","string","Transition type.");
             reg("wipe","variable","string","Transition type.");
+        }
+
+        void registerProperties() {
+            auto prop = [&](const std::string& owner, const std::string& name,
+                            const std::string& kind, const std::string& desc) {
+                knownProps[owner + "." + name] = {owner, kind, desc};
+            };
+            // Meme
+            prop("Meme", "text", "method", ".text(position, str) — Add text. Returns Meme. Chainable.");
+            prop("Meme", "save", "method", ".save(format, path) — Save meme to file.");
+            prop("Meme", "resize", "method", ".resize(size) — Returns resized Meme.");
+            prop("Meme", "_top", "field", "Top text string.");
+            prop("Meme", "_bottom", "field", "Bottom text string.");
+            prop("Meme", "_template", "field", "Template used by this meme.");
+            // Gif
+            prop("Gif", "frame", "method", ".frame(meme, duration) — Add frame. Returns Gif. Chainable.");
+            prop("Gif", "save", "method", ".save(path) — Render and save as animated GIF.");
+            // Timeline
+            prop("Timeline", "frame", "method", ".frame(meme, duration) — Add keyframe. Returns Timeline. Chainable.");
+            prop("Timeline", "transition", "method", ".transition(type, duration) — Set transition to next frame. Chainable.");
+            prop("Timeline", "loop", "method", ".loop(count) — Set loop count (0 = infinite). Chainable.");
+            prop("Timeline", "render", "method", ".render(path) — Render to animated GIF.");
+            prop("Timeline", "save", "method", ".save(path) — Render to animated GIF. Alias for render().");
+            // Template
+            prop("Template", "name", "field", "Template name or path.");
+            prop("Template", "path", "field", "Resolved file path.");
+            // Size
+            prop("Size", "width", "field", "Width in pixels.");
+            prop("Size", "height", "field", "Height in pixels.");
+            // Duration
+            prop("Duration", "ms", "field", "Duration in milliseconds.");
+            // Frame
+            prop("Frame", "meme", "field", "The Meme for this frame.");
+            prop("Frame", "duration", "field", "The Duration for this frame.");
         }
     };
 
