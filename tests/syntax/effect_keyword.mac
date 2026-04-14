@@ -1,0 +1,6 @@
+// effect keyword
+effect glitch = contrast(1.8) >> noise(0.2);
+print type(glitch);              // expect: function
+
+effect clean = sharpen >> contrast(1.1);
+print type(clean);               // expect: function

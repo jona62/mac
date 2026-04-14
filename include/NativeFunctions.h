@@ -1511,7 +1511,7 @@ namespace callable {
 
     class SaveFunction : public MacCallable {
     public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
                              std::vector<value::MacValue> args) override {
             auto& target = args[0];
             auto outputPath = std::get<std::string>(args[1]);
@@ -1552,11 +1552,21 @@ namespace callable {
                 throw std::runtime_error("save() map does not contain rendered image data.");
             }
 
-            // Meme instance → render from template and save
+            // Mac class instance → dispatch by class type
             if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(target)) {
                 auto inst = std::get<std::shared_ptr<instance::MacInstance>>(target);
+                auto className = inst->getClass()->name;
 
-                // Check for renderedPath field (already processed by effects)
+                // Gif/Timeline instances → call .save(path) method
+                if (className == "Gif" || className == "Timeline") {
+                    token::Token saveTok(token::TokenType::IDENTIFIER,
+                        token::TokenValue(std::string("save")), 0);
+                    auto method = inst->get(saveTok);
+                    auto fn = std::get<std::shared_ptr<MacCallable>>(method);
+                    return fn->call(interp, {value::MacValue(outputPath)});
+                }
+
+                // Meme instance → check for renderedPath first
                 token::Token renderedTok(token::TokenType::IDENTIFIER,
                     token::TokenValue(std::string("renderedPath")), 0);
                 value::MacValue renderedVal;

@@ -546,31 +546,154 @@ namespace interpreter {
             return MacValue(std::static_pointer_cast<callable::MacCallable>(composed));
         }
 
-        // --- Mac v2 syntax visitors (stubs for now) ---
+        // --- Mac v2 syntax visitors ---
 
         MacValue visitMemeLiteralExpr(expr::MemeLiteralExpr<MacValue>* expr) override {
-            // TODO: implement in Phase 4
-            throw errors::RuntimeError(expr->templateName, "Meme literals not yet implemented.");
+            auto templateName = std::get<std::string>(expr->templateName.lexeme);
+
+            // Call Template(name) then Meme(template) via the prelude classes
+            auto templateClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Template")), 0));
+            auto memeClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Meme")), 0));
+
+            auto templateFn = std::get<shared_ptr<callable::MacCallable>>(templateClass);
+            auto memeFn = std::get<shared_ptr<callable::MacCallable>>(memeClass);
+
+            auto tmpl = templateFn->call(shared_from_this(), {MacValue(templateName)});
+            auto meme = memeFn->call(shared_from_this(), {tmpl});
+
+            // Apply text positions by calling .text(position, str) on the meme instance
+            auto posTop = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Top")), 0));
+            auto posBottom = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Bottom")), 0));
+            auto posCenter = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Center")), 0));
+
+            for (auto& entry : expr->entries) {
+                auto key = std::get<std::string>(entry.key.lexeme);
+                auto textVal = evaluate(entry.value);
+
+                MacValue position;
+                if (key == "top") position = posTop;
+                else if (key == "bottom") position = posBottom;
+                else position = posCenter;
+
+                // Call meme.text(position, str) — get the 'text' method
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(meme);
+                token::Token textTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("text")), 0);
+                auto method = inst->get(textTok);
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
+                meme = fn->call(shared_from_this(), {position, textVal});
+            }
+
+            return meme;
         }
 
         MacValue visitSaveExpr(expr::SaveExpr<MacValue>* expr) override {
-            // TODO: implement in Phase 4
-            throw errors::RuntimeError(expr->op, "Save operator not yet implemented.");
+            // Desugar: expr => "path" becomes save(expr, "path")
+            // The global save() function handles all types: Meme instances, Gif, Timeline, MacMap
+            auto value = evaluate(expr->value);
+            auto pathVal = evaluate(expr->path);
+            auto saveFn = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("save")), 0));
+            auto fn = std::get<shared_ptr<callable::MacCallable>>(saveFn);
+            return fn->call(shared_from_this(), {value, pathVal});
         }
 
         MacValue visitGifBlockExpr(expr::GifBlockExpr<MacValue>* expr) override {
-            // TODO: implement in Phase 4
-            throw errors::RuntimeError(expr->keyword, "Gif blocks not yet implemented.");
+            // Create a Gif instance via the prelude class
+            auto gifClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Gif")), 0));
+            auto gifFn = std::get<shared_ptr<callable::MacCallable>>(gifClass);
+            auto gif = gifFn->call(shared_from_this(), {});
+
+            auto durClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Duration")), 0));
+            auto durFn = std::get<shared_ptr<callable::MacCallable>>(durClass);
+
+            for (auto& frame : expr->frames) {
+                auto meme = evaluate(frame.meme);
+                auto dur = durFn->call(shared_from_this(), {MacValue(frame.durationMs)});
+
+                // Call gif.frame(meme, duration)
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(gif);
+                token::Token frameTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("frame")), 0);
+                auto method = inst->get(frameTok);
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
+                gif = fn->call(shared_from_this(), {meme, dur});
+            }
+
+            // If loop, the Gif class doesn't support loop — but we still return it
+            return gif;
         }
 
         MacValue visitTimelineBlockExpr(expr::TimelineBlockExpr<MacValue>* expr) override {
-            // TODO: implement in Phase 4
-            throw errors::RuntimeError(expr->keyword, "Timeline blocks not yet implemented.");
+            auto tlClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Timeline")), 0));
+            auto tlFn = std::get<shared_ptr<callable::MacCallable>>(tlClass);
+            auto tl = tlFn->call(shared_from_this(), {});
+
+            auto durClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Duration")), 0));
+            auto durFn = std::get<shared_ptr<callable::MacCallable>>(durClass);
+
+            for (auto& entry : expr->entries) {
+                auto meme = evaluate(entry.frame.meme);
+                auto dur = durFn->call(shared_from_this(), {MacValue(entry.frame.durationMs)});
+
+                // Call tl.frame(meme, duration)
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(tl);
+                token::Token frameTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("frame")), 0);
+                auto method = inst->get(frameTok);
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
+                tl = fn->call(shared_from_this(), {meme, dur});
+
+                // Apply transition if present
+                if (entry.transition) {
+                    auto transInst = std::get<shared_ptr<instance::MacInstance>>(tl);
+                    token::Token transTok(token::TokenType::IDENTIFIER,
+                        token::TokenValue(std::string("transition")), 0);
+                    auto transMethod = transInst->get(transTok);
+                    auto transFn = std::get<shared_ptr<callable::MacCallable>>(transMethod);
+                    auto transDur = durFn->call(shared_from_this(), {MacValue(entry.transition->durationMs)});
+                    tl = transFn->call(shared_from_this(),
+                        {MacValue(entry.transition->type), transDur});
+                }
+            }
+
+            if (expr->loop) {
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(tl);
+                token::Token loopTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("loop")), 0);
+                auto method = inst->get(loopTok);
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
+                tl = fn->call(shared_from_this(), {MacValue(0.0)});
+            }
+
+            return tl;
         }
 
         MacValue visitGridBlockExpr(expr::GridBlockExpr<MacValue>* expr) override {
-            // TODO: implement in Phase 4
-            throw errors::RuntimeError(expr->keyword, "Grid blocks not yet implemented.");
+            // Evaluate all entries into an array
+            auto arr = std::make_shared<collection::MacArray>();
+            for (auto& e : expr->entries) {
+                arr->elements.push_back(evaluate(e));
+            }
+
+            // Call toGrid(arr, cols, rows)
+            auto toGridFn = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("toGrid")), 0));
+            auto fn = std::get<shared_ptr<callable::MacCallable>>(toGridFn);
+            return fn->call(shared_from_this(), {
+                MacValue(arr),
+                MacValue(static_cast<double>(expr->cols)),
+                MacValue(static_cast<double>(expr->rows))
+            });
         }
 
         // --- Public API ---

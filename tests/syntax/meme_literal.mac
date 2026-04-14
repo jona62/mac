@@ -1,0 +1,17 @@
+// @template meme literal syntax
+
+// Named positions
+var m = @two_panel {
+    top: "Hello"
+    bottom: "World"
+};
+print type(m);                   // expect: instance
+
+// One-liner (center text)
+var m2 = @blank "Just this";
+print type(m2);                  // expect: instance
+
+// Access fields
+print m.topText;                 // expect: Hello
+print m.bottomText;              // expect: World
+print m2.bottomText;             // expect: Just this
