@@ -26,6 +26,7 @@ var clean = sharpen >> contrast(1.1);
 var effects = [clean, vintage, glitch, deepfry, invert];
 
 // Apply different effects to each frame
+
 var styled = zip(memes, effects) |> map(pair -> pair[0] |> pair[1]);
 
 // Build animation with reduce — fold memes into a timeline
