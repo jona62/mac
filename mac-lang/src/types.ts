@@ -12,6 +12,7 @@ export type MacType =
     | { tag: "bool" }
     | { tag: "nil" }
     | { tag: "array"; elementType: MacType }
+    | { tag: "tuple"; elementTypes: MacType[] }
     | { tag: "map"; valueType: MacType }
     | { tag: "instance"; className: string }
     | { tag: "function"; paramCount: number }
@@ -31,6 +32,7 @@ export function formatMacType(t: MacType): string {
         case "bool": return "bool";
         case "nil": return "nil";
         case "array": return `[${formatMacType(t.elementType)}]`;
+        case "tuple": return `(${t.elementTypes.map(formatMacType).join(", ")})`;
         case "map": return `{${formatMacType(t.valueType)}}`;
         case "instance": return t.className;
         case "function": return `fun(${t.paramCount})`;

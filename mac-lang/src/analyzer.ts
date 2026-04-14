@@ -318,6 +318,10 @@ export class Analyzer {
             case "indexGet": {
                 const objType = this.analyzeExpr(expr.object);
                 this.analyzeExpr(expr.index);
+                if (objType.tag === "tuple" && expr.index.kind === "literal" && typeof expr.index.value === "number") {
+                    const i = expr.index.value;
+                    if (i >= 0 && i < objType.elementTypes.length) return objType.elementTypes[i];
+                }
                 if (objType.tag === "array") return objType.elementType;
                 if (objType.tag === "map") return objType.valueType;
                 return T_UNKNOWN;
@@ -483,6 +487,10 @@ export class Analyzer {
         }
         if (expr.kind === "indexGet") {
             const objType = this.inferExprType(expr.object);
+            if (objType.tag === "tuple" && expr.index.kind === "literal" && typeof expr.index.value === "number") {
+                const i = expr.index.value;
+                if (i >= 0 && i < objType.elementTypes.length) return objType.elementTypes[i];
+            }
             if (objType.tag === "array") return objType.elementType;
             if (objType.tag === "map") return objType.valueType;
             return T_UNKNOWN;

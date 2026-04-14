@@ -181,17 +181,15 @@ export const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacT
         return { tag: "array" as const, elementType: T_UNKNOWN };
     }],
     ["zip", (args) => {
-        // zip(a, b) — use the first array's element type that isn't unknown
+        // zip(a, b) → [(elemA, elemB)]
         const a = args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN;
         const b = args[1]?.tag === "array" ? args[1].elementType : T_UNKNOWN;
-        const inner = a.tag !== "unknown" ? a : b.tag !== "unknown" ? b : T_UNKNOWN;
-        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: inner } };
+        return { tag: "array" as const, elementType: { tag: "tuple" as const, elementTypes: [a, b] } };
     }],
     ["enumerate", (args) => {
-        if (args[0]?.tag === "array" && args[0].elementType.tag !== "unknown") {
-            return { tag: "array" as const, elementType: { tag: "array" as const, elementType: args[0].elementType } };
-        }
-        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: T_UNKNOWN } };
+        // enumerate(arr) → [(number, elem)]
+        const elem = args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN;
+        return { tag: "array" as const, elementType: { tag: "tuple" as const, elementTypes: [T_NUMBER, elem] } };
     }],
 
     // Element-extracting
