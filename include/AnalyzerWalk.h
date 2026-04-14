@@ -107,6 +107,16 @@ namespace analyzer {
             define(p->varName, "variable", elemType);
             analyzeStmt(p->body.get());
             endScope();
+        } else if (auto* p = dynamic_cast<stmt::EffectStmt<MV>*>(s)) {
+            std::string type = "Meme -> Meme";
+            std::string desc;
+            if (p->value) {
+                type = inferType(p->value.get());
+                if (dynamic_cast<expr::ComposeExpr<MV>*>(p->value.get()))
+                    desc = describeCompose(p->value.get());
+            }
+            define(p->name, "variable", type, desc);
+            if (p->value) analyzeExpr(p->value.get());
         }
     }
 
@@ -276,6 +286,23 @@ namespace analyzer {
         } else if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) {
             analyzeExpr(p->left.get());
             analyzeExpr(p->right.get());
+        }
+        // --- Mac v2 syntax nodes ---
+        else if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
+            for (auto& entry : p->entries) analyzeExpr(entry.value.get());
+        }
+        else if (auto* p = dynamic_cast<expr::SaveExpr<MV>*>(e)) {
+            analyzeExpr(p->value.get());
+            analyzeExpr(p->path.get());
+        }
+        else if (auto* p = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
+            for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
+        }
+        else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
+            for (auto& entry : p->entries) analyzeExpr(entry.frame.meme.get());
+        }
+        else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
+            for (auto& entry : p->entries) analyzeExpr(entry.get());
         }
     }
 

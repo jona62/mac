@@ -5,9 +5,14 @@
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
+    { "include": "#duration-literals" },
     { "include": "#numbers" },
+    { "include": "#meme-literal" },
+    { "include": "#effect-declaration" },
     { "include": "#class-declaration" },
     { "include": "#function-declaration" },
+    { "include": "#block-keywords" },
+    { "include": "#transition-separator" },
     { "include": "#function-call" },
     { "include": "#stdlib-types" },
     { "include": "#stdlib-constants" },
@@ -39,6 +44,32 @@
       "name": "constant.numeric.mac",
       "match": "\\b\\d+(\\.\\d+)?\\b"
     },
+    "duration-literals": {
+      "name": "constant.numeric.duration.mac",
+      "match": "\\b\\d+(ms|s)\\b"
+    },
+    "meme-literal": {
+      "match": "(@)(\\w+)",
+      "captures": {
+        "1": { "name": "punctuation.definition.meme.mac" },
+        "2": { "name": "entity.name.tag.template.mac" }
+      }
+    },
+    "effect-declaration": {
+      "match": "\\b(effect)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": { "name": "keyword.control.mac" },
+        "2": { "name": "entity.name.function.effect.mac" }
+      }
+    },
+    "block-keywords": {
+      "name": "keyword.control.block.mac",
+      "match": "\\b(gif|timeline|grid|loop)\\b(?=\\s+[{\\w\\d])"
+    },
+    "transition-separator": {
+      "name": "punctuation.separator.transition.mac",
+      "match": "---"
+    },
     "constants": {
       "patterns": [
         {
@@ -57,7 +88,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(var|fun|class|for|while|if|else|return|print|in|break|continue)\\b"
+      "match": "\\b(var|fun|effect|class|for|while|if|else|return|print|in|break|continue)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",
@@ -89,7 +120,7 @@
     },
     "stdlib-constants": {
       "name": "support.constant.mac",
-      "match": "\\b(Top|Bottom|Center|PNG|JPG|GIF)\\b"
+      "match": "\\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\\b"
     },
     "dunder-methods": {
       "name": "support.function.magic.mac",
@@ -97,7 +128,7 @@
     },
     "operators": {
       "name": "keyword.operator.mac",
-      "match": "->|\\|>|>>|==|!=|<=|>=|[+\\-*/!<>=%]"
+      "match": "=>|->|\\|>|>>|==|!=|<=|>=|[+\\-*/!<>=%@]"
     },
     "punctuation": {
       "patterns": [
