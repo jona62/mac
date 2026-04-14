@@ -31,10 +31,12 @@ namespace token {
         LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,
         LEFT_BRACKET, RIGHT_BRACKET,
         COMMA, DOT, MINUS, PLUS, SEMICOLON, SLASH, STAR,
-        COLON, PERCENT,
+        COLON, PERCENT, AT,
         PIPE,    // |>
         COMPOSE, // >>
         ARROW,   // ->
+        FAT_ARROW,   // =>
+        TRIPLE_DASH, // ---
 
         // One or two character tokens.
         BANG, BANG_EQUAL,
@@ -46,7 +48,8 @@ namespace token {
         IDENTIFIER, STRING, NUMBER,
 
         // Keywords.
-        AND, BREAK, CLASS, CONTINUE, ELSE, FALSE, FUN, FOR, IF, IN, NIL, OR,
+        AND, BREAK, CLASS, CONTINUE, EFFECT, ELSE, FALSE, FUN, FOR,
+        IF, IN, NIL, OR,
         PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
 
         // End of file.
@@ -59,14 +62,15 @@ namespace token {
         "LEFT_PAREN", "RIGHT_PAREN", "LEFT_BRACE", "RIGHT_BRACE",
         "LEFT_BRACKET", "RIGHT_BRACKET",
         "COMMA", "DOT", "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",
-        "COLON", "PERCENT",
-        "PIPE", "COMPOSE", "ARROW",
+        "COLON", "PERCENT", "AT",
+        "PIPE", "COMPOSE", "ARROW", "FAT_ARROW", "TRIPLE_DASH",
         "BANG", "BANG_EQUAL",
         "EQUAL", "EQUAL_EQUAL",
         "GREATER", "GREATER_EQUAL",
         "LESS", "LESS_EQUAL",
         "IDENTIFIER", "STRING", "NUMBER",
-        "AND", "BREAK", "CLASS", "CONTINUE", "ELSE", "FALSE", "FUN", "FOR", "IF", "IN", "NIL", "OR",
+        "AND", "BREAK", "CLASS", "CONTINUE", "EFFECT", "ELSE", "FALSE", "FUN", "FOR",
+        "IF", "IN", "NIL", "OR",
         "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
         "END_OF_FILE"
     };

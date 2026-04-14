@@ -34,6 +34,7 @@ namespace scanner {
                 case ']': type = TokenType::RIGHT_BRACKET; break;
                 case ':': type = TokenType::COLON; break;
                 case '%': type = TokenType::PERCENT; break;
+                case '@': type = TokenType::AT; break;
                 default:
                     break;
             }
@@ -55,6 +56,8 @@ namespace scanner {
                 case '=':
                     if (match('=')) {
                         type = TokenType::EQUAL_EQUAL;
+                    } else if (match('>')) {
+                        type = TokenType::FAT_ARROW;
                     } else {
                         type = TokenType::EQUAL;
                     }
@@ -76,6 +79,14 @@ namespace scanner {
                 case '-':
                     if (match('>')) {
                         type = TokenType::ARROW;
+                    } else if (match('-')) {
+                        if (match('-')) {
+                            type = TokenType::TRIPLE_DASH;
+                        } else {
+                            // Two minuses: put one back, emit single MINUS
+                            current--;
+                            type = TokenType::MINUS;
+                        }
                     } else {
                         type = TokenType::MINUS;
                     }

@@ -81,6 +81,7 @@ namespace scanner {
                 {"break", TokenType::BREAK},
                 {"class", TokenType::CLASS},
                 {"continue", TokenType::CONTINUE},
+                {"effect", TokenType::EFFECT},
                 {"else", TokenType::ELSE},
                 {"false", TokenType::FALSE},
                 {"fun", TokenType::FUN},
