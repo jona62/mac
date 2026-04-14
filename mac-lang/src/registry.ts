@@ -181,13 +181,11 @@ export const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacT
         return { tag: "array" as const, elementType: T_UNKNOWN };
     }],
     ["zip", (args) => {
-        if (args[0]?.tag === "array" && args[1]?.tag === "array") {
-            const a = args[0].elementType, b = args[1].elementType;
-            if (a.tag === b.tag && a.tag === "instance" && b.tag === "instance" && a.className === b.className) {
-                return { tag: "array" as const, elementType: { tag: "array" as const, elementType: a } };
-            }
-        }
-        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: T_UNKNOWN } };
+        // zip(a, b) — use the first array's element type that isn't unknown
+        const a = args[0]?.tag === "array" ? args[0].elementType : T_UNKNOWN;
+        const b = args[1]?.tag === "array" ? args[1].elementType : T_UNKNOWN;
+        const inner = a.tag !== "unknown" ? a : b.tag !== "unknown" ? b : T_UNKNOWN;
+        return { tag: "array" as const, elementType: { tag: "array" as const, elementType: inner } };
     }],
     ["enumerate", (args) => {
         if (args[0]?.tag === "array" && args[0].elementType.tag !== "unknown") {

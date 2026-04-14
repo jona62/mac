@@ -415,11 +415,19 @@ export class Analyzer {
 
     private inferCallbackReturnType(callback: Expr, inputType: MacType): MacType {
         if (callback.kind === "lambda") {
-            const lastStmt = callback.body[callback.body.length - 1];
-            if (lastStmt) {
-                const bodyType = this.inferLambdaReturnType(lastStmt);
-                if (bodyType.tag !== "unknown") return bodyType;
+            // Temporarily define lambda params with the input element type
+            const elemType = inputType.tag === "array" ? inputType.elementType : inputType;
+            this.beginScope();
+            for (const param of callback.params) {
+                this.define(param.lexeme, {
+                    name: param.lexeme, kind: "parameter", token: param, type: elemType,
+                });
             }
+            const lastStmt = callback.body[callback.body.length - 1];
+            let bodyType: MacType = T_UNKNOWN;
+            if (lastStmt) bodyType = this.inferLambdaReturnType(lastStmt);
+            this.endScope();
+            if (bodyType.tag !== "unknown") return bodyType;
         }
         if (callback.kind === "variable") {
             const name = callback.name.lexeme;
@@ -472,6 +480,12 @@ export class Analyzer {
             const leftType = this.inferExprType(expr.value);
             if (leftType.tag === "instance" && leftType.className === "Meme") return leftType;
             return leftType;
+        }
+        if (expr.kind === "indexGet") {
+            const objType = this.inferExprType(expr.object);
+            if (objType.tag === "array") return objType.elementType;
+            if (objType.tag === "map") return objType.valueType;
+            return T_UNKNOWN;
         }
         if (expr.kind === "variable") {
             const def = this.resolve(expr.name.lexeme);
