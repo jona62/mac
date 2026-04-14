@@ -148,6 +148,27 @@ namespace resolver {
             return std::monostate{};
         }
 
+        MV visitMemeLiteralExpr(expr::MemeLiteralExpr<MV>* expr) override {
+            for (auto& e : expr->entries) resolveExpr(e.value);
+            return std::monostate{};
+        }
+        MV visitSaveExpr(expr::SaveExpr<MV>* expr) override {
+            resolveExpr(expr->value); resolveExpr(expr->path);
+            return std::monostate{};
+        }
+        MV visitGifBlockExpr(expr::GifBlockExpr<MV>* expr) override {
+            for (auto& f : expr->frames) resolveExpr(f.meme);
+            return std::monostate{};
+        }
+        MV visitTimelineBlockExpr(expr::TimelineBlockExpr<MV>* expr) override {
+            for (auto& e : expr->entries) resolveExpr(e.frame.meme);
+            return std::monostate{};
+        }
+        MV visitGridBlockExpr(expr::GridBlockExpr<MV>* expr) override {
+            for (auto& e : expr->entries) resolveExpr(e);
+            return std::monostate{};
+        }
+
         MV visitAssignExpr(expr::Assign<MV>* expr) override {
             resolveExpr(expr->value);
             resolveLocal(expr, expr->name);
@@ -212,6 +233,9 @@ namespace resolver {
 
         void visitBreakStmt(stmt::BreakStmt<MV>*) override {}
         void visitContinueStmt(stmt::ContinueStmt<MV>*) override {}
+        void visitEffectStmt(stmt::EffectStmt<MV>* stm) override {
+            declare(stm->name); resolveExpr(stm->value); define(stm->name);
+        }
 
         void visitClassStmt(stmt::ClassStmt<MV>* stm) override {
             declare(stm->name);

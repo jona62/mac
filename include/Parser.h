@@ -87,9 +87,22 @@ namespace parser {
         template <typename T>
         shared_ptr<Expr<T>> compose();
         template <typename T>
+        shared_ptr<Expr<T>> saveExpr();
+        template <typename T>
         shared_ptr<Expr<T>> pipe();
         template <typename T>
         shared_ptr<Expr<T>> expression();
+        template <typename T>
+        shared_ptr<Expr<T>> memeLiteral();
+        template <typename T>
+        shared_ptr<Expr<T>> gifBlock();
+        template <typename T>
+        shared_ptr<Expr<T>> timelineBlock();
+        template <typename T>
+        shared_ptr<Expr<T>> gridBlock();
+        template <typename T>
+        shared_ptr<stmt::Stmt<T>> effectDeclaration();
+        double parseDuration();
 
         void synchronize();
     };

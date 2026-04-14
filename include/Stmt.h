@@ -186,6 +186,19 @@ namespace stmt {
         token::Token keyword;
     };
 
+    // effect name = compose_expr;
+    template <typename T>
+    class EffectStmt : public Stmt<T> {
+    public:
+        EffectStmt(token::Token name, std::shared_ptr<expr::Expr<T>> value)
+            : name(name), value(value) {}
+        void accept(shared_ptr<StmtVisitor<T>> visitor) override {
+            visitor->visitEffectStmt(this);
+        }
+        token::Token name;
+        std::shared_ptr<expr::Expr<T>> value;
+    };
+
     template <typename T>
     class StmtVisitor {
     public:
@@ -201,6 +214,7 @@ namespace stmt {
         virtual void visitForInStmt(ForInStmt<T>* stmt) = 0;
         virtual void visitBreakStmt(BreakStmt<T>* stmt) = 0;
         virtual void visitContinueStmt(ContinueStmt<T>* stmt) = 0;
+        virtual void visitEffectStmt(EffectStmt<T>* stmt) = 0;
         virtual ~StmtVisitor() = default;
     };
 

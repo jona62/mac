@@ -435,6 +435,12 @@ namespace interpreter {
             throw errors::ContinueException();
         }
 
+        void visitEffectStmt(stmt::EffectStmt<MacValue>* stmt) override {
+            // Same as var declaration — effect is just a named compose
+            MacValue value = evaluate(stmt->value);
+            env->define(std::get<std::string>(stmt->name.lexeme), value);
+        }
+
         MacValue visitArrayExpr(expr::ArrayExpr<MacValue>* expr) override {
             auto arr = std::make_shared<collection::MacArray>();
             for (auto& elem : expr->elements) {
@@ -538,6 +544,33 @@ namespace interpreter {
             auto fn2 = std::get<shared_ptr<callable::MacCallable>>(right);
             auto composed = make_shared<callable::ComposedFunction>(fn1, fn2);
             return MacValue(std::static_pointer_cast<callable::MacCallable>(composed));
+        }
+
+        // --- Mac v2 syntax visitors (stubs for now) ---
+
+        MacValue visitMemeLiteralExpr(expr::MemeLiteralExpr<MacValue>* expr) override {
+            // TODO: implement in Phase 4
+            throw errors::RuntimeError(expr->templateName, "Meme literals not yet implemented.");
+        }
+
+        MacValue visitSaveExpr(expr::SaveExpr<MacValue>* expr) override {
+            // TODO: implement in Phase 4
+            throw errors::RuntimeError(expr->op, "Save operator not yet implemented.");
+        }
+
+        MacValue visitGifBlockExpr(expr::GifBlockExpr<MacValue>* expr) override {
+            // TODO: implement in Phase 4
+            throw errors::RuntimeError(expr->keyword, "Gif blocks not yet implemented.");
+        }
+
+        MacValue visitTimelineBlockExpr(expr::TimelineBlockExpr<MacValue>* expr) override {
+            // TODO: implement in Phase 4
+            throw errors::RuntimeError(expr->keyword, "Timeline blocks not yet implemented.");
+        }
+
+        MacValue visitGridBlockExpr(expr::GridBlockExpr<MacValue>* expr) override {
+            // TODO: implement in Phase 4
+            throw errors::RuntimeError(expr->keyword, "Grid blocks not yet implemented.");
         }
 
         // --- Public API ---

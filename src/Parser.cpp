@@ -46,6 +46,7 @@ shared_ptr<stmt::Stmt<T>> Parser::declaration() {
             return functionDeclaration<T>("function");
         }
         if (match(TokenType::VAR)) return varDeclaration<T>();
+        if (match(TokenType::EFFECT)) return effectDeclaration<T>();
         return statement<T>();
     } catch (const ParseError& error) {
         std::cerr << error.what() << std::endl;
@@ -441,6 +442,29 @@ shared_ptr<Expr<T>> Parser::primary() {
 
     if (match(TokenType::LEFT_BRACE)) return mapLiteral<T>();
 
+    if (match(TokenType::AT)) return memeLiteral<T>();
+
+    // Contextual keyword blocks: gif, timeline, grid
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        if (s && (*s == "gif" || *s == "timeline" || *s == "grid")) {
+            // Look ahead: must be followed by { or loop or NxM
+            if (current + 1 < tokens.size()) {
+                auto next = tokens[current + 1].type;
+                auto* nextStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
+                bool isBlock = (next == TokenType::LEFT_BRACE) ||
+                    (nextStr && *nextStr == "loop") ||
+                    (next == TokenType::NUMBER);
+                if (isBlock) {
+                    advance(); // consume gif/timeline/grid
+                    if (*s == "gif") return gifBlock<T>();
+                    if (*s == "timeline") return timelineBlock<T>();
+                    if (*s == "grid") return gridBlock<T>();
+                }
+            }
+        }
+    }
+
     throw ParseError(peek(), "Expected expression.");
 }
 
@@ -649,8 +673,185 @@ shared_ptr<Expr<T>> Parser::pipe() {
 }
 
 template <typename T>
+shared_ptr<Expr<T>> Parser::saveExpr() {
+    auto expr = pipe<T>();
+
+    if (match(TokenType::FAT_ARROW)) {
+        Token op = previous();
+        auto path = primary<T>(); // path is just a string literal
+        expr = make_shared<expr::SaveExpr<T>>(expr, op, path);
+    }
+
+    return expr;
+}
+
+template <typename T>
 shared_ptr<Expr<T>> Parser::expression() {
-    return pipe<T>();
+    return saveExpr<T>();
+}
+
+// --- Mac v2 syntax parsing ---
+
+// Helper: parse duration like 400ms or 2s — returns milliseconds
+double Parser::parseDuration() {
+    consume(TokenType::NUMBER, "Expected duration number.");
+    double num = std::get<double>(previous().lexeme);
+    // Check for ms/s suffix
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* unit = std::get_if<std::string>(&peek().lexeme);
+        if (unit && (*unit == "ms" || *unit == "s")) {
+            advance();
+            if (*unit == "s") num *= 1000;
+        }
+    }
+    return num;
+}
+
+// effect name = compose_expr;
+template <typename T>
+shared_ptr<stmt::Stmt<T>> Parser::effectDeclaration() {
+    consume(TokenType::IDENTIFIER, "Expected effect name.");
+    Token name = previous();
+    consume(TokenType::EQUAL, "Expected '=' after effect name.");
+    auto value = compose<T>();
+    consume(TokenType::SEMICOLON, "Expected ';' after effect declaration.");
+    return make_shared<stmt::EffectStmt<T>>(name, value);
+}
+
+// @templateName { top: "...", bottom: "..." } or @templateName "one-liner"
+template <typename T>
+shared_ptr<Expr<T>> Parser::memeLiteral() {
+    consume(TokenType::IDENTIFIER, "Expected template name after '@'.");
+    Token templateName = previous();
+
+    std::vector<typename expr::MemeLiteralExpr<T>::TextEntry> entries;
+
+    if (match(TokenType::LEFT_BRACE)) {
+        // Named positions: top: "...", bottom: "..."
+        while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+            consume(TokenType::IDENTIFIER, "Expected position name (top, bottom, center).");
+            Token key = previous();
+            consume(TokenType::COLON, "Expected ':' after position name.");
+            auto value = expression<T>();
+            entries.push_back({key, value});
+        }
+        consume(TokenType::RIGHT_BRACE, "Expected '}' after meme literal.");
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false);
+    }
+
+    // One-liner: @template "text"
+    if (peek().type == TokenType::STRING) {
+        auto value = primary<T>();
+        Token centerKey(TokenType::IDENTIFIER, token::TokenValue(std::string("center")),
+                        templateName.line, templateName.column);
+        entries.push_back({centerKey, value});
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true);
+    }
+
+    throw ParseError(peek(), "Expected '{' or string after @template.");
+}
+
+// gif [loop] { @tmpl "text" : 400ms, ... }
+template <typename T>
+shared_ptr<Expr<T>> Parser::gifBlock() {
+    Token keyword = previous();
+    bool loop = false;
+
+    // Check for 'loop' keyword (contextual)
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        if (s && *s == "loop") { advance(); loop = true; }
+    }
+
+    consume(TokenType::LEFT_BRACE, "Expected '{' after gif.");
+
+    std::vector<typename expr::GifBlockExpr<T>::Frame> frames;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        auto meme = expression<T>(); // parse the meme expression (could be @literal or variable)
+        consume(TokenType::COLON, "Expected ':' after meme in gif frame.");
+        double ms = parseDuration();
+        frames.push_back({meme, ms});
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after gif block.");
+
+    return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(frames));
+}
+
+// timeline [loop] { @tmpl { ... } : 2s --- crossfade 150ms --- ... }
+template <typename T>
+shared_ptr<Expr<T>> Parser::timelineBlock() {
+    Token keyword = previous();
+    bool loop = false;
+
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        if (s && *s == "loop") { advance(); loop = true; }
+    }
+
+    consume(TokenType::LEFT_BRACE, "Expected '{' after timeline.");
+
+    std::vector<typename expr::TimelineBlockExpr<T>::Entry> entries;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        // Check for transition: --- type duration ---
+        if (match(TokenType::TRIPLE_DASH)) {
+            consume(TokenType::IDENTIFIER, "Expected transition type after '---'.");
+            std::string transType = std::get<std::string>(previous().lexeme);
+            double transMs = parseDuration();
+            consume(TokenType::TRIPLE_DASH, "Expected '---' after transition duration.");
+            // Attach transition to the previous entry
+            if (!entries.empty()) {
+                auto trans = std::make_shared<typename expr::TimelineBlockExpr<T>::Transition>();
+                trans->type = transType;
+                trans->durationMs = transMs;
+                entries.back().transition = trans;
+            }
+            continue;
+        }
+
+        // Parse frame: memeExpr : duration
+        auto meme = expression<T>();
+        consume(TokenType::COLON, "Expected ':' after meme in timeline frame.");
+        double ms = parseDuration();
+        entries.push_back({{meme, ms}, nullptr});
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after timeline block.");
+
+    return make_shared<expr::TimelineBlockExpr<T>>(keyword, loop, std::move(entries));
+}
+
+// grid NxM { entries }
+template <typename T>
+shared_ptr<Expr<T>> Parser::gridBlock() {
+    Token keyword = previous();
+    // Parse NxM: NUMBER then 'x' then NUMBER, or just NUMBER (assume square)
+    consume(TokenType::NUMBER, "Expected grid columns (e.g., 2x2).");
+    int cols = static_cast<int>(std::get<double>(previous().lexeme));
+    int rows = cols; // default: square
+    // Check for 'x' followed by number
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        if (s && s->length() > 0 && (*s)[0] == 'x') {
+            // Could be "x2" or just "x" followed by number
+            if (s->length() > 1) {
+                rows = std::stoi(s->substr(1));
+                advance();
+            } else {
+                advance(); // consume 'x'
+                consume(TokenType::NUMBER, "Expected row count after 'x'.");
+                rows = static_cast<int>(std::get<double>(previous().lexeme));
+            }
+        }
+    }
+
+    consume(TokenType::LEFT_BRACE, "Expected '{' after grid dimensions.");
+
+    std::vector<shared_ptr<Expr<T>>> entries;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        entries.push_back(expression<T>());
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after grid block.");
+
+    return make_shared<expr::GridBlockExpr<T>>(keyword, cols, rows, std::move(entries));
 }
 
 void Parser::synchronize() {
@@ -702,7 +903,13 @@ template shared_ptr<Expr<MV>> Parser::logicalOr<MV>();
 template shared_ptr<Expr<MV>> Parser::logicalAnd<MV>();
 template shared_ptr<Expr<MV>> Parser::assignment<MV>();
 template shared_ptr<Expr<MV>> Parser::compose<MV>();
+template shared_ptr<Expr<MV>> Parser::saveExpr<MV>();
 template shared_ptr<Expr<MV>> Parser::pipe<MV>();
 template shared_ptr<Expr<MV>> Parser::expression<MV>();
+template shared_ptr<Expr<MV>> Parser::memeLiteral<MV>();
+template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
+template shared_ptr<Expr<MV>> Parser::timelineBlock<MV>();
+template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
+template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
 
 } // namespace parser
