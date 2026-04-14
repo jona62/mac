@@ -300,8 +300,17 @@ const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
     ["take",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
     ["drop",    (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
 
-    // Array-returning with unknown elements
-    ["map",       () => ({ tag: "array", elementType: T_UNKNOWN })],
+    // Array-returning — infer element type from callback context
+    ["map",       (args) => {
+        // If mapping over an array and the callback is an effect (Meme→Meme), preserve Meme type
+        if (args[0]?.tag === "array" && args[0].elementType.tag === "instance" && args[0].elementType.className === "Meme") {
+            return { tag: "array" as const, elementType: args[0].elementType };
+        }
+        // If callback return type is known (e.g. from arrow returning a constructor), try to use it
+        if (args[1]?.tag === "instance") return { tag: "array" as const, elementType: args[1] };
+        if (args[1]?.tag === "function") return { tag: "array" as const, elementType: T_UNKNOWN };
+        return { tag: "array" as const, elementType: T_UNKNOWN };
+    }],
     ["flatMap",   () => ({ tag: "array", elementType: T_UNKNOWN })],
     ["flatten",   (args) => {
         if (args[0]?.tag === "array" && args[0].elementType.tag === "array") {
@@ -974,16 +983,74 @@ export class Analyzer {
         // x |> name(args) — pipe inserts x as first arg
         if (func.kind === "call" && func.callee.kind === "variable") {
             const name = func.callee.name.lexeme;
+
+            // map/filter with lambda — try to infer element type from lambda body
+            if (name === "map" && func.args.length >= 1 && func.args[0].kind === "lambda") {
+                const lambdaBody = func.args[0].body;
+                const lastStmt = lambdaBody[lambdaBody.length - 1];
+                if (lastStmt) {
+                    const bodyType = this.inferLambdaReturnType(lastStmt);
+                    if (bodyType.tag !== "unknown") {
+                        return { tag: "array", elementType: bodyType };
+                    }
+                }
+            }
+
             const resolver = NATIVE_RETURN_TYPES.get(name);
             if (resolver) return resolver([inputType]);
             return T_UNKNOWN;
         }
 
-        // Effect pipeline: Meme piped through a function → Meme
+        // Effect pipeline: Meme piped through anything → Meme
         if (inputType.tag === "instance" && inputType.className === "Meme") {
             return inputType;
         }
 
+        return T_UNKNOWN;
+    }
+
+    private inferLambdaReturnType(stmt: Stmt): MacType {
+        // return expr;
+        if (stmt.kind === "return" && stmt.value) {
+            return this.inferExprType(stmt.value);
+        }
+        // expression statement (implicit return in arrow functions)
+        if (stmt.kind === "expression") {
+            return this.inferExprType(stmt.expression);
+        }
+        return T_UNKNOWN;
+    }
+
+    private inferExprType(expr: Expr): MacType {
+        // Constructor call: Meme(...), Gif(...), Timeline(...)
+        if (expr.kind === "call" && expr.callee.kind === "variable") {
+            const name = expr.callee.name.lexeme;
+            const def = this.resolve(name);
+            if (def?.kind === "class") return { tag: "instance", className: name };
+            const resolver = NATIVE_RETURN_TYPES.get(name);
+            if (resolver) return resolver([]);
+        }
+        // Method chain: Meme(...).text(...).text(...)
+        if (expr.kind === "call" && expr.callee.kind === "get") {
+            const objectType = this.inferExprType(expr.callee.object);
+            if (objectType.tag === "instance") {
+                const key = `${objectType.className}.${expr.callee.name.lexeme}`;
+                const retType = METHOD_RETURN_TYPES.get(key);
+                if (retType) return retType;
+            }
+            return objectType; // method chains often return this
+        }
+        // Pipe: expr |> effect → preserves Meme type
+        if (expr.kind === "pipe") {
+            const leftType = this.inferExprType(expr.value);
+            if (leftType.tag === "instance" && leftType.className === "Meme") return leftType;
+            return leftType;
+        }
+        // Variable reference
+        if (expr.kind === "variable") {
+            const def = this.resolve(expr.name.lexeme);
+            if (def?.type) return def.type;
+        }
         return T_UNKNOWN;
     }
 }
