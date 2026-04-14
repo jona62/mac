@@ -212,7 +212,9 @@ function runAnalysis(text: string): AnalysisResult | null {
         const out = cp.execFileSync(macBinary, ["--analyze", tmpFile], {
             timeout: 5000,
             encoding: "utf-8",
-            cwd: path.dirname(macBinary),
+            // Run from project root so analyzer reads source stdlib/prelude.mac
+            // (not the build copy which may be stale)
+            cwd: path.resolve(path.dirname(macBinary), ".."),
         });
         return JSON.parse(out) as AnalysisResult;
     } catch {
