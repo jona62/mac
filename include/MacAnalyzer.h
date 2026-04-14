@@ -1,77 +1,28 @@
 #ifndef MAC_ANALYZER_H
 #define MAC_ANALYZER_H
 
+#include <functional>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include "Expr.h"
 #include "Stmt.h"
-#include "MacValue.h"
 #include "Token.h"
+#include "AnalyzerTypes.h"
+#include "AnalyzerRegistry.h"
 
 namespace analyzer {
-
-    using MV = value::MacValue;
-
-    struct SymbolDef {
-        std::string name, kind, type, description;
-        int line, col, endCol;
-    };
-
-    struct Reference {
-        int line, col, endCol, defLine, defCol;
-        std::string defName;
-    };
-
-    struct Diagnostic {
-        int line, col, endCol;
-        std::string message, severity;
-    };
-
-    struct PropertyRef {
-        int line, col, endCol;
-        std::string name, ownerType, kind, description;
-    };
-
-    struct FoldRange { int startLine, endLine; };
-
-    struct SemanticToken { int line, col, length; std::string tokenType; };
-
-    struct ParamHint { int line, col; std::string name; };
-
-    struct ChainHint { int line, endCol; std::string type; };
-
-    struct Signature {
-        std::string name, returnType, description;
-        std::vector<std::string> params;
-    };
-
-    struct AnalysisResult {
-        std::vector<SymbolDef> symbols;
-        std::vector<Reference> references;
-        std::vector<Diagnostic> diagnostics;
-        std::vector<PropertyRef> properties;
-        std::vector<FoldRange> foldingRanges;
-        std::vector<SemanticToken> semanticTokens;
-        std::vector<ParamHint> paramHints;
-        std::vector<ChainHint> chainHints;
-        std::vector<Signature> signatures;
-    };
-
-    struct Scope {
-        std::unordered_map<std::string, SymbolDef> symbols;
-        Scope* parent = nullptr;
-    };
 
     class MacAnalyzer {
     public:
         MacAnalyzer() : currentScope(&globalScope) {
-            registerNatives();
-            registerPreludeTypes();
-            registerProperties();
+            auto defFn = [this](const token::Token& t, const std::string& k,
+                                const std::string& ty, const std::string& d) { define(t, k, ty, d); };
+            registerNatives(nativeNames, result, defFn);
+            registerPreludeTypes(nativeNames, defFn);
+            registerProperties(knownProps);
         }
 
         AnalysisResult analyze(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& stmts) {
@@ -79,241 +30,14 @@ namespace analyzer {
             return result;
         }
 
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"symbols\":[";
-            for (size_t i = 0; i < result.symbols.size(); i++) {
-                auto& s = result.symbols[i];
-                if (i) o << ",";
-                o << "{\"name\":" << J(s.name) << ",\"kind\":" << J(s.kind)
-                  << ",\"line\":" << s.line << ",\"col\":" << s.col
-                  << ",\"endCol\":" << s.endCol << ",\"type\":" << J(s.type)
-                  << ",\"description\":" << J(s.description) << "}";
-            }
-            o << "],\"references\":[";
-            for (size_t i = 0; i < result.references.size(); i++) {
-                auto& r = result.references[i];
-                if (i) o << ",";
-                o << "{\"line\":" << r.line << ",\"col\":" << r.col
-                  << ",\"endCol\":" << r.endCol << ",\"defLine\":" << r.defLine
-                  << ",\"defCol\":" << r.defCol << ",\"defName\":" << J(r.defName) << "}";
-            }
-            o << "],\"diagnostics\":[";
-            for (size_t i = 0; i < result.diagnostics.size(); i++) {
-                auto& d = result.diagnostics[i];
-                if (i) o << ",";
-                o << "{\"line\":" << d.line << ",\"col\":" << d.col
-                  << ",\"endCol\":" << d.endCol << ",\"message\":" << J(d.message)
-                  << ",\"severity\":" << J(d.severity) << "}";
-            }
-            o << "],\"properties\":[";
-            for (size_t i = 0; i < result.properties.size(); i++) {
-                auto& p = result.properties[i];
-                if (i) o << ",";
-                o << "{\"line\":" << p.line << ",\"col\":" << p.col
-                  << ",\"endCol\":" << p.endCol << ",\"name\":" << J(p.name)
-                  << ",\"ownerType\":" << J(p.ownerType)
-                  << ",\"kind\":" << J(p.kind)
-                  << ",\"description\":" << J(p.description) << "}";
-            }
-            o << "],\"foldingRanges\":[";
-            for (size_t i = 0; i < result.foldingRanges.size(); i++) {
-                auto& f = result.foldingRanges[i];
-                if (i) o << ",";
-                o << "{\"startLine\":" << f.startLine << ",\"endLine\":" << f.endLine << "}";
-            }
-            o << "],\"semanticTokens\":[";
-            for (size_t i = 0; i < result.semanticTokens.size(); i++) {
-                auto& t = result.semanticTokens[i];
-                if (i) o << ",";
-                o << "{\"line\":" << t.line << ",\"col\":" << t.col
-                  << ",\"length\":" << t.length << ",\"tokenType\":" << J(t.tokenType) << "}";
-            }
-            o << "],\"paramHints\":[";
-            for (size_t i = 0; i < result.paramHints.size(); i++) {
-                auto& h = result.paramHints[i];
-                if (i) o << ",";
-                o << "{\"line\":" << h.line << ",\"col\":" << h.col << ",\"name\":" << J(h.name) << "}";
-            }
-            o << "],\"chainHints\":[";
-            for (size_t i = 0; i < result.chainHints.size(); i++) {
-                auto& h = result.chainHints[i];
-                if (i) o << ",";
-                o << "{\"line\":" << h.line << ",\"endCol\":" << h.endCol << ",\"type\":" << J(h.type) << "}";
-            }
-            o << "],\"signatures\":[";
-            for (size_t i = 0; i < result.signatures.size(); i++) {
-                auto& s = result.signatures[i];
-                if (i) o << ",";
-                o << "{\"name\":" << J(s.name) << ",\"returnType\":" << J(s.returnType)
-                  << ",\"description\":" << J(s.description) << ",\"params\":[";
-                for (size_t j = 0; j < s.params.size(); j++) {
-                    if (j) o << ",";
-                    o << J(s.params[j]);
-                }
-                o << "]}";
-            }
-            o << "]}";
-            return o.str();
-        }
+        std::string toJson() const { return analyzer::toJson(result); }
 
     private:
         AnalysisResult result;
         Scope globalScope;
         Scope* currentScope;
         std::unordered_set<std::string> nativeNames;
-
-        struct PropInfo { std::string ownerType, kind, description; };
-        // key: "OwnerType.propName"
         std::unordered_map<std::string, PropInfo> knownProps;
-
-        // --- AST walking ---
-
-        void analyzeStmt(stmt::Stmt<MV>* s) {
-            if (!s) return;
-            if (auto* p = dynamic_cast<stmt::ExpressionStmt<MV>*>(s)) { analyzeExpr(p->expression.get()); }
-            else if (auto* p = dynamic_cast<stmt::PrintStmt<MV>*>(s)) { analyzeExpr(p->expression.get()); }
-            else if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(s)) {
-                std::string type = "unknown", desc;
-                if (p->initializer) {
-                    type = inferType(p->initializer.get());
-                    if (dynamic_cast<expr::ComposeExpr<MV>*>(p->initializer.get()))
-                        desc = describeCompose(p->initializer.get());
-                }
-                define(p->name, "variable", type, desc);
-                if (p->initializer) analyzeExpr(p->initializer.get());
-            }
-            else if (auto* p = dynamic_cast<stmt::BlockStmt<MV>*>(s)) {
-                beginScope();
-                for (auto& st : p->statements) analyzeStmt(st.get());
-                endScope();
-            }
-            else if (auto* p = dynamic_cast<stmt::IfStmt<MV>*>(s)) {
-                analyzeExpr(p->condition.get());
-                analyzeStmt(p->thenBranch.get());
-                if (p->elseBranch) analyzeStmt(p->elseBranch.get());
-            }
-            else if (auto* p = dynamic_cast<stmt::WhileStmt<MV>*>(s)) {
-                analyzeExpr(p->condition.get());
-                analyzeStmt(p->body.get());
-            }
-            else if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(s)) {
-                define(p->name, "function", "fun(" + std::to_string(p->params.size()) + ")");
-                addFoldRange(p->name.line, p->body);
-                addSignature(p);
-                beginScope();
-                for (auto& prm : p->params) define(prm, "parameter", "unknown");
-                for (auto& st : p->body) analyzeStmt(st.get());
-                endScope();
-            }
-            else if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(s)) {
-                if (p->value) analyzeExpr(p->value.get());
-            }
-            else if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(s)) {
-                define(p->name, "class", "class " + tokName(p->name));
-                if (p->superclass) resolveRef(p->superclass->name);
-                // Fold the class body (approximate: from class line to last method's last line)
-                if (!p->methods.empty()) {
-                    int endLine = p->name.line;
-                    for (auto& m : p->methods)
-                        if (!m->body.empty()) endLine = std::max(endLine, lastLineOf(m->body));
-                    result.foldingRanges.push_back({p->name.line, endLine + 1});
-                }
-                beginScope();
-                for (auto& m : p->methods) {
-                    define(m->name, "method", "fun(" + std::to_string(m->params.size()) + ")");
-                    addFoldRange(m->name.line, m->body);
-                    beginScope();
-                    for (auto& prm : m->params) define(prm, "parameter", "unknown");
-                    for (auto& st : m->body) analyzeStmt(st.get());
-                    endScope();
-                }
-                endScope();
-            }
-            else if (auto* p = dynamic_cast<stmt::ForInStmt<MV>*>(s)) {
-                analyzeExpr(p->iterable.get());
-                beginScope();
-                define(p->varName, "variable", "unknown");
-                analyzeStmt(p->body.get());
-                endScope();
-            }
-        }
-
-        void analyzeExpr(expr::Expr<MV>* e) {
-            if (!e) return;
-            if (auto* p = dynamic_cast<expr::Variable<MV>*>(e)) { resolveRef(p->name); }
-            else if (auto* p = dynamic_cast<expr::Assign<MV>*>(e)) { analyzeExpr(p->value.get()); resolveRef(p->name); }
-            else if (auto* p = dynamic_cast<expr::Binary<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
-            else if (auto* p = dynamic_cast<expr::Logical<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
-            else if (auto* p = dynamic_cast<expr::Unary<MV>*>(e)) { analyzeExpr(p->right.get()); }
-            else if (auto* p = dynamic_cast<expr::Grouping<MV>*>(e)) { analyzeExpr(p->expression.get()); }
-            else if (auto* p = dynamic_cast<expr::Call<MV>*>(e)) {
-                analyzeExpr(p->callee.get());
-                for (auto& a : p->arguments) analyzeExpr(a.get());
-                collectParamHints(p);
-                collectChainHint(p);
-            }
-            else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) {
-                analyzeExpr(p->object.get());
-                auto propName = tokName(p->name);
-                auto objType = inferType(p->object.get());
-                auto key = objType + "." + propName;
-                auto it = knownProps.find(key);
-                if (it != knownProps.end()) {
-                    int c = p->name.column > 0 ? p->name.column : 1;
-                    int ec = c + static_cast<int>(propName.size());
-                    result.properties.push_back({p->name.line, c, ec,
-                        propName, it->second.ownerType, it->second.kind, it->second.description});
-                }
-            }
-            else if (auto* p = dynamic_cast<expr::Set<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->value.get()); }
-            else if (auto* p = dynamic_cast<expr::ArrayExpr<MV>*>(e)) { for (auto& el : p->elements) analyzeExpr(el.get()); }
-            else if (auto* p = dynamic_cast<expr::MapExpr<MV>*>(e)) { for (auto& v : p->values) analyzeExpr(v.get()); }
-            else if (auto* p = dynamic_cast<expr::IndexGet<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->index.get()); }
-            else if (auto* p = dynamic_cast<expr::IndexSet<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->index.get()); analyzeExpr(p->value.get()); }
-            else if (auto* p = dynamic_cast<expr::LambdaExpr<MV>*>(e)) {
-                beginScope();
-                for (auto& prm : p->params) define(prm, "parameter", "unknown");
-                for (auto& st : p->body) analyzeStmt(st.get());
-                endScope();
-            }
-            else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) {
-                analyzeExpr(p->value.get());
-                auto inputType = inferType(p->value.get());
-                // HOF call in pipe: bind lambda params with inferred types
-                if (auto* call = dynamic_cast<expr::Call<MV>*>(p->func.get())) {
-                    analyzeExpr(call->callee.get());
-                    if (auto* callee = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
-                        auto name = tokName(callee->name);
-                        for (auto& arg : call->arguments) {
-                            if (auto* lambda = dynamic_cast<expr::LambdaExpr<MV>*>(arg.get())) {
-                                auto elemType = extractElem(inputType);
-                                beginScope();
-                                if (name == "reduce" && lambda->params.size() >= 2) {
-                                    // reduce((acc, elem) -> ..., initial): acc = initial type, elem = element type
-                                    auto initType = call->arguments.size() >= 2
-                                        ? inferType(call->arguments.back().get()) : "unknown";
-                                    define(lambda->params[0], "parameter", initType);
-                                    define(lambda->params[1], "parameter", elemType);
-                                } else {
-                                    // map/filter/each/etc: all params get element type
-                                    for (auto& prm : lambda->params) define(prm, "parameter", elemType);
-                                }
-                                for (auto& st : lambda->body) analyzeStmt(st.get());
-                                endScope();
-                            } else {
-                                analyzeExpr(arg.get());
-                            }
-                        }
-                    } else {
-                        for (auto& arg : call->arguments) analyzeExpr(arg.get());
-                    }
-                } else {
-                    analyzeExpr(p->func.get());
-                }
-            }
-            else if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
-        }
 
         // --- Scope ---
 
@@ -333,10 +57,8 @@ namespace analyzer {
             SymbolDef sym{name, kind, type, desc, tok.line, c, c + static_cast<int>(name.size())};
             currentScope->symbols[name] = sym;
             result.symbols.push_back(sym);
-            if (tok.line > 0) {
-                result.semanticTokens.push_back({tok.line, c,
-                    static_cast<int>(name.size()), semanticKind(kind)});
-            }
+            if (tok.line > 0)
+                result.semanticTokens.push_back({tok.line, c, static_cast<int>(name.size()), semanticKind(kind)});
         }
 
         SymbolDef* resolve(const std::string& name) {
@@ -355,550 +77,58 @@ namespace analyzer {
             int ec = c + static_cast<int>(name.size());
             if (def) {
                 result.references.push_back({tok.line, c, ec, def->line, def->col, def->name});
-                if (tok.line > 0) {
-                    result.semanticTokens.push_back({tok.line, c,
-                        static_cast<int>(name.size()), semanticKind(def->kind)});
-                }
+                if (tok.line > 0)
+                    result.semanticTokens.push_back({tok.line, c, static_cast<int>(name.size()), semanticKind(def->kind)});
             } else if (!nativeNames.count(name) && name != "this" && name != "super") {
-                result.diagnostics.push_back({tok.line, c, ec,
-                    "Undefined variable '" + name + "'.", "warning"});
+                result.diagnostics.push_back({tok.line, c, ec, "Undefined variable '" + name + "'.", "warning"});
             }
-        }
-
-        // --- Type inference ---
-
-        std::string inferType(expr::Expr<MV>* e) {
-            if (!e) return "unknown";
-            if (auto* p = dynamic_cast<expr::Literal<MV>*>(e)) {
-                return std::visit([](auto&& v) -> std::string {
-                    using T = std::decay_t<decltype(v)>;
-                    if constexpr (std::is_same_v<T, double>) return "number";
-                    if constexpr (std::is_same_v<T, std::string>) return "string";
-                    if constexpr (std::is_same_v<T, bool>) return "bool";
-                    return "nil";
-                }, p->value);
-            }
-            if (auto* p = dynamic_cast<expr::Variable<MV>*>(e)) {
-                auto* def = resolve(tokName(p->name));
-                return def ? def->type : "unknown";
-            }
-            if (auto* p = dynamic_cast<expr::Call<MV>*>(e)) return inferCallType(p);
-            if (auto* p = dynamic_cast<expr::ArrayExpr<MV>*>(e)) {
-                if (!p->elements.empty()) return "[" + inferType(p->elements[0].get()) + "]";
-                return "[unknown]";
-            }
-            if (auto* p = dynamic_cast<expr::MapExpr<MV>*>(e)) {
-                if (!p->values.empty()) return "{" + inferType(p->values[0].get()) + "}";
-                return "{unknown}";
-            }
-            if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) return inferPipeType(p);
-            if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) {
-                auto lt = inferType(p->left.get()), rt = inferType(p->right.get());
-                if (lt == "Meme -> Meme" || rt == "Meme -> Meme") return "Meme -> Meme";
-                return "fun(1)";
-            }
-            if (auto* p = dynamic_cast<expr::LambdaExpr<MV>*>(e))
-                return "fun(" + std::to_string(p->params.size()) + ")";
-            if (auto* p = dynamic_cast<expr::IndexGet<MV>*>(e)) {
-                auto objType = inferType(p->object.get());
-                if (objType.size() > 2 && objType.front() == '(' && objType.back() == ')') {
-                    if (auto* lit = dynamic_cast<expr::Literal<MV>*>(p->index.get())) {
-                        auto parts = splitTuple(objType);
-                        if (auto* val = std::get_if<double>(&lit->value))
-                            if (*val >= 0 && (size_t)*val < parts.size()) return parts[(size_t)*val];
-                    }
-                }
-                if (objType.size() > 2 && objType.front() == '[' && objType.back() == ']')
-                    return objType.substr(1, objType.size() - 2);
-                return "unknown";
-            }
-            if (auto* p = dynamic_cast<expr::Binary<MV>*>(e)) {
-                auto op = tokName(p->operatorToken);
-                if (op == "==" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=") return "bool";
-                if (op == "+") {
-                    auto lt = inferType(p->left.get());
-                    if (lt == "string") return "string";
-                    if (lt == "number") return "number";
-                }
-            }
-            return "unknown";
-        }
-
-        std::string inferCallType(expr::Call<MV>* c) {
-            if (auto* var = dynamic_cast<expr::Variable<MV>*>(c->callee.get())) {
-                auto name = tokName(var->name);
-                auto* def = resolve(name);
-                if (def && def->kind == "class") return def->name;
-                static const std::unordered_map<std::string, std::string> ret = {
-                    {"clock","number"},{"len","number"},{"sqrt","number"},{"abs","number"},
-                    {"pow","number"},{"floor","number"},{"ceil","number"},
-                    {"type","string"},{"substr","string"},{"input","string"},
-                    {"upper","string"},{"lower","string"},{"trim","string"},
-                    {"replace","string"},{"join","string"},
-                    {"split","[string]"},{"range","[number]"},
-                    {"any","bool"},{"all","bool"},{"save","bool"},
-                    {"Timeline","Timeline"},{"animate","Gif"},{"toGrid","Meme"},
-                    {"beside","Meme"},{"stack","Meme"},{"grid","Meme"},
-                    {"pad","Meme"},{"border","Meme"},
-                    {"invert","Meme"},{"sepia","Meme"},{"sharpen","Meme"},{"vignette","Meme"},
-                };
-                auto it = ret.find(name);
-                if (it != ret.end()) return it->second;
-                static const std::unordered_set<std::string> eff = {
-                    "blur","pixelate","noise","saturate","contrast","brightness","jpeg"};
-                if (eff.count(name)) return "Meme -> Meme";
-                // zip(a, b) direct call
-                if (name == "zip" && c->arguments.size() >= 2) {
-                    auto a = extractElem(inferType(c->arguments[0].get()));
-                    auto b = extractElem(inferType(c->arguments[1].get()));
-                    return "[(" + a + ", " + b + ")]";
-                }
-                // enumerate(arr) direct call
-                if (name == "enumerate" && !c->arguments.empty()) {
-                    auto elem = extractElem(inferType(c->arguments[0].get()));
-                    return "[(number, " + elem + ")]";
-                }
-                // Array-preserving: filter, sort, reverse, take, drop
-                static const std::unordered_set<std::string> pres = {"filter","sort","reverse","take","drop"};
-                if (pres.count(name) && !c->arguments.empty()) return inferType(c->arguments[0].get());
-                // map direct call
-                if (name == "map" && c->arguments.size() >= 2) {
-                    auto cb = inferCbReturn(c->arguments[1].get(), inferType(c->arguments[0].get()));
-                    if (cb != "unknown") return "[" + cb + "]";
-                }
-                if (name == "reduce" && c->arguments.size() >= 3) return inferType(c->arguments[2].get());
-                if (name == "find" && !c->arguments.empty()) return extractElem(inferType(c->arguments[0].get()));
-                if (name == "flatten" && !c->arguments.empty()) {
-                    auto e = extractElem(inferType(c->arguments[0].get()));
-                    return e.front() == '[' ? e : "[" + e + "]";
-                }
-            }
-            if (auto* get = dynamic_cast<expr::Get<MV>*>(c->callee.get())) {
-                auto obj = inferType(get->object.get());
-                auto m = tokName(get->name);
-                if (obj == "Meme" && (m == "text" || m == "resize")) return "Meme";
-                if (obj == "Gif" && m == "frame") return "Gif";
-                if (obj == "Timeline" && (m == "frame" || m == "transition" || m == "loop" || m == "render" || m == "save")) return "Timeline";
-                return obj;
-            }
-            return "unknown";
-        }
-
-        std::string inferPipeType(expr::PipeExpr<MV>* p) {
-            auto input = inferType(p->value.get());
-            if (auto* var = dynamic_cast<expr::Variable<MV>*>(p->func.get())) {
-                auto name = tokName(var->name);
-                auto ret = nativeRetForPipe(name, input);
-                if (ret != "unknown") return ret;
-                auto* def = resolve(name);
-                if (def && def->kind == "class") return def->name;
-                if (input == "Meme") return "Meme";
-                return "unknown";
-            }
-            if (auto* call = dynamic_cast<expr::Call<MV>*>(p->func.get())) {
-                if (auto* callee = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
-                    auto name = tokName(callee->name);
-                    if (name == "reduce" && call->arguments.size() >= 2)
-                        return inferType(call->arguments[1].get());
-                    if ((name == "map" || name == "flatMap") && !call->arguments.empty()) {
-                        auto cb = inferCbReturn(call->arguments[0].get(), input);
-                        if (cb != "unknown") {
-                            if (name == "flatMap" && cb.size() > 2 && cb.front() == '[' && cb.back() == ']')
-                                return cb;
-                            return "[" + cb + "]";
-                        }
-                    }
-                    if (name == "zip" && !call->arguments.empty()) {
-                        auto a = extractElem(input), b = extractElem(inferType(call->arguments[0].get()));
-                        return "[(" + a + ", " + b + ")]";
-                    }
-                    auto ret = nativeRetForPipe(name, input);
-                    if (ret != "unknown") return ret;
-                    if (input == "Meme") return "Meme";
-                }
-            }
-            if (input == "Meme") return "Meme";
-            return "unknown";
-        }
-
-        std::string inferCbReturn(expr::Expr<MV>* cb, const std::string& inputType) {
-            if (auto* lambda = dynamic_cast<expr::LambdaExpr<MV>*>(cb)) {
-                if (!lambda->body.empty()) {
-                    auto elem = extractElem(inputType);
-                    beginScope();
-                    for (auto& prm : lambda->params) define(prm, "parameter", elem);
-                    std::string bodyType = "unknown";
-                    auto* last = lambda->body.back().get();
-                    if (auto* ret = dynamic_cast<stmt::ReturnStmt<MV>*>(last))
-                        bodyType = ret->value ? inferType(ret->value.get()) : "nil";
-                    else if (auto* es = dynamic_cast<stmt::ExpressionStmt<MV>*>(last))
-                        bodyType = inferType(es->expression.get());
-                    endScope();
-                    if (bodyType != "unknown") return bodyType;
-                }
-            }
-            if (auto* var = dynamic_cast<expr::Variable<MV>*>(cb)) {
-                auto elem = extractElem(inputType);
-                if (elem == "Meme") return "Meme";
-                auto* def = resolve(tokName(var->name));
-                if (def && def->type.find("->") != std::string::npos) return elem;
-            }
-            return "unknown";
-        }
-
-        std::string nativeRetForPipe(const std::string& name, const std::string& input) {
-            static const std::unordered_set<std::string> pres = {"filter","sort","reverse","take","drop"};
-            if (pres.count(name)) return input;
-            if (name == "find" || name == "pop") return extractElem(input);
-            if (name == "enumerate") return "[(number, " + extractElem(input) + ")]";
-            if (name == "flatten") { auto e = extractElem(input); return e.front() == '[' ? e : "[" + e + "]"; }
-            static const std::unordered_map<std::string, std::string> fix = {
-                {"join","string"},{"any","bool"},{"all","bool"},{"each","nil"},
-                {"upper","string"},{"lower","string"},{"trim","string"},{"save","bool"},
-                {"animate","Gif"},{"toGrid","Meme"},{"pad","Meme"},{"border","Meme"},
-            };
-            auto it = fix.find(name);
-            return it != fix.end() ? it->second : "unknown";
-        }
-
-        std::string extractElem(const std::string& t) {
-            if (t.size() > 2 && t.front() == '[' && t.back() == ']') return t.substr(1, t.size() - 2);
-            return t;
-        }
-
-        std::vector<std::string> splitTuple(const std::string& t) {
-            std::vector<std::string> parts;
-            auto inner = t.substr(1, t.size() - 2);
-            size_t start = 0; int depth = 0;
-            for (size_t i = 0; i < inner.size(); i++) {
-                if (inner[i] == '(' || inner[i] == '[') depth++;
-                else if (inner[i] == ')' || inner[i] == ']') depth--;
-                else if (inner[i] == ',' && depth == 0) {
-                    auto p = inner.substr(start, i - start);
-                    while (!p.empty() && p[0] == ' ') p = p.substr(1);
-                    parts.push_back(p); start = i + 1;
-                }
-            }
-            auto last = inner.substr(start);
-            while (!last.empty() && last[0] == ' ') last = last.substr(1);
-            parts.push_back(last);
-            return parts;
-        }
-
-        // --- Compose description ---
-
-        std::string describeCompose(expr::Expr<MV>* e) {
-            std::vector<std::string> parts;
-            collectCompose(e, parts);
-            std::string r;
-            for (size_t i = 0; i < parts.size(); i++) { if (i) r += " >> "; r += parts[i]; }
-            return r;
-        }
-
-        void collectCompose(expr::Expr<MV>* e, std::vector<std::string>& parts) {
-            if (auto* c = dynamic_cast<expr::ComposeExpr<MV>*>(e)) {
-                collectCompose(c->left.get(), parts);
-                collectCompose(c->right.get(), parts);
-            } else { parts.push_back(exprStr(e)); }
-        }
-
-        std::string exprStr(expr::Expr<MV>* e) {
-            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return tokName(v->name);
-            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) {
-                auto callee = exprStr(c->callee.get());
-                std::string args;
-                for (size_t i = 0; i < c->arguments.size(); i++) {
-                    if (i) args += ", "; args += exprStr(c->arguments[i].get());
-                }
-                return callee + "(" + args + ")";
-            }
-            if (auto* l = dynamic_cast<expr::Literal<MV>*>(e)) {
-                return std::visit([](auto&& v) -> std::string {
-                    using T = std::decay_t<decltype(v)>;
-                    if constexpr (std::is_same_v<T, double>) { std::ostringstream o; o << v; return o.str(); }
-                    if constexpr (std::is_same_v<T, std::string>) return "\"" + v + "\"";
-                    if constexpr (std::is_same_v<T, bool>) return v ? "true" : "false";
-                    return "nil";
-                }, l->value);
-            }
-            if (auto* lam = dynamic_cast<expr::LambdaExpr<MV>*>(e)) {
-                std::string prms;
-                for (size_t i = 0; i < lam->params.size(); i++) {
-                    if (i) prms += ", "; prms += tokName(lam->params[i]);
-                }
-                if (lam->params.size() > 1) prms = "(" + prms + ")";
-                if (lam->body.size() == 1)
-                    if (auto* r = dynamic_cast<stmt::ReturnStmt<MV>*>(lam->body[0].get()))
-                        if (r->value) return prms + " -> " + exprStr(r->value.get());
-                return prms + " -> ...";
-            }
-            if (auto* b = dynamic_cast<expr::Binary<MV>*>(e))
-                return exprStr(b->left.get()) + " " + tokName(b->operatorToken) + " " + exprStr(b->right.get());
-            if (auto* g = dynamic_cast<expr::Grouping<MV>*>(e))
-                return "(" + exprStr(g->expression.get()) + ")";
-            if (auto* idx = dynamic_cast<expr::IndexGet<MV>*>(e))
-                return exprStr(idx->object.get()) + "[" + exprStr(idx->index.get()) + "]";
-            if (auto* u = dynamic_cast<expr::Unary<MV>*>(e))
-                return tokName(u->operatorToken) + exprStr(u->right.get());
-            return "...";
-        }
-
-        // --- JSON ---
-
-        static std::string J(const std::string& s) {
-            std::string o = "\"";
-            for (char c : s) {
-                if (c == '"') o += "\\\""; else if (c == '\\') o += "\\\\";
-                else if (c == '\n') o += "\\n"; else o += c;
-            }
-            return o + "\"";
-        }
-
-        // --- Native registration ---
-
-        // --- Folding, semantic tokens, param hints, chain hints ---
-
-        void addFoldRange(int startLine,
-                          const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
-            if (!body.empty()) {
-                int endLine = lastLineOf(body);
-                if (endLine > startLine) result.foldingRanges.push_back({startLine, endLine});
-            }
-        }
-
-        int lastLineOf(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
-            // Rough heuristic: use the last statement's token line
-            // This works for most cases since statements are sequential
-            if (body.empty()) return 0;
-            auto* last = body.back().get();
-            if (auto* p = dynamic_cast<stmt::ExpressionStmt<MV>*>(last)) return tokenLine(p->expression.get());
-            if (auto* p = dynamic_cast<stmt::PrintStmt<MV>*>(last)) return tokenLine(p->expression.get());
-            if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(last)) return p->name.line;
-            if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(last)) return p->keyword.line;
-            if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(last)) return p->name.line;
-            if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(last)) return p->name.line;
-            return 0;
-        }
-
-        int tokenLine(expr::Expr<MV>* e) {
-            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.line;
-            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return c->paren.line;
-            return 0;
         }
 
         static std::string semanticKind(const std::string& kind) {
             if (kind == "parameter") return "parameter";
-            if (kind == "function") return "function";
+            if (kind == "function" || kind == "native") return "function";
             if (kind == "method") return "method";
             if (kind == "class") return "class";
-            if (kind == "native") return "function";
             return "variable";
         }
 
-        void collectParamHints(expr::Call<MV>* call) {
-            if (auto* var = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
-                auto name = tokName(var->name);
-                auto* def = resolve(name);
-                // User-defined function with known params
-                if (def && def->kind == "function") {
-                    // Look up the FunctionStmt to get param names — we stored them via define()
-                    // For natives, use the signature registry
-                }
-                // Check signatures
-                for (auto& sig : result.signatures) {
-                    if (sig.name == name) {
-                        for (size_t i = 0; i < sig.params.size() && i < call->arguments.size(); i++) {
-                            auto* arg = call->arguments[i].get();
-                            int argCol = getExprCol(arg);
-                            if (argCol > 0) result.paramHints.push_back({getExprLine(arg), argCol, sig.params[i]});
-                        }
-                        break;
-                    }
-                }
-            }
-        }
+        // --- AST walk (statements) ---
 
-        void collectChainHint(expr::Call<MV>* call) {
-            // Method call: obj.method(...) — emit chain hint with return type
-            if (auto* get = dynamic_cast<expr::Get<MV>*>(call->callee.get())) {
-                auto objType = inferType(get->object.get());
-                auto method = tokName(get->name);
-                auto key = objType + "." + method;
-                auto it = knownProps.find(key);
-                if (it != knownProps.end() && it->second.kind == "method") {
-                    // Find the return type
-                    std::string retType = objType; // chainable methods return this
-                    int line = call->paren.line;
-                    int endCol = call->paren.column + 1; // after closing paren
-                    result.chainHints.push_back({line, endCol, retType});
-                }
-            }
-        }
+        void analyzeStmt(stmt::Stmt<MV>* s);
 
-        void addSignature(stmt::FunctionStmt<MV>* fn) {
-            Signature sig;
-            sig.name = tokName(fn->name);
-            sig.returnType = "unknown";
-            sig.description = "";
-            for (auto& p : fn->params) sig.params.push_back(tokName(p));
-            result.signatures.push_back(sig);
-        }
+        // --- AST walk (expressions) ---
 
-        int getExprLine(expr::Expr<MV>* e) {
-            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.line;
-            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return c->paren.line;
-            return 0;
-        }
+        void analyzeExpr(expr::Expr<MV>* e);
 
-        int getExprCol(expr::Expr<MV>* e) {
-            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.column;
-            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return getExprCol(c->callee.get());
-            return 0;
-        }
+        // --- Folding + hints helpers ---
 
-        void registerNatives() {
-            auto reg = [&](const std::string& name, const std::string& desc, const std::string& type = "fun(1)") {
-                nativeNames.insert(name);
-                token::Token tok(token::TokenType::IDENTIFIER, token::TokenValue(name), 0);
-                define(tok, "native", type, desc);
-            };
-            auto sig = [&](const std::string& name, std::vector<std::string> params,
-                           const std::string& ret, const std::string& desc = "") {
-                result.signatures.push_back({name, ret, desc, std::move(params)});
-            };
-            // Key function signatures for param hints
-            sig("blur", {"radius"}, "Meme -> Meme");
-            sig("pixelate", {"blockSize"}, "Meme -> Meme");
-            sig("noise", {"amount"}, "Meme -> Meme");
-            sig("saturate", {"factor"}, "Meme -> Meme");
-            sig("contrast", {"factor"}, "Meme -> Meme");
-            sig("brightness", {"factor"}, "Meme -> Meme");
-            sig("jpeg", {"quality"}, "Meme -> Meme");
-            sig("map", {"array", "fn"}, "[T]");
-            sig("filter", {"array", "fn"}, "[T]");
-            sig("reduce", {"array", "fn", "initial"}, "T");
-            sig("find", {"array", "fn"}, "T");
-            sig("zip", {"array1", "array2"}, "[(A, B)]");
-            sig("take", {"array", "n"}, "[T]");
-            sig("drop", {"array", "n"}, "[T]");
-            sig("join", {"array", "separator"}, "string");
-            sig("replace", {"str", "from", "to"}, "string");
-            sig("substr", {"str", "start", "length"}, "string");
-            sig("split", {"str", "delimiter"}, "[string]");
-            sig("pad", {"meme", "pixels"}, "Meme");
-            sig("border", {"meme", "pixels"}, "Meme");
-            sig("beside", {"meme1", "meme2"}, "Meme");
-            sig("stack", {"meme1", "meme2"}, "Meme");
-            sig("animate", {"memes", "duration"}, "Gif");
-            sig("toGrid", {"memes", "cols", "rows"}, "Meme");
-            sig("save", {"target", "path"}, "bool");
-            sig("pow", {"base", "exponent"}, "number");
-            sig("len", {"value"}, "number");
-            sig("type", {"value"}, "string");
-            reg("clock","Current time."); reg("len","Length of string/array.");
-            reg("substr","Substring."); reg("split","Split string."); reg("type","Type name.");
-            reg("sqrt","Square root."); reg("abs","Absolute value.");
-            reg("pow","Exponentiation."); reg("floor","Round down."); reg("ceil","Round up.");
-            reg("push","Append to array."); reg("pop","Remove last.");
-            reg("map","Map function over array."); reg("filter","Filter by predicate.");
-            reg("input","Read input line.");
-            reg("range","Generate number array."); reg("reduce","Fold with accumulator.");
-            reg("zip","Pair two arrays."); reg("enumerate","Pair with indices.");
-            reg("each","Side effects."); reg("flatten","Flatten one level.");
-            reg("flatMap","Map then flatten."); reg("sort","Sort."); reg("reverse","Reverse.");
-            reg("find","First match."); reg("any","Any match?"); reg("all","All match?");
-            reg("take","First n."); reg("drop","Skip first n."); reg("join","Join to string.");
-            reg("upper","Uppercase."); reg("lower","Lowercase.");
-            reg("trim","Strip whitespace."); reg("replace","Replace all.");
-            reg("animate","Memes to GIF."); reg("toGrid","Memes to grid.");
-            reg("save","Save to file.");
-            reg("blur","Blur. Meme -> Meme.","Meme -> Meme");
-            reg("pixelate","Pixelate. Meme -> Meme.","Meme -> Meme");
-            reg("noise","Noise. Meme -> Meme.","Meme -> Meme");
-            reg("saturate","Saturate. Meme -> Meme.","Meme -> Meme");
-            reg("contrast","Contrast. Meme -> Meme.","Meme -> Meme");
-            reg("brightness","Brightness. Meme -> Meme.","Meme -> Meme");
-            reg("jpeg","JPEG artifacts. Meme -> Meme.","Meme -> Meme");
-            reg("invert","Invert. Meme -> Meme.","Meme -> Meme");
-            reg("sepia","Sepia. Meme -> Meme.","Meme -> Meme");
-            reg("sharpen","Sharpen. Meme -> Meme.","Meme -> Meme");
-            reg("vignette","Vignette. Meme -> Meme.","Meme -> Meme");
-            reg("beside","Side-by-side."); reg("stack","Vertical stack.");
-            reg("grid","Grid layout."); reg("pad","Padding."); reg("border","Border.");
-            reg("timeline","Internal.");
-            for (auto& n : {"_resolve_template","_meme_save","_gif_save","_save_rendered",
-                            "_apply_effect","_compose_layout","_add_padding","_add_border",
-                            "_timeline_keyframe","_timeline_transition","_timeline_hold",
-                            "_timeline_loop","_timeline_render"})
-                reg(n, "Internal.");
-        }
+        void addFoldRange(int startLine, const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body);
+        void collectParamHints(expr::Call<MV>* call);
+        void collectChainHint(expr::Call<MV>* call);
+        void addSignature(stmt::FunctionStmt<MV>* fn);
+        int lastLineOf(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body);
+        int getExprCol(expr::Expr<MV>* e);
+        int getExprLine(expr::Expr<MV>* e);
 
-        void registerPreludeTypes() {
-            auto reg = [&](const std::string& name, const std::string& kind,
-                           const std::string& type, const std::string& desc) {
-                nativeNames.insert(name);
-                token::Token tok(token::TokenType::IDENTIFIER, token::TokenValue(name), 0);
-                define(tok, kind, type, desc);
-            };
-            reg("Size","class","class Size","Pixel dimensions.");
-            reg("Duration","class","class Duration","Time in milliseconds.");
-            reg("Position","class","class Position","Text position.");
-            reg("Format","class","class Format","Output format.");
-            reg("Template","class","class Template","Meme template image.");
-            reg("Meme","class","class Meme","Meme builder.");
-            reg("Frame","class","class Frame","Animation frame.");
-            reg("Gif","class","class Gif","GIF builder.");
-            reg("Timeline","class","class Timeline","Animation timeline.");
-            reg("Top","variable","Position","Top position.");
-            reg("Bottom","variable","Position","Bottom position.");
-            reg("Center","variable","Position","Center position.");
-            reg("PNG","variable","Format","PNG format.");
-            reg("JPG","variable","Format","JPG format.");
-            reg("GIF","variable","Format","GIF format.");
-            reg("deepfry","variable","Meme -> Meme","Composed effect preset.");
-            reg("crossfade","variable","string","Transition type.");
-            reg("slideLeft","variable","string","Transition type.");
-            reg("slideRight","variable","string","Transition type.");
-            reg("slideUp","variable","string","Transition type.");
-            reg("slideDown","variable","string","Transition type.");
-            reg("wipe","variable","string","Transition type.");
-        }
+        // --- Type inference ---
 
-        void registerProperties() {
-            auto prop = [&](const std::string& owner, const std::string& name,
-                            const std::string& kind, const std::string& desc) {
-                knownProps[owner + "." + name] = {owner, kind, desc};
-            };
-            // Meme
-            prop("Meme", "text", "method", ".text(position, str) — Add text. Returns Meme. Chainable.");
-            prop("Meme", "save", "method", ".save(format, path) — Save meme to file.");
-            prop("Meme", "resize", "method", ".resize(size) — Returns resized Meme.");
-            prop("Meme", "_top", "field", "Top text string.");
-            prop("Meme", "_bottom", "field", "Bottom text string.");
-            prop("Meme", "_template", "field", "Template used by this meme.");
-            // Gif
-            prop("Gif", "frame", "method", ".frame(meme, duration) — Add frame. Returns Gif. Chainable.");
-            prop("Gif", "save", "method", ".save(path) — Render and save as animated GIF.");
-            // Timeline
-            prop("Timeline", "frame", "method", ".frame(meme, duration) — Add keyframe. Returns Timeline. Chainable.");
-            prop("Timeline", "transition", "method", ".transition(type, duration) — Set transition to next frame. Chainable.");
-            prop("Timeline", "loop", "method", ".loop(count) — Set loop count (0 = infinite). Chainable.");
-            prop("Timeline", "render", "method", ".render(path) — Render to animated GIF.");
-            prop("Timeline", "save", "method", ".save(path) — Render to animated GIF. Alias for render().");
-            // Template
-            prop("Template", "name", "field", "Template name or path.");
-            prop("Template", "path", "field", "Resolved file path.");
-            // Size
-            prop("Size", "width", "field", "Width in pixels.");
-            prop("Size", "height", "field", "Height in pixels.");
-            // Duration
-            prop("Duration", "ms", "field", "Duration in milliseconds.");
-            // Frame
-            prop("Frame", "meme", "field", "The Meme for this frame.");
-            prop("Frame", "duration", "field", "The Duration for this frame.");
-        }
+        std::string inferType(expr::Expr<MV>* e);
+        std::string inferCallType(expr::Call<MV>* c);
+        std::string inferPipeType(expr::PipeExpr<MV>* p);
+        std::string inferCbReturn(expr::Expr<MV>* cb, const std::string& inputType);
+        std::string nativeRetForPipe(const std::string& name, const std::string& input);
+        std::string extractElem(const std::string& t);
+        std::vector<std::string> splitTuple(const std::string& t);
+        std::string describeCompose(expr::Expr<MV>* e);
+        void collectCompose(expr::Expr<MV>* e, std::vector<std::string>& parts);
+        std::string exprStr(expr::Expr<MV>* e);
     };
 
 } // namespace analyzer
+
+// Implementation split into separate headers — included here because
+// template-heavy code must be visible at the point of use.
+#include "AnalyzerWalk.h"
+#include "AnalyzerInference.h"
 
 #endif // MAC_ANALYZER_H
