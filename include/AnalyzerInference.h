@@ -77,6 +77,24 @@ namespace analyzer {
         }
 
         if (auto* p = dynamic_cast<expr::LambdaExpr<MV>*>(e)) {
+            // Try to infer return type from body
+            std::string retType = "unknown";
+            if (!p->body.empty()) {
+                auto* last = p->body.back().get();
+                if (auto* ret = dynamic_cast<stmt::ReturnStmt<MV>*>(last)) {
+                    retType = ret->value ? inferType(ret->value.get()) : "nil";
+                } else if (auto* es = dynamic_cast<stmt::ExpressionStmt<MV>*>(last)) {
+                    retType = inferType(es->expression.get());
+                }
+            }
+            if (retType != "unknown") {
+                std::string params;
+                for (size_t i = 0; i < p->params.size(); i++) {
+                    if (i) params += ", ";
+                    params += "any";
+                }
+                return "(" + params + ") -> " + retType;
+            }
             return "fun(" + std::to_string(p->params.size()) + ")";
         }
 
@@ -105,8 +123,9 @@ namespace analyzer {
                 auto leftType = inferType(p->left.get());
                 auto rightType = inferType(p->right.get());
                 if (leftType == "string" || rightType == "string") return "string";
-                if (leftType == "number" && rightType == "number") return "number";
+                if (leftType == "number" || rightType == "number") return "number";
             }
+            if (op == "-" || op == "*" || op == "/" || op == "%") return "number";
         }
 
         // Mac v2 syntax nodes

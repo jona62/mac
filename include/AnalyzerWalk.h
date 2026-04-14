@@ -366,34 +366,44 @@ namespace analyzer {
             analyzeExpr(p->path.get());
         }
         else if (auto* p = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
-            // Semantic token for 'gif' keyword
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
                 int kc = p->keyword.column > 0 ? p->keyword.column : 1;
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
+                // Hover symbol for the gif keyword
+                std::string desc = p->loop ? "Looping GIF block" : "GIF block";
+                desc += " — " + std::to_string(p->frames.size()) + " frames";
+                result.symbols.push_back({kw, "keyword", "Gif", desc, currentSource,
+                    "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
             }
             for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
         }
         else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
-            // Semantic token for 'timeline' keyword
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
                 int kc = p->keyword.column > 0 ? p->keyword.column : 1;
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
+                std::string desc = p->loop ? "Looping timeline" : "Timeline";
+                desc += " — " + std::to_string(p->entries.size()) + " keyframes";
+                result.symbols.push_back({kw, "keyword", "Timeline", desc, currentSource,
+                    "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
             }
             for (auto& entry : p->entries) {
                 analyzeExpr(entry.frame.meme.get());
             }
         }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
-            // Semantic token for 'grid' keyword
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
                 int kc = p->keyword.column > 0 ? p->keyword.column : 1;
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
+                std::string desc = std::to_string(p->cols) + "x" + std::to_string(p->rows) +
+                    " grid — " + std::to_string(p->entries.size()) + " entries";
+                result.symbols.push_back({kw, "keyword", "Meme", desc, currentSource,
+                    "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
             }
             for (auto& entry : p->entries) analyzeExpr(entry.get());
         }

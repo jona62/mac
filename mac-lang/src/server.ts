@@ -928,6 +928,11 @@ function formatSymbolHover(result: AnalysisResult, sym: SymbolDef): string {
         return `\`\`\`mac\nclass ${sym.name}\n\`\`\`${sym.description ? `\n\n${sym.description}` : ""}`;
     }
 
+    if (sym.kind === "keyword") {
+        const type = sym.type && sym.type !== "unknown" ? ` → ${sym.type}` : "";
+        return `\`\`\`mac\n${sym.name}${type}\n\`\`\`${sym.description ? `\n\n${sym.description}` : ""}`;
+    }
+
     if (sym.kind === "function" || sym.kind === "native" || sym.kind === "method") {
         const signatures = result.signatures.filter((sig) =>
             sig.name === sym.name &&
