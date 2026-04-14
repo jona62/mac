@@ -47,6 +47,7 @@ shared_ptr<stmt::Stmt<T>> Parser::declaration() {
         }
         if (match(TokenType::VAR)) return varDeclaration<T>();
         if (match(TokenType::EFFECT)) return effectDeclaration<T>();
+        if (match(TokenType::STYLE)) return styleDeclaration<T>();
         return statement<T>();
     } catch (const ParseError& error) {
         std::cerr << error.what() << std::endl;
@@ -706,6 +707,24 @@ double Parser::parseDuration() {
     return num;
 }
 
+// style name { key: value, ... }
+template <typename T>
+shared_ptr<stmt::Stmt<T>> Parser::styleDeclaration() {
+    consume(TokenType::IDENTIFIER, "Expected style name.");
+    Token name = previous();
+    consume(TokenType::LEFT_BRACE, "Expected '{' after style name.");
+    std::vector<std::pair<Token, shared_ptr<Expr<T>>>> props;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        consume(TokenType::IDENTIFIER, "Expected property name.");
+        Token key = previous();
+        consume(TokenType::COLON, "Expected ':' after property name.");
+        auto value = expression<T>();
+        props.push_back({key, value});
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after style block.");
+    return make_shared<stmt::StyleStmt<T>>(name, std::move(props));
+}
+
 // effect name = compose_expr;
 template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::effectDeclaration() {
@@ -749,6 +768,22 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         }
     }
 
+    // Optional style name: @template [WxH] styleName { ... }
+    Token styleName;
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        // A style name is an identifier that's NOT a position key and is followed by { or string
+        if (s && *s != "top" && *s != "bottom" && *s != "center" && *s != "loop") {
+            if (current + 1 < tokens.size()) {
+                auto nextType = tokens[current + 1].type;
+                if (nextType == TokenType::LEFT_BRACE || nextType == TokenType::STRING) {
+                    advance();
+                    styleName = previous();
+                }
+            }
+        }
+    }
+
     std::vector<typename expr::MemeLiteralExpr<T>::TextEntry> entries;
 
     if (match(TokenType::LEFT_BRACE)) {
@@ -761,7 +796,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
             entries.push_back({key, value});
         }
         consume(TokenType::RIGHT_BRACE, "Expected '}' after meme literal.");
-        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false, width, height);
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false, width, height, styleName);
     }
 
     // One-liner: @template expr (string literal, variable, or any primary expression)
@@ -770,7 +805,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         Token centerKey(TokenType::IDENTIFIER, token::TokenValue(std::string("center")),
                         templateName.line, templateName.column);
         entries.push_back({centerKey, value});
-        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true, width, height);
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true, width, height, styleName);
     }
 
     throw ParseError(peek(), "Expected '{' or text after @template.");
@@ -946,5 +981,6 @@ template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::timelineBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
+template shared_ptr<stmt::Stmt<MV>> Parser::styleDeclaration<MV>();
 
 } // namespace parser

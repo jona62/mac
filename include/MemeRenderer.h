@@ -17,6 +17,15 @@
 
 namespace meme {
 
+    struct TextStyle {
+        unsigned char textR = 255, textG = 255, textB = 255, textA = 255; // white
+        unsigned char outlineR = 0, outlineG = 0, outlineB = 0;          // black
+        int outlineWidth = 3;
+        int shadowOffsetX = 0, shadowOffsetY = 0;
+        unsigned char shadowR = 0, shadowG = 0, shadowB = 0, shadowA = 128;
+        float fontSizeOverride = 0; // 0 = auto
+    };
+
     class MemeRenderer {
     public:
         // Render meme to RGBA pixel buffer.
@@ -37,8 +46,9 @@ namespace meme {
                                                   int targetWidth,
                                                   int targetHeight,
                                                   int& outWidth,
-                                                  int& outHeight) {
-            return renderInternal(imagePath, topText, bottomText, targetWidth, targetHeight, outWidth, outHeight);
+                                                  int& outHeight,
+                                                  const TextStyle& style = TextStyle{}) {
+            return renderInternal(imagePath, topText, bottomText, targetWidth, targetHeight, outWidth, outHeight, style);
         }
 
         // Save rendered RGBA pixels to a PNG or JPG file (detected by extension).
@@ -69,7 +79,8 @@ namespace meme {
                 int targetWidth,
                 int targetHeight,
                 int& outWidth,
-                int& outHeight) {
+                int& outHeight,
+                const TextStyle& activeStyle = TextStyle{}) {
 
             // Load template image
             int imgW, imgH, imgC;
@@ -114,14 +125,14 @@ namespace meme {
             if (!topText.empty()) {
                 int regionY = 0;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH);
+                drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH, activeStyle);
             }
 
             // Draw bottom text (lower half)
             if (!bottomText.empty()) {
                 int regionY = h / 2;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH);
+                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH, activeStyle);
             }
 
             outWidth = w;
@@ -167,7 +178,8 @@ namespace meme {
                                  stbtt_fontinfo& fontInfo,
                                  const std::vector<unsigned char>& fontData,
                                  const std::string& text,
-                                 int regionY, int regionH) {
+                                 int regionY, int regionH,
+                                 const TextStyle& activeStyle = TextStyle{}) {
 
             std::string upper = toUpper(text);
             float maxWidth = imgW * 0.9f;
@@ -214,19 +226,33 @@ namespace meme {
                 int startX = static_cast<int>((imgW - lineWidth) / 2.0f);
                 int startY = static_cast<int>(blockStartY + li * lineHeight + ascentPx);
 
-                // Draw outline (black) -- radius 3 for thick meme look
-                for (int ox = -3; ox <= 3; ++ox) {
-                    for (int oy = -3; oy <= 3; ++oy) {
+                // Draw shadow if enabled
+                if (activeStyle.shadowOffsetX != 0 || activeStyle.shadowOffsetY != 0) {
+                    drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                                 startX + activeStyle.shadowOffsetX,
+                                 startY + activeStyle.shadowOffsetY,
+                                 activeStyle.shadowR, activeStyle.shadowG,
+                                 activeStyle.shadowB, activeStyle.shadowA);
+                }
+
+                // Draw outline
+                int r = activeStyle.outlineWidth;
+                for (int ox = -r; ox <= r; ++ox) {
+                    for (int oy = -r; oy <= r; ++oy) {
                         if (ox == 0 && oy == 0) continue;
-                        if (ox * ox + oy * oy > 9) continue;
+                        if (ox * ox + oy * oy > r * r) continue;
                         drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
-                                     startX + ox, startY + oy, 0, 0, 0, 255);
+                                     startX + ox, startY + oy,
+                                     activeStyle.outlineR, activeStyle.outlineG,
+                                     activeStyle.outlineB, 255);
                     }
                 }
 
-                // Draw text (white)
+                // Draw text
                 drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
-                             startX, startY, 255, 255, 255, 255);
+                             startX, startY,
+                             activeStyle.textR, activeStyle.textG,
+                             activeStyle.textB, activeStyle.textA);
             }
         }
 

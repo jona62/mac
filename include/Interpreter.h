@@ -435,6 +435,16 @@ namespace interpreter {
             throw errors::ContinueException();
         }
 
+        void visitStyleStmt(stmt::StyleStmt<MacValue>* stmt) override {
+            auto map = std::make_shared<collection::MacMap>();
+            for (auto& [key, val] : stmt->properties) {
+                auto k = std::get<std::string>(key.lexeme);
+                auto v = evaluate(val);
+                map->set(k, v);
+            }
+            env->define(std::get<std::string>(stmt->name.lexeme), MacValue(map));
+        }
+
         void visitEffectStmt(stmt::EffectStmt<MacValue>* stmt) override {
             // Same as var declaration — effect is just a named compose
             MacValue value = evaluate(stmt->value);
@@ -587,6 +597,20 @@ namespace interpreter {
                 auto method = inst->get(textTok);
                 auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
                 meme = fn->call(shared_from_this(), {position, textVal});
+            }
+
+            // Apply style if specified: @template styleName { ... }
+            if (expr->styleName.type != token::TokenType::NONE) {
+                auto styleNameStr = std::get<std::string>(expr->styleName.lexeme);
+                auto styleVal = env->get(expr->styleName);
+                if (std::holds_alternative<shared_ptr<collection::MacMap>>(styleVal)) {
+                    auto styleMap = std::get<shared_ptr<collection::MacMap>>(styleVal);
+                    // Store style on the meme instance for rendering
+                    auto inst = std::get<shared_ptr<instance::MacInstance>>(meme);
+                    token::Token styleTok(token::TokenType::IDENTIFIER,
+                        token::TokenValue(std::string("_style")), 0);
+                    inst->set(styleTok, styleVal);
+                }
             }
 
             // Apply size if specified: @template WxH { ... }

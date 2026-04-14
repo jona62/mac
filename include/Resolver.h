@@ -236,6 +236,11 @@ namespace resolver {
         void visitEffectStmt(stmt::EffectStmt<MV>* stm) override {
             declare(stm->name); resolveExpr(stm->value); define(stm->name);
         }
+        void visitStyleStmt(stmt::StyleStmt<MV>* stm) override {
+            declare(stm->name);
+            for (auto& [key, val] : stm->properties) resolveExpr(val);
+            define(stm->name);
+        }
 
         void visitClassStmt(stmt::ClassStmt<MV>* stm) override {
             declare(stm->name);

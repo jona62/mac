@@ -102,6 +102,8 @@ namespace parser {
         shared_ptr<Expr<T>> gridBlock();
         template <typename T>
         shared_ptr<stmt::Stmt<T>> effectDeclaration();
+        template <typename T>
+        shared_ptr<stmt::Stmt<T>> styleDeclaration();
         double parseDuration();
 
         void synchronize();
