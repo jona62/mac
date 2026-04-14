@@ -110,7 +110,11 @@ namespace analyzer {
         }
 
         // Mac v2 syntax nodes
-        if (dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) return "Meme";
+        if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
+            if (p->width > 0 && p->height > 0)
+                return "Meme(" + std::to_string(p->width) + "x" + std::to_string(p->height) + ")";
+            return "Meme";
+        }
         if (dynamic_cast<expr::GifBlockExpr<MV>*>(e)) return "Gif";
         if (dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) return "Timeline";
         if (dynamic_cast<expr::GridBlockExpr<MV>*>(e)) return "Meme";
