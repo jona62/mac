@@ -10,6 +10,7 @@ style cinematic {
     outlineColor: "#111111"
     shadow: 4
     shadowColor: "#00000088"
+    fontSize: "md"
 }
 
 style panic {
@@ -18,12 +19,30 @@ style panic {
     outlineColor: "#440000"
     shadow: 3
     shadowColor: "#00000099"
+    fontSize: "lg"
 }
 
 style chill {
     color: "#00FF41"
     outline: 3
     outlineColor: "#003300"
+    fontSize: "md"
+}
+
+style shout {
+    color: "#FFFFFF"
+    outline: 4
+    outlineColor: "#000000"
+    shadow: 3
+    shadowColor: "#00000099"
+    fontSize: "xlg"
+}
+
+style whisper {
+    color: "#CCCCCC"
+    outline: 1
+    outlineColor: "#333333"
+    fontSize: "sm"
 }
 
 // ===== MEME DEFINITIONS (lazy) =====
@@ -59,9 +78,9 @@ var standup = () -> grid 2x1 {
 } |> pad(5) |> border(2);
 
 var code_review = () -> grid 2x2 {
-    @meme.shrek_smirk cinematic "Opens PR: 3 lines"
+    @meme.shrek_smirk shout "Opens PR: 3 lines"
     @meme.kid_crying panic "47 comments"
-    @meme.shrek_side_eye cinematic "Fixes all comments"
+    @meme.shrek_side_eye shout "Fixes all comments"
     @meme.girl_side_eye panic "nit: add period"
 } |> pad(5) |> border(2);
 
@@ -76,15 +95,15 @@ var stackoverflow = () -> @meme.girl_side_eye cinematic {
 };
 
 var git_history = () -> grid 2x2 {
-    @meme.shrek_smirk cinematic "'fix'"
-    @meme.shrek_side_eye cinematic "'fix fix'"
-    @meme.kid_crying cinematic "'actually fix'"
+    @meme.shrek_smirk shout "'fix'"
+    @meme.shrek_side_eye shout "'fix fix'"
+    @meme.kid_crying shout "'actually fix'"
     @meme.girl_side_eye panic "'WHY'"
 } |> pad(5) |> border(2);
 
 var imposter = () -> grid 2x1 {
-    @meme.shrek_smirk cinematic "I have no idea what I'm doing"
-    @meme.shrek_side_eye cinematic "Designs distributed system before lunch"
+    @meme.shrek_smirk shout "I have no idea what I'm doing"
+    @meme.shrek_side_eye shout "Designs distributed system before lunch"
 } |> pad(5) |> border(2);
 
 var pto_deploy = () -> grid 2x1 {
@@ -120,7 +139,7 @@ var lgtm = () -> grid 2x1 {
 } |> pad(5) |> border(2);
 
 var not_a_bug = () -> grid 2x1 {
-    @meme.girl_side_eye cinematic "It's not a bug"
+    @meme.girl_side_eye shout "It's not a bug"
     @meme.shrek_smirk chill "It's a feature"
 } |> pad(5) |> border(2);
 
@@ -173,7 +192,7 @@ var rebase = () -> @meme.king_bach_stare cinematic {
 
 var docker = () -> grid 2x1 {
     @meme.shrek_smirk chill "Docker build: 0 errors"
-    @meme.king_bach_stare panic "Docker run: segfault"
+    @meme.king_bach_stare shout "Docker run: segfault"
 } |> pad(5) |> border(2);
 
 var todo = () -> @meme.shrek_side_eye cinematic {
@@ -193,14 +212,14 @@ var ai_fix = () -> grid 2x2 {
     @meme.jordan_crying panic "git reset --hard"
 } |> pad(5) |> border(2);
 
-var dns = () -> @meme.window_despair panic {
+var dns = () -> @meme.window_despair shout {
     top: "It's always DNS"
     bottom: "It was DNS"
 };
 
 var regex = () -> grid 2x1 {
-    @meme.shrek_smirk cinematic "I'll just write a quick regex"
-    @meme.window_despair panic "3 hours later: ^(?!.*(?<=\\d)(?=\\w))"
+    @meme.shrek_smirk shout "I'll just write a quick regex"
+    @meme.window_despair whisper "3 hours later: ^(?!.*(?<=\\d)(?=\\w))"
 } |> pad(5) |> border(2);
 
 var localhost = () -> @meme.king_bach_stare cinematic {
@@ -228,8 +247,8 @@ var standup_timeline = () -> gif loop {
 };
 
 var legacy = () -> grid 2x2 {
-    @meme.shrek_smirk cinematic "Reads legacy code"
-    @meme.shrek_side_eye cinematic "No tests, no docs"
+    @meme.shrek_smirk shout "Reads legacy code"
+    @meme.shrek_side_eye shout "No tests, no docs"
     @meme.king_bach_stare panic "Last commit: 2019"
     @meme.girl_side_eye panic "Author left the company"
 } |> pad(5) |> border(2);
