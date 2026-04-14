@@ -198,7 +198,7 @@ namespace analyzer {
             int c = tok.column > 0 ? tok.column : 1;
             SymbolDef sym{name, kind, type, desc, tok.line, c, c + static_cast<int>(name.size())};
             currentScope->symbols[name] = sym;
-            if (tok.line > 0) result.symbols.push_back(sym);
+            result.symbols.push_back(sym);
         }
 
         SymbolDef* resolve(const std::string& name) {
