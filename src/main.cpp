@@ -120,20 +120,29 @@ void run_prompt() {
 void analyze_file(const char *path) {
     string source = readFile(path);
     if (source.empty()) {
-        cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\"}]}" << endl;
+        cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\",\"source\":\"user\"}],\"properties\":[],\"foldingRanges\":[],\"semanticTokens\":[],\"paramHints\":[],\"chainHints\":[],\"signatures\":[],\"classes\":[]}" << endl;
         return;
     }
 
-    // Scan + parse
+    analyzer::MacAnalyzer macAnalyzer;
+
+    string preludeSource = readFile("stdlib/prelude.mac");
+    if (!preludeSource.empty()) {
+        scanner::Scanner preludeScanner(preludeSource);
+        vector<Token> preludeTokens;
+        for (auto& token : preludeScanner) preludeTokens.push_back(token);
+
+        parser::Parser preludeParser(preludeTokens);
+        auto preludeStatements = preludeParser.parse<value::MacValue>();
+        macAnalyzer.analyze(preludeStatements, "prelude");
+    }
+
     scanner::Scanner scanner(source);
     vector<Token> tokens;
     for (auto& token : scanner) tokens.push_back(token);
 
     parser::Parser parser(tokens);
     auto statements = parser.parse<value::MacValue>();
-
-    // Run analyzer
-    analyzer::MacAnalyzer macAnalyzer;
-    macAnalyzer.analyze(statements);
+    macAnalyzer.analyze(statements, "user");
     cout << macAnalyzer.toJson() << endl;
 }

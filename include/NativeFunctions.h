@@ -304,7 +304,7 @@ namespace callable {
     // =======================================================================
 
     // Helper: extract meme rendering data from a MacInstance (Meme class)
-    // Returns the rendered pixel data + dimensions. If _rendered is set (temp path),
+    // Returns the rendered pixel data + dimensions. If renderedPath is set (temp path),
     // loads from that. Otherwise renders from template + text.
     struct MemePixelData {
         std::vector<unsigned char> pixels;
@@ -336,8 +336,8 @@ namespace callable {
         }
         auto inst = std::get<std::shared_ptr<instance::MacInstance>>(val);
 
-        // Check for _rendered field (temp file path)
-        token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_rendered")), 0);
+        // Check for renderedPath field (temp file path)
+        token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("renderedPath")), 0);
         value::MacValue renderedVal;
         try {
             renderedVal = inst->get(renderedTok);
@@ -361,17 +361,17 @@ namespace callable {
         }
 
         // Render from template
-        token::Token tplTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_template")), 0);
+        token::Token tplTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("template")), 0);
         auto tplVal = inst->get(tplTok);
         auto tplInst = std::get<std::shared_ptr<instance::MacInstance>>(tplVal);
 
         token::Token pathTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("path")), 0);
         auto templatePath = std::get<std::string>(tplInst->get(pathTok));
 
-        token::Token topTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_top")), 0);
-        token::Token botTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_bottom")), 0);
-        token::Token wTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_width")), 0);
-        token::Token hTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_height")), 0);
+        token::Token topTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("topText")), 0);
+        token::Token botTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("bottomText")), 0);
+        token::Token wTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("width")), 0);
+        token::Token hTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("height")), 0);
 
         auto topText = std::get<std::string>(inst->get(topTok));
         auto bottomText = std::get<std::string>(inst->get(botTok));
@@ -1423,7 +1423,7 @@ namespace callable {
 
         // Get template path
         std::string templatePath = "";
-        auto templateVal = getField("_template");
+        auto templateVal = getField("template");
         if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(templateVal)) {
             auto tmplInst = std::get<std::shared_ptr<instance::MacInstance>>(templateVal);
             token::Token pathTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("path")), 0);
@@ -1432,10 +1432,10 @@ namespace callable {
             } catch (...) {}
         }
 
-        auto topVal = getField("_top");
-        auto bottomVal = getField("_bottom");
-        auto wVal = getField("_width");
-        auto hVal = getField("_height");
+        auto topVal = getField("topText");
+        auto bottomVal = getField("bottomText");
+        auto wVal = getField("width");
+        auto hVal = getField("height");
 
         std::string top = std::holds_alternative<std::string>(topVal) ? std::get<std::string>(topVal) : "";
         std::string bottom = std::holds_alternative<std::string>(bottomVal) ? std::get<std::string>(bottomVal) : "";
@@ -1556,9 +1556,9 @@ namespace callable {
             if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(target)) {
                 auto inst = std::get<std::shared_ptr<instance::MacInstance>>(target);
 
-                // Check for _rendered field (already processed by effects)
+                // Check for renderedPath field (already processed by effects)
                 token::Token renderedTok(token::TokenType::IDENTIFIER,
-                    token::TokenValue(std::string("_rendered")), 0);
+                    token::TokenValue(std::string("renderedPath")), 0);
                 value::MacValue renderedVal;
                 try { renderedVal = inst->get(renderedTok); } catch (...) { renderedVal = std::monostate{}; }
 

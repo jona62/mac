@@ -5,10 +5,12 @@ var m2 = Meme(tmpl).text(Top, "Frame 2");
 var g = Gif()
     .frame(m1, Duration(300))
     .frame(m2, Duration(300));
+print g.frameCount;               // expect: 2
 g.save("typed_anim.gif");
 print "gif saved";               // expect: gif saved
 
 var f1 = m1 + Duration(400);
 var g2 = Gif() + f1;
+print g2.frameCount;              // expect: 1
 g2.save("typed_op.gif");
 print "op gif saved";            // expect: op gif saved

@@ -18,7 +18,7 @@
 #include "MacMap.h"
 #include "MacMeme.h"
 #include "MacGif.h"
-#include "NativeFunctions.h"
+#include "NativeRegistry.h"
 #include "Environment.h"
 #include "RuntimeError.h"
 #include "Return.h"
@@ -55,86 +55,9 @@ namespace interpreter {
                         public std::enable_shared_from_this<Interpreter> {
     public:
         Interpreter() : globals(make_shared<environment::Environment>()), env(globals) {
-            auto defn = [&](const string& name, shared_ptr<callable::MacCallable> fn) {
-                globals->define(name, MacValue(fn));
-            };
-            defn("clock", make_shared<callable::ClockFunction>());
-            defn("len", make_shared<callable::LenFunction>());
-            defn("substr", make_shared<callable::SubstrFunction>());
-            defn("split", make_shared<callable::SplitFunction>());
-            defn("type", make_shared<callable::TypeFunction>());
-            defn("sqrt", make_shared<callable::SqrtFunction>());
-            defn("abs", make_shared<callable::AbsFunction>());
-            defn("pow", make_shared<callable::PowFunction>());
-            defn("floor", make_shared<callable::FloorFunction>());
-            defn("ceil", make_shared<callable::CeilFunction>());
-            defn("push", make_shared<callable::PushFunction>());
-            defn("pop", make_shared<callable::PopFunction>());
-            defn("map", make_shared<callable::MapArrayFunction>());
-            defn("filter", make_shared<callable::FilterFunction>());
-            defn("input", make_shared<callable::InputFunction>());
-            defn("_resolve_template", make_shared<callable::ResolveTemplateFunction>());
-            defn("_meme_save", make_shared<callable::MemeRenderSaveFunction>());
-            defn("_gif_save", make_shared<callable::GifRenderSaveFunction>());
-
-            // Effects
-            defn("blur", make_shared<callable::ParamEffectCreator>("blur"));
-            defn("pixelate", make_shared<callable::ParamEffectCreator>("pixelate"));
-            defn("noise", make_shared<callable::ParamEffectCreator>("noise"));
-            defn("saturate", make_shared<callable::ParamEffectCreator>("saturate"));
-            defn("contrast", make_shared<callable::ParamEffectCreator>("contrast"));
-            defn("brightness", make_shared<callable::ParamEffectCreator>("brightness"));
-            defn("jpeg", make_shared<callable::ParamEffectCreator>("jpeg"));
-            defn("invert", make_shared<callable::DirectEffect>("invert"));
-            defn("sepia", make_shared<callable::DirectEffect>("sepia"));
-            defn("sharpen", make_shared<callable::DirectEffect>("sharpen"));
-            defn("vignette", make_shared<callable::DirectEffect>("vignette"));
-
-            // Layout
-            defn("beside", make_shared<callable::BesideFunction>());
-            defn("stack", make_shared<callable::StackFunction>());
-            defn("grid", make_shared<callable::GridFunction>());
-            defn("pad", make_shared<callable::PadFunction>());
-            defn("border", make_shared<callable::BorderFunction>());
-
-            // Effect infrastructure
-            defn("_apply_effect", make_shared<callable::ApplyEffectFunction>());
-            defn("_compose_layout", make_shared<callable::ComposeLayoutFunction>());
-            defn("_add_padding", make_shared<callable::AddPaddingFunction>());
-            defn("_add_border", make_shared<callable::AddBorderFunction>());
-            defn("_save_rendered", make_shared<callable::SaveRenderedFunction>());
-
-            // Timeline
-            defn("timeline", make_shared<callable::TimelineCreateFunction>());
-            defn("_timeline_keyframe", make_shared<callable::TimelineKeyframeFunction>());
-            defn("_timeline_transition", make_shared<callable::TimelineTransitionFunction>());
-            defn("_timeline_hold", make_shared<callable::TimelineHoldFunction>());
-            defn("_timeline_loop", make_shared<callable::TimelineLoopFunction>());
-            defn("_timeline_render", make_shared<callable::TimelineRenderFunction>());
-
-            // Functional toolkit
-            defn("range", make_shared<callable::RangeFunction>());
-            defn("reduce", make_shared<callable::ReduceFunction>());
-            defn("zip", make_shared<callable::ZipFunction>());
-            defn("enumerate", make_shared<callable::EnumerateFunction>());
-            defn("each", make_shared<callable::EachFunction>());
-            defn("flatten", make_shared<callable::FlattenFunction>());
-            defn("flatMap", make_shared<callable::FlatMapFunction>());
-            defn("sort", make_shared<callable::SortFunction>());
-            defn("reverse", make_shared<callable::ReverseFunction>());
-            defn("find", make_shared<callable::FindFunction>());
-            defn("any", make_shared<callable::AnyFunction>());
-            defn("all", make_shared<callable::AllFunction>());
-            defn("take", make_shared<callable::TakeFunction>());
-            defn("drop", make_shared<callable::DropFunction>());
-            defn("join", make_shared<callable::JoinFunction>());
-            defn("upper", make_shared<callable::UpperFunction>());
-            defn("lower", make_shared<callable::LowerFunction>());
-            defn("trim", make_shared<callable::TrimFunction>());
-            defn("replace", make_shared<callable::ReplaceFunction>());
-            defn("animate", make_shared<callable::AnimateFunction>());
-            defn("toGrid", make_shared<callable::ToGridFunction>());
-            defn("save", make_shared<callable::SaveFunction>());
+            for (const auto& def : native_registry::all()) {
+                globals->define(def.name, MacValue(def.factory()));
+            }
         }
 
         // --- Expression visitors ---

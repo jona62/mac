@@ -1,71 +1,105 @@
 #ifndef ANALYZER_WALK_H
 #define ANALYZER_WALK_H
 
-// Included at the bottom of MacAnalyzer.h — implements AST walking methods.
-
 namespace analyzer {
 
     inline void MacAnalyzer::analyzeStmt(stmt::Stmt<MV>* s) {
         if (!s) return;
-        if (auto* p = dynamic_cast<stmt::ExpressionStmt<MV>*>(s)) { analyzeExpr(p->expression.get()); }
-        else if (auto* p = dynamic_cast<stmt::PrintStmt<MV>*>(s)) { analyzeExpr(p->expression.get()); }
-        else if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(s)) {
-            std::string type = "unknown", desc;
+
+        if (auto* p = dynamic_cast<stmt::ExpressionStmt<MV>*>(s)) {
+            analyzeExpr(p->expression.get());
+        } else if (auto* p = dynamic_cast<stmt::PrintStmt<MV>*>(s)) {
+            analyzeExpr(p->expression.get());
+        } else if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(s)) {
+            std::string type = "unknown";
+            std::string desc;
             if (p->initializer) {
                 type = inferType(p->initializer.get());
-                if (dynamic_cast<expr::ComposeExpr<MV>*>(p->initializer.get()))
+                if (dynamic_cast<expr::ComposeExpr<MV>*>(p->initializer.get())) {
                     desc = describeCompose(p->initializer.get());
+                }
             }
             define(p->name, "variable", type, desc);
             if (p->initializer) analyzeExpr(p->initializer.get());
-        }
-        else if (auto* p = dynamic_cast<stmt::BlockStmt<MV>*>(s)) {
+        } else if (auto* p = dynamic_cast<stmt::BlockStmt<MV>*>(s)) {
             beginScope();
             for (auto& st : p->statements) analyzeStmt(st.get());
             endScope();
-        }
-        else if (auto* p = dynamic_cast<stmt::IfStmt<MV>*>(s)) {
+        } else if (auto* p = dynamic_cast<stmt::IfStmt<MV>*>(s)) {
             analyzeExpr(p->condition.get());
             analyzeStmt(p->thenBranch.get());
             if (p->elseBranch) analyzeStmt(p->elseBranch.get());
-        }
-        else if (auto* p = dynamic_cast<stmt::WhileStmt<MV>*>(s)) {
+        } else if (auto* p = dynamic_cast<stmt::WhileStmt<MV>*>(s)) {
             analyzeExpr(p->condition.get());
             analyzeStmt(p->body.get());
-        }
-        else if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(s)) {
+        } else if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(s)) {
             define(p->name, "function", "fun(" + std::to_string(p->params.size()) + ")");
             addFoldRange(p->name.line, p->body);
-            addSignature(p);
+
             beginScope();
             for (auto& prm : p->params) define(prm, "parameter", "unknown");
             for (auto& st : p->body) analyzeStmt(st.get());
+            auto returnType = inferBlockReturn(p->body);
+            addFunctionSignature(p, "function", returnType);
             endScope();
-        }
-        else if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(s)) {
+        } else if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(s)) {
             if (p->value) analyzeExpr(p->value.get());
-        }
-        else if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(s)) {
-            define(p->name, "class", "class " + tokName(p->name));
-            if (p->superclass) resolveRef(p->superclass->name);
+        } else if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(s)) {
+            auto className = tokName(p->name);
+            define(p->name, "class", "class " + className);
+            auto* cls = ensureClass(p->name);
+            if (p->superclass) {
+                auto superName = tokName(p->superclass->name);
+                cls->superclass = superName;
+                resolveRef(p->superclass->name);
+            }
+
             if (!p->methods.empty()) {
                 int endLine = p->name.line;
-                for (auto& m : p->methods)
+                for (auto& m : p->methods) {
                     if (!m->body.empty()) endLine = std::max(endLine, lastLineOf(m->body));
-                result.foldingRanges.push_back({p->name.line, endLine + 1});
+                }
+                result.foldingRanges.push_back({p->name.line, endLine + 1, currentSource});
             }
+
+            auto prevClass = currentClassName;
+            auto prevSuper = currentSuperclassName;
+            currentClassName = className;
+            currentSuperclassName = cls->superclass;
+
             beginScope();
             for (auto& m : p->methods) {
-                define(m->name, "method", "fun(" + std::to_string(m->params.size()) + ")");
+                auto methodName = tokName(m->name);
+                auto visibility = isInternalName(methodName) ? "internal" : "public";
+                define(m->name, "method", "fun(" + std::to_string(m->params.size()) + ")",
+                       "", "", visibility, className);
                 addFoldRange(m->name.line, m->body);
+
                 beginScope();
                 for (auto& prm : m->params) define(prm, "parameter", "unknown");
                 for (auto& st : m->body) analyzeStmt(st.get());
+
+                std::vector<std::string> params;
+                params.reserve(m->params.size());
+                for (auto& prm : m->params) params.push_back(tokName(prm));
+                auto returnType = methodName == "init" ? className : inferBlockReturn(m->body);
+                upsertMember(className, m->name, methodName == "init" ? "constructor" : "method",
+                             "fun(" + std::to_string(m->params.size()) + ")", returnType, params,
+                             "", visibility);
+                addFunctionSignature(m.get(), methodName == "init" ? "constructor" : "method",
+                                     returnType, "", className, visibility);
                 endScope();
             }
+
+            if (!resolveMember(className, "init")) {
+                addSignature(p->name, className, "constructor", constructorParamsFor(className),
+                             className, constructorDescriptionFor(className), currentSource, "public", className);
+            }
+
             endScope();
-        }
-        else if (auto* p = dynamic_cast<stmt::ForInStmt<MV>*>(s)) {
+            currentClassName = prevClass;
+            currentSuperclassName = prevSuper;
+        } else if (auto* p = dynamic_cast<stmt::ForInStmt<MV>*>(s)) {
             analyzeExpr(p->iterable.get());
             auto iterType = inferType(p->iterable.get());
             auto elemType = extractElem(iterType);
@@ -78,43 +112,137 @@ namespace analyzer {
 
     inline void MacAnalyzer::analyzeExpr(expr::Expr<MV>* e) {
         if (!e) return;
-        if (auto* p = dynamic_cast<expr::Variable<MV>*>(e)) { resolveRef(p->name); }
-        else if (auto* p = dynamic_cast<expr::Assign<MV>*>(e)) { analyzeExpr(p->value.get()); resolveRef(p->name); }
-        else if (auto* p = dynamic_cast<expr::Binary<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
-        else if (auto* p = dynamic_cast<expr::Logical<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
-        else if (auto* p = dynamic_cast<expr::Unary<MV>*>(e)) { analyzeExpr(p->right.get()); }
-        else if (auto* p = dynamic_cast<expr::Grouping<MV>*>(e)) { analyzeExpr(p->expression.get()); }
-        else if (auto* p = dynamic_cast<expr::Call<MV>*>(e)) {
+
+        if (auto* p = dynamic_cast<expr::Variable<MV>*>(e)) {
+            resolveRef(p->name);
+        } else if (auto* p = dynamic_cast<expr::Assign<MV>*>(e)) {
+            analyzeExpr(p->value.get());
+            resolveRef(p->name);
+        } else if (auto* p = dynamic_cast<expr::Binary<MV>*>(e)) {
+            analyzeExpr(p->left.get());
+            analyzeExpr(p->right.get());
+        } else if (auto* p = dynamic_cast<expr::Logical<MV>*>(e)) {
+            analyzeExpr(p->left.get());
+            analyzeExpr(p->right.get());
+        } else if (auto* p = dynamic_cast<expr::Unary<MV>*>(e)) {
+            analyzeExpr(p->right.get());
+        } else if (auto* p = dynamic_cast<expr::Grouping<MV>*>(e)) {
+            analyzeExpr(p->expression.get());
+        } else if (auto* p = dynamic_cast<expr::Call<MV>*>(e)) {
             analyzeExpr(p->callee.get());
             for (auto& a : p->arguments) analyzeExpr(a.get());
             collectParamHints(p);
             collectChainHint(p);
-        }
-        else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) {
+        } else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) {
             analyzeExpr(p->object.get());
             auto propName = tokName(p->name);
             auto objType = inferType(p->object.get());
-            auto key = objType + "." + propName;
-            auto it = knownProps.find(key);
-            if (it != knownProps.end()) {
+            if (const auto* member = resolveMember(objType, propName)) {
                 int c = p->name.column > 0 ? p->name.column : 1;
-                int ec = c + static_cast<int>(propName.size());
-                result.properties.push_back({p->name.line, c, ec,
-                    propName, it->second.ownerType, it->second.kind, it->second.description});
+                result.properties.push_back({
+                    p->name.line,
+                    c,
+                    c + static_cast<int>(propName.size()),
+                    member->line,
+                    member->col,
+                    member->endCol,
+                    propName,
+                    objType,
+                    member->kind,
+                    member->kind == "field" ? member->type : member->returnType,
+                    member->description,
+                    currentSource,
+                    member->source,
+                    member->visibility,
+                });
             }
-        }
-        else if (auto* p = dynamic_cast<expr::Set<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->value.get()); }
-        else if (auto* p = dynamic_cast<expr::ArrayExpr<MV>*>(e)) { for (auto& el : p->elements) analyzeExpr(el.get()); }
-        else if (auto* p = dynamic_cast<expr::MapExpr<MV>*>(e)) { for (auto& v : p->values) analyzeExpr(v.get()); }
-        else if (auto* p = dynamic_cast<expr::IndexGet<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->index.get()); }
-        else if (auto* p = dynamic_cast<expr::IndexSet<MV>*>(e)) { analyzeExpr(p->object.get()); analyzeExpr(p->index.get()); analyzeExpr(p->value.get()); }
-        else if (auto* p = dynamic_cast<expr::LambdaExpr<MV>*>(e)) {
+        } else if (auto* p = dynamic_cast<expr::Set<MV>*>(e)) {
+            analyzeExpr(p->object.get());
+            analyzeExpr(p->value.get());
+
+            if (dynamic_cast<expr::This<MV>*>(p->object.get()) && !currentClassName.empty()) {
+                auto fieldName = tokName(p->name);
+                auto fieldType = inferType(p->value.get());
+                auto visibility = isInternalName(fieldName) ? "internal" : "public";
+
+                bool exists = false;
+                if (auto* cls = resolveClass(currentClassName)) {
+                    for (const auto& member : cls->members) {
+                        if (member.name == fieldName && member.kind == "field" && member.source == currentSource) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                }
+
+                upsertMember(currentClassName, p->name, "field", fieldType, "", {}, "", visibility);
+
+                if (!exists) {
+                    int c = p->name.column > 0 ? p->name.column : 1;
+                    result.symbols.push_back({
+                        fieldName,
+                        "field",
+                        fieldType,
+                        "",
+                        currentSource,
+                        visibility,
+                        currentClassName,
+                        p->name.line,
+                        c,
+                        c + static_cast<int>(fieldName.size()),
+                    });
+                    if (currentSource == "user" && p->name.line > 0) {
+                        result.semanticTokens.push_back({
+                            p->name.line,
+                            c,
+                            static_cast<int>(fieldName.size()),
+                            semanticKind("field"),
+                            currentSource,
+                        });
+                    }
+                }
+            }
+        } else if (auto* p = dynamic_cast<expr::This<MV>*>(e)) {
+            if (currentClassName.empty()) addDiagnostic(p->keyword, "Can't use 'this' outside of a class.", "error");
+        } else if (auto* p = dynamic_cast<expr::Super<MV>*>(e)) {
+            if (currentClassName.empty() || currentSuperclassName.empty()) {
+                addDiagnostic(p->keyword, "Can't use 'super' without a superclass.", "error");
+            } else if (const auto* member = resolveMember(currentSuperclassName, tokName(p->method))) {
+                int c = p->method.column > 0 ? p->method.column : 1;
+                result.properties.push_back({
+                    p->method.line,
+                    c,
+                    c + static_cast<int>(tokName(p->method).size()),
+                    member->line,
+                    member->col,
+                    member->endCol,
+                    tokName(p->method),
+                    currentSuperclassName,
+                    member->kind,
+                    member->kind == "field" ? member->type : member->returnType,
+                    member->description,
+                    currentSource,
+                    member->source,
+                    member->visibility,
+                });
+            }
+        } else if (auto* p = dynamic_cast<expr::ArrayExpr<MV>*>(e)) {
+            for (auto& el : p->elements) analyzeExpr(el.get());
+        } else if (auto* p = dynamic_cast<expr::MapExpr<MV>*>(e)) {
+            for (auto& v : p->values) analyzeExpr(v.get());
+        } else if (auto* p = dynamic_cast<expr::IndexGet<MV>*>(e)) {
+            analyzeExpr(p->object.get());
+            analyzeExpr(p->index.get());
+        } else if (auto* p = dynamic_cast<expr::IndexSet<MV>*>(e)) {
+            analyzeExpr(p->object.get());
+            analyzeExpr(p->index.get());
+            analyzeExpr(p->value.get());
+        } else if (auto* p = dynamic_cast<expr::LambdaExpr<MV>*>(e)) {
             beginScope();
             for (auto& prm : p->params) define(prm, "parameter", "unknown");
             for (auto& st : p->body) analyzeStmt(st.get());
             endScope();
-        }
-        else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) {
+        } else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) {
             analyzeExpr(p->value.get());
             auto inputType = inferType(p->value.get());
             if (auto* call = dynamic_cast<expr::Call<MV>*>(p->func.get())) {
@@ -145,17 +273,117 @@ namespace analyzer {
             } else {
                 analyzeExpr(p->func.get());
             }
+        } else if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) {
+            analyzeExpr(p->left.get());
+            analyzeExpr(p->right.get());
         }
-        else if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
     }
 
-    // --- Helpers ---
-
-    inline void MacAnalyzer::addFoldRange(int startLine, const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
+    inline void MacAnalyzer::addFoldRange(
+        int startLine, const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
         if (!body.empty()) {
             int endLine = lastLineOf(body);
-            if (endLine > startLine) result.foldingRanges.push_back({startLine, endLine});
+            if (endLine > startLine) result.foldingRanges.push_back({startLine, endLine, currentSource});
         }
+    }
+
+    inline void MacAnalyzer::collectParamHints(expr::Call<MV>* call) {
+        const Signature* sig = nullptr;
+
+        if (auto* var = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
+            auto name = tokName(var->name);
+            for (const auto& candidate : result.signatures) {
+                if (candidate.name != name || candidate.visibility == "internal") continue;
+                if (candidate.ownerType.empty() &&
+                    (candidate.params.size() == call->arguments.size() || candidate.params.size() >= call->arguments.size())) {
+                    sig = &candidate;
+                    break;
+                }
+            }
+        } else if (auto* get = dynamic_cast<expr::Get<MV>*>(call->callee.get())) {
+            auto ownerType = inferType(get->object.get());
+            auto methodName = tokName(get->name);
+            for (const auto& candidate : result.signatures) {
+                if (candidate.name != methodName || candidate.ownerType != ownerType || candidate.visibility == "internal") continue;
+                if (candidate.params.size() == call->arguments.size() || candidate.params.size() >= call->arguments.size()) {
+                    sig = &candidate;
+                    break;
+                }
+            }
+            if (!sig) sig = resolveSignature(methodName, ownerType);
+        }
+
+        if (!sig) return;
+        for (size_t i = 0; i < sig->params.size() && i < call->arguments.size(); i++) {
+            int argCol = getExprCol(call->arguments[i].get());
+            int argLine = getExprLine(call->arguments[i].get());
+            if (argCol > 0 && argLine > 0 && currentSource == "user") {
+                result.paramHints.push_back({argLine, argCol, sig->params[i], currentSource});
+            }
+        }
+    }
+
+    inline void MacAnalyzer::collectChainHint(expr::Call<MV>* call) {
+        if (!dynamic_cast<expr::Get<MV>*>(call->callee.get())) return;
+        auto resultType = inferCallType(call);
+        if (resultType != "unknown" && currentSource == "user") {
+            result.chainHints.push_back({
+                call->paren.line,
+                call->paren.column + 1,
+                resultType,
+                currentSource,
+            });
+        }
+    }
+
+    inline void MacAnalyzer::addFunctionSignature(stmt::FunctionStmt<MV>* fn, const std::string& kind,
+                                                  const std::string& returnType,
+                                                  const std::string& description,
+                                                  const std::string& ownerType,
+                                                  const std::string& visibility) {
+        std::vector<std::string> params;
+        params.reserve(fn->params.size());
+        for (auto& prm : fn->params) params.push_back(tokName(prm));
+        addSignature(fn->name, tokName(fn->name), kind, params, returnType, description,
+                     currentSource, visibility, ownerType);
+    }
+
+    inline void MacAnalyzer::collectReturnTypes(stmt::Stmt<MV>* s, std::vector<std::string>& out) {
+        if (!s) return;
+        if (auto* ret = dynamic_cast<stmt::ReturnStmt<MV>*>(s)) {
+            out.push_back(ret->value ? inferType(ret->value.get()) : "nil");
+            return;
+        }
+        if (auto* block = dynamic_cast<stmt::BlockStmt<MV>*>(s)) {
+            for (auto& st : block->statements) collectReturnTypes(st.get(), out);
+            return;
+        }
+        if (auto* ifStmt = dynamic_cast<stmt::IfStmt<MV>*>(s)) {
+            collectReturnTypes(ifStmt->thenBranch.get(), out);
+            if (ifStmt->elseBranch) collectReturnTypes(ifStmt->elseBranch.get(), out);
+            return;
+        }
+        if (auto* whileStmt = dynamic_cast<stmt::WhileStmt<MV>*>(s)) {
+            collectReturnTypes(whileStmt->body.get(), out);
+            return;
+        }
+        if (auto* forIn = dynamic_cast<stmt::ForInStmt<MV>*>(s)) {
+            collectReturnTypes(forIn->body.get(), out);
+            return;
+        }
+    }
+
+    inline std::string MacAnalyzer::inferBlockReturn(
+        const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
+        std::vector<std::string> returns;
+        for (auto& st : body) collectReturnTypes(st.get(), returns);
+        if (returns.empty()) return "nil";
+
+        std::string first = returns.front();
+        for (const auto& type : returns) {
+            if (type != first) return "unknown";
+        }
+        return first;
     }
 
     inline int MacAnalyzer::lastLineOf(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
@@ -165,56 +393,28 @@ namespace analyzer {
         if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(last)) return p->name.line;
         if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(last)) return p->keyword.line;
         if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(last)) return p->name.line;
+        if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(last)) return p->name.line;
         return 0;
     }
 
     inline int MacAnalyzer::getExprLine(expr::Expr<MV>* e) {
         if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.line;
         if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return c->paren.line;
+        if (auto* g = dynamic_cast<expr::Get<MV>*>(e)) return g->name.line;
+        if (auto* s = dynamic_cast<expr::Set<MV>*>(e)) return s->name.line;
+        if (auto* t = dynamic_cast<expr::This<MV>*>(e)) return t->keyword.line;
+        if (auto* s = dynamic_cast<expr::Super<MV>*>(e)) return s->method.line;
         return 0;
     }
 
     inline int MacAnalyzer::getExprCol(expr::Expr<MV>* e) {
         if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.column;
         if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return getExprCol(c->callee.get());
+        if (auto* g = dynamic_cast<expr::Get<MV>*>(e)) return g->name.column;
+        if (auto* s = dynamic_cast<expr::Set<MV>*>(e)) return s->name.column;
+        if (auto* t = dynamic_cast<expr::This<MV>*>(e)) return t->keyword.column;
+        if (auto* s = dynamic_cast<expr::Super<MV>*>(e)) return s->method.column;
         return 0;
-    }
-
-    inline void MacAnalyzer::collectParamHints(expr::Call<MV>* call) {
-        if (auto* var = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
-            auto name = tokName(var->name);
-            for (auto& sig : result.signatures) {
-                if (sig.name == name) {
-                    for (size_t i = 0; i < sig.params.size() && i < call->arguments.size(); i++) {
-                        int argCol = getExprCol(call->arguments[i].get());
-                        int argLine = getExprLine(call->arguments[i].get());
-                        if (argCol > 0 && argLine > 0)
-                            result.paramHints.push_back({argLine, argCol, sig.params[i]});
-                    }
-                    break;
-                }
-            }
-        }
-    }
-
-    inline void MacAnalyzer::collectChainHint(expr::Call<MV>* call) {
-        if (auto* get = dynamic_cast<expr::Get<MV>*>(call->callee.get())) {
-            auto objType = inferType(get->object.get());
-            auto method = tokName(get->name);
-            auto key = objType + "." + method;
-            auto it = knownProps.find(key);
-            if (it != knownProps.end() && it->second.kind == "method") {
-                result.chainHints.push_back({call->paren.line, call->paren.column + 1, objType});
-            }
-        }
-    }
-
-    inline void MacAnalyzer::addSignature(stmt::FunctionStmt<MV>* fn) {
-        Signature sig;
-        sig.name = tokName(fn->name);
-        sig.returnType = "unknown";
-        for (auto& p : fn->params) sig.params.push_back(tokName(p));
-        result.signatures.push_back(sig);
     }
 
 } // namespace analyzer

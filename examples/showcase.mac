@@ -1,66 +1,83 @@
 // Mac Language Showcase
-// Generates a complex animated GIF using pipes, compose,
-// arrows, effects, layout, and timeline
+// Guided demo covering user classes, typed prelude APIs,
+// shared native metadata, effects, layout, GIFs, and timelines.
+
 class Human {
-   init(name) {
-    this.name = name;
-   }
+    init(name) {
+        this.name = name;
+    }
 }
+
 class Person < Human {
+    init(name, role) {
+        this.name = name;
+        this.role = role;
+    }
 
+    headline() {
+        return this.role + ": " + this.name;
+    }
 }
 
-var me = Person("Jonathan");
-print me.name;
-var t = Template("two_panel");
+var narrator = Person("Jonathan", "Builder");
+print narrator.headline();
+
+var twoPanel = Template("two_panel");
 var blank = Template("blank");
 
-// Data-driven meme generation with arrows
+var intro = Meme(twoPanel)
+    .text(Top, narrator.headline())
+    .text(Bottom, "Hints now come from real class metadata")
+    .resize(Size(900, 900));
+
+print intro.template.name;
+print intro.topText;
+print intro.width;
+
+var glitch = contrast(1.6) >> noise(0.08) >> pixelate(3);
+var spotlight = intro |> glitch;
+save(spotlight, "showcase_intro.png");
+
 var captions = [
-    ["Me: it works on my machine", "Prod: lol no"],
-    ["Senior dev: we need tests", "The tests:"],
-    ["git push --force", "The intern's branch:"],
-    ["Me explaining my code", "Me reading it 2 weeks later"],
-    ["Stack Overflow: just use regex", "The regex:"]
+    ["Built-ins and runtime", "now share one registry"],
+    ["Prelude classes", "drive editor hints directly"],
+    ["Dot completion", "comes from class members"],
+    ["User classes", "get the same analyzer treatment"]
 ];
 
-var memes = captions
-    |> map(pair -> Meme(t)
+var frames = captions
+    |> map(pair -> Meme(twoPanel)
         .text(Top, pair[0])
-        .text(Bottom, pair[1]));
+        .text(Bottom, pair[1])
+        .resize(Size(800, 800)));
 
-// Create effect presets using compose
-var glitch = contrast(1.8) >> noise(0.2) >> pixelate(4);
-var vintage = sepia >> brightness(0.9);
-var clean = sharpen >> contrast(1.1);
-var effects = [clean, vintage, glitch, deepfry, invert];
+var gif = frames
+    |> reduce((acc, frame) -> acc.frame(frame, Duration(450)), Gif());
 
-// Apply different effects to each frame
-var pairs = zip([""], [1, 2, 3]);
-var styled = zip(memes, effects) |> map(pair -> pair[0] |> pair[1]);
+print gif.frameCount;
+gif.save("showcase.gif");
+print "showcase gif saved";
 
-// Build animation with reduce — fold memes into a timeline
-var tl = styled |> reduce((tl, m) -> tl
-    .frame(m, Duration(4000))
-    .transition(crossfade, Duration(150)), Timeline());
-tl.loop(0).render("showcase.gif");
+var timeline = Timeline()
+    .frame(intro, Duration(700))
+    .transition(crossfade, Duration(160))
+    .frame(spotlight, Duration(700))
+    .transition(slideLeft, Duration(160))
+    .frame(Meme(blank).text(Center, "Ship it"), Duration(700))
+    .loop(0);
 
-print "Showcase GIF saved!";
+timeline.render("showcase_timeline.gif");
+print "timeline gif saved";
 
-// Effects comparison grid
-[clean, vintage, glitch, deepfry]
-    |> map(fx -> Meme(blank).text(Center, "Mac") |> fx)
+var gallery = [
+    intro,
+    Meme(blank).text(Center, "Public fields"),
+    Meme(blank).text(Center, "Frame count"),
+    Meme(blank).text(Center, "Shared hints")
+]
     |> toGrid(2, 2)
-    |> pad(5)
-    |> border(2)
-    |> save("showcase_grid.png");
+    |> pad(8)
+    |> border(2);
 
-print "Grid saved!";
-
-// Countdown using animate pipeline
-["5", "4", "3", "2", "1", "GO!"]
-    |> map(n -> Meme(blank).text(Center, n))
-    |> animate(Duration(1000))
-    |> save("countdown.gif");
-
-print "Countdown saved!";
+save(gallery, "showcase_grid.png");
+print "grid saved";

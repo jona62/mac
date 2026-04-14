@@ -1,9 +1,9 @@
 // Basic typed meme API
 var tmpl = Template("two_panel");
 var m = Meme(tmpl).text(Top, "Writing Java").text(Bottom, "Writing Mac");
-print m._top;               // expect: Writing Java
-print m._bottom;            // expect: Writing Mac
-print m._template.name;     // expect: two_panel
+print m.topText;            // expect: Writing Java
+print m.bottomText;         // expect: Writing Mac
+print m.template.name;      // expect: two_panel
 
 // Position/Format types
 print Top.name;             // expect: top

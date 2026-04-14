@@ -64,40 +64,40 @@ class Frame {
 
 class Meme {
     init(template) {
-        this._template = template;
-        this._top = "";
-        this._bottom = "";
-        this._width = 0;
-        this._height = 0;
-        this._rendered = nil;
+        this.template = template;
+        this.topText = "";
+        this.bottomText = "";
+        this.width = 0;
+        this.height = 0;
+        this.renderedPath = nil;
     }
     text(position, str) {
-        var m = Meme(this._template);
-        m._top = this._top;
-        m._bottom = this._bottom;
-        m._width = this._width;
-        m._height = this._height;
-        m._rendered = this._rendered;
-        if (position == Top) m._top = str;
-        if (position == Bottom) m._bottom = str;
-        if (position == Center) m._bottom = str;
+        var m = Meme(this.template);
+        m.topText = this.topText;
+        m.bottomText = this.bottomText;
+        m.width = this.width;
+        m.height = this.height;
+        m.renderedPath = this.renderedPath;
+        if (position == Top) m.topText = str;
+        if (position == Bottom) m.bottomText = str;
+        if (position == Center) m.bottomText = str;
         return m;
     }
     save(format, path) {
-        if (this._rendered) {
-            _save_rendered(this._rendered, path);
+        if (this.renderedPath) {
+            _save_rendered(this.renderedPath, path);
         } else {
-            _meme_save(this._template.path, this._top, this._bottom,
-                       this._width, this._height, path);
+            _meme_save(this.template.path, this.topText, this.bottomText,
+                       this.width, this.height, path);
         }
     }
     resize(size) {
-        var m = Meme(this._template);
-        m._top = this._top;
-        m._bottom = this._bottom;
-        m._width = size.width;
-        m._height = size.height;
-        m._rendered = this._rendered;
+        var m = Meme(this.template);
+        m.topText = this.topText;
+        m.bottomText = this.bottomText;
+        m.width = size.width;
+        m.height = size.height;
+        m.renderedPath = this.renderedPath;
         return m;
     }
     __add__(other) {
@@ -108,16 +108,18 @@ class Meme {
 class Gif {
     init() {
         this._frames = [];
+        this.frameCount = 0;
     }
     frame(memeObj, duration) {
         push(this._frames, {
-            path: memeObj._template.path,
-            top: memeObj._top,
-            bottom: memeObj._bottom,
-            width: memeObj._width,
-            height: memeObj._height,
+            path: memeObj.template.path,
+            top: memeObj.topText,
+            bottom: memeObj.bottomText,
+            width: memeObj.width,
+            height: memeObj.height,
             duration: duration.ms
         });
+        this.frameCount = len(this._frames);
         return this;
     }
     save(path) {

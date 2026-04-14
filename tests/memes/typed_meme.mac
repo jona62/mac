@@ -2,8 +2,8 @@ var tmpl = Template("two_panel");
 var m = Meme(tmpl)
     .text(Top, "Writing Java")
     .text(Bottom, "Writing Mac");
-print m._top;                    // expect: Writing Java
-print m._bottom;                 // expect: Writing Mac
+print m.topText;                 // expect: Writing Java
+print m.bottomText;              // expect: Writing Mac
 
 m.save(PNG, "typed_meme.png");
 print "saved";                   // expect: saved
