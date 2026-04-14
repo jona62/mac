@@ -1,7 +1,17 @@
 // Mac Language Showcase
 // Generates a complex animated GIF using pipes, compose,
 // arrows, effects, layout, and timeline
+class Human {
+   init(name) {
+    this.name = name;
+   }
+}
+class Person < Human {
 
+}
+
+var me = Person("Jonathan");
+print me.name;
 var t = Template("two_panel");
 var blank = Template("blank");
 
@@ -26,7 +36,7 @@ var clean = sharpen >> contrast(1.1);
 var effects = [clean, vintage, glitch, deepfry, invert];
 
 // Apply different effects to each frame
-
+var pairs = zip([""], [1, 2, 3]);
 var styled = zip(memes, effects) |> map(pair -> pair[0] |> pair[1]);
 
 // Build animation with reduce — fold memes into a timeline

@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -6,6 +7,7 @@
 #include "Scanner.h"
 #include "Parser.h"
 #include "Resolver.h"
+#include "MacAnalyzer.h"
 
 using namespace std;
 using namespace token;
@@ -18,21 +20,24 @@ static vector<shared_ptr<stmt::Stmt<interpreter::MacValue>>> preludeStatements;
 void run(string source);
 void run_file(const char *path);
 void run_prompt();
+void analyze_file(const char *path);
+
+string readFile(const char *path) {
+    ifstream f(path);
+    if (!f.is_open()) return "";
+    ostringstream ss;
+    string buf;
+    while (getline(f, buf)) ss << buf << '\n';
+    return ss.str();
+}
 
 void loadPrelude() {
-    std::ifstream prelude("stdlib/prelude.mac");
-    if (!prelude.is_open()) return;
-    std::ostringstream ss;
-    std::string buf;
-    while (std::getline(prelude, buf)) ss << buf << '\n';
-    prelude.close();
+    string src = readFile("stdlib/prelude.mac");
+    if (src.empty()) return;
 
-    string src = ss.str();
     scanner::Scanner scanner(src);
     vector<Token> tokens;
-    for (auto& token : scanner) {
-        tokens.push_back(token);
-    }
+    for (auto& token : scanner) tokens.push_back(token);
 
     parser::Parser parser(tokens);
     preludeStatements = parser.parse<interpreter::MacValue>();
@@ -40,13 +45,19 @@ void loadPrelude() {
 
     auto resolverInstance = make_shared<resolver::Resolver>(interp);
     resolverInstance->resolve(preludeStatements);
-
     interp->interpret(preludeStatements);
 }
 
 int main(int argc, char **argv) {
+    // --analyze mode: output JSON analysis for LSP
+    if (argc == 3 && strcmp(argv[1], "--analyze") == 0) {
+        analyze_file(argv[2]);
+        return 0;
+    }
+
     if (argc > 2) {
         cout << "Usage: mac [script]" << endl;
+        cout << "       mac --analyze <file>" << endl;
         return 1;
     }
 
@@ -104,4 +115,25 @@ void run_prompt() {
         if (line == "exit") break;
         run(line);
     } while (true);
+}
+
+void analyze_file(const char *path) {
+    string source = readFile(path);
+    if (source.empty()) {
+        cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\"}]}" << endl;
+        return;
+    }
+
+    // Scan + parse
+    scanner::Scanner scanner(source);
+    vector<Token> tokens;
+    for (auto& token : scanner) tokens.push_back(token);
+
+    parser::Parser parser(tokens);
+    auto statements = parser.parse<value::MacValue>();
+
+    // Run analyzer
+    analyzer::MacAnalyzer macAnalyzer;
+    macAnalyzer.analyze(statements);
+    cout << macAnalyzer.toJson() << endl;
 }
