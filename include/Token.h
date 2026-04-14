@@ -72,9 +72,11 @@ namespace token {
     };
 
     struct Token {
-        Token() : type(TokenType::NONE), lexeme(""), line(0) {}
+        Token() : type(TokenType::NONE), lexeme(""), line(0), column(0) {}
         Token(TokenType type, TokenValue lexeme, int line)
-            : type(type), lexeme(lexeme), line(line) {}
+            : type(type), lexeme(lexeme), line(line), column(0) {}
+        Token(TokenType type, TokenValue lexeme, int line, int column)
+            : type(type), lexeme(lexeme), line(line), column(column) {}
 
         string toString() const {
             std::ostringstream ss;
@@ -107,6 +109,7 @@ namespace token {
         TokenType type;
         TokenValue lexeme;
         int line;
+        int column;
     };
 
 } // Token

@@ -74,6 +74,7 @@ namespace scanner {
             int start = 0;
             int current = 0;
             int line = 1;
+            int lineStart = 0;  // index of current line start, for column calculation
 
             std::unordered_map<string, TokenType> keywords = {
                 {"and", TokenType::AND},

@@ -195,7 +195,8 @@ namespace analyzer {
                     const std::string& type, const std::string& desc = "") {
             auto name = tokName(tok);
             if (name.empty()) return;
-            SymbolDef sym{name, kind, type, desc, tok.line, 1, 1 + static_cast<int>(name.size())};
+            int c = tok.column > 0 ? tok.column : 1;
+            SymbolDef sym{name, kind, type, desc, tok.line, c, c + static_cast<int>(name.size())};
             currentScope->symbols[name] = sym;
             if (tok.line > 0) result.symbols.push_back(sym);
         }
@@ -212,12 +213,12 @@ namespace analyzer {
             auto name = tokName(tok);
             if (name.empty()) return;
             auto* def = resolve(name);
+            int c = tok.column > 0 ? tok.column : 1;
+            int ec = c + static_cast<int>(name.size());
             if (def) {
-                int ec = 1 + static_cast<int>(name.size());
-                result.references.push_back({tok.line, 1, ec, def->line, def->col, def->name});
+                result.references.push_back({tok.line, c, ec, def->line, def->col, def->name});
             } else if (!nativeNames.count(name) && name != "this" && name != "super") {
-                int ec = 1 + static_cast<int>(name.size());
-                result.diagnostics.push_back({tok.line, 1, ec,
+                result.diagnostics.push_back({tok.line, c, ec,
                     "Undefined variable '" + name + "'.", "warning"});
             }
         }

@@ -14,9 +14,11 @@ namespace scanner {
             if (isWhitespace(c)) continue;
             if (c == '\n') {
                 line++;
+                lineStart = current;
                 continue;
             }
             start = current - 1;
+            int col = start - lineStart + 1;
             TokenType type = TokenType::NONE;
             switch (c) {
                 case '(': type = TokenType::LEFT_PAREN; break;
@@ -37,7 +39,7 @@ namespace scanner {
             }
             if (type != TokenType::NONE) {
                 string lexeme = string(1, c);
-                return Token(type, TokenValue(lexeme), line);
+                return Token(type, TokenValue(lexeme), line, col);
             }
 
             // two character tokens
@@ -91,7 +93,7 @@ namespace scanner {
 
             if (type != TokenType::NONE) {
                 string lexeme = source.substr(start, current - start);
-                return Token(type, TokenValue(lexeme), line);
+                return Token(type, TokenValue(lexeme), line, col);
             }
 
             // Longer lexemes
@@ -106,16 +108,16 @@ namespace scanner {
                     break;
                 case '"':
                     while (peek() != '"' && !isAtEnd()) {
-                        if (peek() == '\n') line++;
+                        if (peek() == '\n') { line++; lineStart = current + 1; }
                         advance();
                     }
                     if (isAtEnd()) {
                         cout << "Unterminated string on line " << line << std::endl;
-                        return Token(TokenType::NONE, TokenValue(), line);
+                        return Token(TokenType::NONE, TokenValue(), line, col);
                     } else {
                         advance(); // closing "
                         TokenValue literal = source.substr(start + 1, current - start - 2); // Exclude the quotes
-                        return Token(TokenType::STRING, literal, line);
+                        return Token(TokenType::STRING, literal, line, col);
                     }
                 default:
                     if(isdigit(c)) {
@@ -128,7 +130,7 @@ namespace scanner {
                             while (isDigit(peek())) advance();
                         }
                         string lexeme = source.substr(start, current - start);
-                        return Token(TokenType::NUMBER, stod(lexeme), line);
+                        return Token(TokenType::NUMBER, stod(lexeme), line, col);
                     } else if (isAlpha(c)) {
                         // Consume each alphanumeric character up to the maximum length
                         while (isAlphaNumeric(peek())) advance();
@@ -138,20 +140,20 @@ namespace scanner {
                         if (keywords.find(identifier) != keywords.end()) {
                             tokenType = keywords[identifier]; // Override type here
                         }
-                        return Token(tokenType, TokenValue(identifier), line);
+                        return Token(tokenType, TokenValue(identifier), line, col);
                     } else {
                         cout << "Unexpected character on line " << line << std::endl;
-                        return Token(TokenType::NONE, TokenValue(), line);
+                        return Token(TokenType::NONE, TokenValue(), line, col);
                     }
             }
 
             if (type != TokenType::NONE) {
                 string lexeme = source.substr(start, current - start);
-                return Token(type, TokenValue(lexeme), line);
+                return Token(type, TokenValue(lexeme), line, col);
             }
 
         }
-        return Token(TokenType::END_OF_FILE, TokenValue(), line);
+        return Token(TokenType::END_OF_FILE, TokenValue(), line, current - lineStart + 1);
     }
 
 } // namespace scanner
