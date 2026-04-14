@@ -18,6 +18,9 @@ import {
     Location,
     Position,
     Range,
+    InlayHint,
+    InlayHintKind,
+    InlayHintParams,
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -49,6 +52,7 @@ connection.onInitialize((_params: InitializeParams): InitializeResult => {
             },
             hoverProvider: true,
             definitionProvider: true,
+            inlayHintProvider: true,
         },
     };
 });
@@ -242,6 +246,43 @@ function formatSymbolHover(sym: Symbol): string {
 }
 
 // ============================================================
+// Inlay Hints (Rust-style inline type annotations)
+// ============================================================
+
+connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] => {
+    const result = analysisCache.get(params.textDocument.uri);
+    if (!result) return [];
+
+    const hints: InlayHint[] = [];
+    const startLine = params.range.start.line + 1; // tokens are 1-based
+    const endLine = params.range.end.line + 1;
+
+    for (const sym of result.symbols) {
+        // Only show hints for user-defined variables and parameters in the visible range
+        if (sym.kind !== "variable" && sym.kind !== "parameter") continue;
+        if (sym.token.line < startLine || sym.token.line > endLine) continue;
+        if (sym.token.line <= 0) continue; // skip native/prelude symbols
+        if (!sym.type || sym.type.tag === "unknown") continue;
+
+        const typeStr = formatMacType(sym.type);
+        const position = Position.create(
+            sym.token.line - 1,
+            sym.token.column - 1 + sym.name.length
+        );
+
+        hints.push({
+            position,
+            label: `: ${typeStr}`,
+            kind: InlayHintKind.Type,
+            paddingLeft: false,
+            paddingRight: true,
+        });
+    }
+
+    return hints;
+});
+
+// ============================================================
 // Completion
 // ============================================================
 
@@ -302,14 +343,16 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     // Dot-completion hints for known types
     const doc = documents.get(params.textDocument.uri);
     if (doc && params.context?.triggerCharacter === ".") {
-        const memeProps = ["text", "save", "resize", "_top", "_bottom", "_template", "_width", "_height"];
+        const memeProps = ["text", "save", "resize"];
         const gifProps = ["frame", "save"];
+        const timelineProps = ["frame", "transition", "loop", "render", "save"];
         const templateProps = ["name", "path"];
         const sizeProps = ["width", "height"];
         const durationProps = ["ms"];
         const allDotProps = [
             ...memeProps.map(p => ({ label: p, detail: "Meme" })),
             ...gifProps.map(p => ({ label: p, detail: "Gif" })),
+            ...timelineProps.map(p => ({ label: p, detail: "Timeline" })),
             ...templateProps.map(p => ({ label: p, detail: "Template" })),
             ...sizeProps.map(p => ({ label: p, detail: "Size" })),
             ...durationProps.map(p => ({ label: p, detail: "Duration" })),
