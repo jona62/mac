@@ -220,6 +220,45 @@ effect comic = posterize(5) >> contrast(1.4) >> sharpen;
 | `vignette`  | Dark vignette border |
 | `grayscale` | Convert to grayscale |
 
+## Styles
+
+Customize text color, outline, and shadow with reusable `style` blocks:
+
+```mac
+style neon {
+    color: "#00FF41"
+    outline: 4
+    outlineColor: "#003300"
+    shadow: 3
+    shadowColor: "#00FF4180"
+}
+
+// Apply between template name and block
+@dark neon {
+    top: "NEON"
+    bottom: "Styled text"
+} => "neon.png"
+
+// One-liner with style
+@blank neon "Green text" => "green.png"
+
+// Size + style
+@dark 800x800 neon "Big neon" => "big.png"
+```
+
+### Style Properties
+
+| Property       | Type   | Default       | Description                 |
+| -------------- | ------ | ------------- | --------------------------- |
+| `color`        | hex    | `"#FFFFFF"`   | Text fill color             |
+| `outline`      | number | `3`           | Outline width in pixels     |
+| `outlineColor` | hex    | `"#000000"`   | Outline color               |
+| `shadow`       | number | `0`           | Shadow offset (x and y)     |
+| `shadowColor`  | hex    | `"#00000080"` | Shadow color (supports alpha)|
+| `fontSize`     | number | `0` (auto)    | Override auto font sizing   |
+
+Hex colors: `#RRGGBB` or `#RRGGBBAA` (with alpha channel).
+
 ## Animation
 
 ### GIF Blocks

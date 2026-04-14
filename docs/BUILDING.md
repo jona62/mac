@@ -2,10 +2,10 @@
 
 ## Prerequisites
 
-- C++23 compiler (Clang 16+, GCC 13+, MSVC 19.36+)
+- C++23 compiler (Clang 16+, GCC 13+)
 - CMake 3.20+
-- Python 3 (for the web GIF studio, optional)
-- Node.js 20+ (for the VS Code extension, optional)
+- Python 3 (web GIF studio, optional)
+- Node.js 22+ (VS Code extension, optional)
 
 ## Build
 
@@ -14,17 +14,19 @@ cmake -S . -B build
 cmake --build build
 ```
 
-The build copies `assets/` and `stdlib/` into the build directory so the binary can find templates and the standard library at runtime.
+The post-build step copies `assets/` and `stdlib/` to the build directory on every build.
 
 ## Run
 
 ```bash
-./build/mac                    # Interactive REPL (prompt: |>)
-./build/mac script.mac         # Execute a .mac file
-./build/mac examples/hello.mac # Run an example
+./build/mac                        # Interactive REPL (|> prompt)
+./build/mac script.mac             # Execute a file
+./build/mac examples/01_hello.mac  # Run an example
 ```
 
-The REPL loads `stdlib/prelude.mac` on startup, then accepts one-line expressions. Type `exit` or press Ctrl-D to quit.
+Output files are written to `~/mac/output/` regardless of working directory.
+
+The binary resolves `stdlib/prelude.mac` and `assets/` relative to its own location, so it works from any directory after installation.
 
 ## Tests
 
@@ -32,31 +34,43 @@ The REPL loads `stdlib/prelude.mac` on startup, then accepts one-line expression
 bash tests/run_tests.sh
 ```
 
-The test harness finds all `.mac` files under `tests/`, runs each through the interpreter, and checks stdout against `// expect:` annotations in the source.
+57 tests across 20 categories. Tests use `// expect:` annotations:
 
-Example test file:
 ```mac
-print 2 + 2;           // expect: 4
-print "hello" |> upper; // expect: HELLO
+print 2 + 2;                    // expect: 4
+print "hello" |> upper;         // expect: HELLO
+print type(@blank "hi");        // expect: instance
 ```
 
-There are 46 tests across 19 categories (arrays, classes, control flow, effects, expressions, extensions, functional, functions, lambdas, layout, maps, memes, operators, pipes, scoping, statements, stdlib, timeline).
+Test categories: arrays, classes, control_flow, effects, expressions, extensions, functional, functions, lambdas, layout, maps, memes, operators, pipes, scoping, statements, stdlib, syntax, timeline.
+
+## Examples
+
+9 progressive examples from basic to advanced:
+
+```
+examples/
+├── 01_hello.mac          # Language basics
+├── 02_first_meme.mac     # @template, =>, positions
+├── 02b_classic_api.mac   # Builder pattern (Meme, Gif, Timeline classes)
+├── 03_effects.mac        # Pipes, compose, effect presets
+├── 03b_styles.mac        # Text color, outline, shadow
+├── 04_animation.mac      # gif/timeline blocks, transitions, easing
+├── 05_functional.mac     # Arrows, map/filter/reduce, zip
+├── 06_layout.mac         # beside, stack, grid blocks
+└── 07_showcase.mac       # Everything combined
+```
 
 ## VS Code Extension
 
-Build the LSP server:
 ```bash
-cd mac-lang
-npm install
-npx tsc
-```
-
-Install locally:
-```bash
+cd mac-lang && npm install && npx tsc && cd ..
 ln -sf "$(pwd)/mac-lang" ~/.vscode/extensions/mac-lang
 ```
 
-Provides syntax highlighting, hover, go-to-definition, autocomplete, and diagnostics for `.mac` files.
+Reload VS Code. Features: syntax highlighting, hover, go-to-definition, inlay type hints, semantic tokens, signature help, find references, document symbols, folding ranges, completion.
+
+The LSP runs `mac --analyze` as a backend — no language logic in TypeScript.
 
 ## Web GIF Studio
 
@@ -64,22 +78,25 @@ Provides syntax highlighting, hover, go-to-definition, autocomplete, and diagnos
 PORT=9001 ./webapp/run.sh
 ```
 
-This builds the `mac` binary (if needed) and starts a Python HTTP server on port 9001. Open `http://localhost:9001` to use the browser-based meme builder.
+Opens at `http://localhost:9001`. 10 templates, 12 effect presets, style customization, live Mac v2 script preview.
 
 ## Pre-built Binaries
 
-Install the latest release without building:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash
 ```
 
-Installs to `~/.mac` with a symlink at `~/.local/bin/mac`. Override with `MAC_INSTALL_DIR` and `MAC_BIN_DIR` environment variables.
+Installs to `~/.mac/` with symlink at `~/.local/bin/mac`. Includes binary, assets, and stdlib.
 
-## Release Builds
+Supported platforms: macOS arm64, macOS x86_64, Linux x86_64.
 
-Tagged releases (`v*`) trigger CI to build binaries for:
-- macOS arm64
-- macOS x86_64
-- Linux x86_64
+## Release
 
-Each release package contains the `mac` binary, `assets/`, `stdlib/`, and `README.md`.
+Tag a version to trigger CI release:
+
+```bash
+git tag v0.0.2
+git push origin v0.0.2
+```
+
+CI builds binaries for 3 platforms, runs all tests, and publishes a GitHub release.

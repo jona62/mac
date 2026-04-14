@@ -8,7 +8,7 @@ See [docs/BUILDING.md](docs/BUILDING.md) for build prerequisites and instruction
 git clone https://github.com/jona62/mac.git
 cd mac
 cmake -S . -B build && cmake --build build
-bash tests/run_tests.sh  # should pass all 46 tests
+bash tests/run_tests.sh  # should pass all 57 tests
 ```
 
 ## Project Layout
@@ -18,77 +18,71 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture overv
 - `src/` — C++ source files (entry point in `main.cpp`)
 - `include/` — C++ headers (most implementation lives here due to templates)
 - `stdlib/prelude.mac` — Standard library loaded before user code
-- `tests/` — Test suite organized by category
-- `mac-lang/` — VS Code extension and LSP server (TypeScript)
+- `tests/` — 57 tests across 20 categories
+- `examples/` — 9 progressive examples (01-07 + 02b, 03b)
+- `mac-lang/` — VS Code extension + LSP (thin adapter over `mac --analyze`)
 - `webapp/` — Web GIF studio (Python)
+- `.claude/skills/` — Claude Code agent skill for Mac language
 
 ## Writing Tests
 
-Tests are `.mac` files with `// expect:` annotations on output lines:
+Tests are `.mac` files with `// expect:` annotations:
 
 ```mac
-print 2 + 2;           // expect: 4
-print "hi" |> upper;   // expect: HI
+print 2 + 2;              // expect: 4
+print "hi" |> upper;       // expect: HI
+print type(@blank "x");    // expect: instance
 ```
 
-Place tests in the appropriate `tests/<category>/` subdirectory. The test harness (`tests/run_tests.sh`) runs each file and compares stdout against expected output.
+Place tests in `tests/<category>/`. Categories include: arrays, classes, control_flow, effects, expressions, extensions, functional, functions, lambdas, layout, maps, memes, operators, pipes, scoping, statements, stdlib, syntax, timeline.
 
 Run the full suite: `bash tests/run_tests.sh`
 
 ## Adding a Native Function
 
-1. Define a class in `include/NativeFunctions.h` extending `MacCallable`:
+1. Define in `include/NativeRegistry.h`:
    ```cpp
-   class MyFunction : public MacCallable {
-   public:
-       value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
-                            std::vector<value::MacValue> args) override {
-           // implementation
-       }
-       int arity() override { return 1; }  // use -1 for variable arity
-       std::string toString() override { return "<native fn my_func>"; }
-   };
+   {"my_func", NativeVisibility::Public, "fun(1)", "Description.",
+       {{{"arg1"}, "ReturnType", "Overload description."}},
+       [] { return std::make_shared<callable::MyFunction>(); }},
    ```
 
-2. Register it in the `Interpreter` constructor in `include/Interpreter.h`:
-   ```cpp
-   defn("my_func", make_shared<callable::MyFunction>());
-   ```
+2. Implement the class in `include/NativeFunctions.h` extending `MacCallable`.
 
-3. Add hover documentation in `mac-lang/src/analyzer.ts` (the `NATIVE_FUNCTIONS` array).
+3. Write a test in `tests/` to verify.
 
-4. Write a test in `tests/` to verify the function works.
+The analyzer and LSP pick up the function automatically from `NativeRegistry.h`.
 
 ## Adding an Effect
 
-Effects use two patterns in `include/NativeFunctions.h`:
+1. Implement the pixel transform in `include/MemeEffects.h`:
+   ```cpp
+   inline void myEffect(unsigned char* pixels, int w, int h, float param) {
+       // process RGBA pixels in-place
+   }
+   ```
 
-- **Parameterized** (e.g., `blur(5)`): use `ParamEffectCreator`
-- **Direct** (e.g., `sepia`): use `DirectEffect`
+2. Add dispatch in `PartialEffect::call()` or `DirectEffect::call()` in `NativeFunctions.h`.
 
-Register in `include/Interpreter.h`:
-```cpp
-defn("my_effect", make_shared<callable::ParamEffectCreator>("my_effect"));
-// or
-defn("my_effect", make_shared<callable::DirectEffect>("my_effect"));
-```
+3. Register in `NativeRegistry.h`:
+   ```cpp
+   {"myEffect", NativeVisibility::Public, "Meme -> Meme", "Description.",
+       {{{"param"}, "Meme -> Meme", "..."}},
+       [] { return std::make_shared<callable::ParamEffectCreator>("myEffect"); }},
+   ```
 
-Then implement the pixel transform in `include/MemeEffects.h`.
+## Adding a Template
+
+1. Add the generator function in `tools/gen_templates.cpp`.
+2. Register the name→path mapping in `MacMeme.h`'s `templateMap()`.
+3. Run `cd tools && ./gen_templates` to regenerate images.
 
 ## Pull Request Workflow
 
 1. Create a branch from `main`
-2. Make your changes
-3. Run `bash tests/run_tests.sh` — all tests must pass
-4. Run `cd mac-lang && npx tsc --noEmit` — LSP must typecheck (if you touched TypeScript)
-5. Commit with a descriptive message
-6. Open a PR against `main`
+2. Make changes
+3. `bash tests/run_tests.sh` — all 57 tests must pass
+4. `cd mac-lang && npx tsc --noEmit` — LSP must typecheck
+5. Commit and open a PR against `main`
 
-CI runs tests on Ubuntu and macOS, plus LSP typechecking.
-
-## Code Style
-
-- Follow existing patterns — the codebase is consistent
-- Headers are template-heavy and contain most implementation; this is deliberate
-- Native functions follow the `MacCallable` class pattern
-- Tests use the `// expect:` annotation convention
+CI runs tests on Ubuntu + macOS, plus LSP typechecking.

@@ -6,160 +6,134 @@ Mac has three components: a **C++ interpreter**, a **VS Code extension** with LS
 
 ```
 mac-cpp/
-├── src/                   # C++ source files (entry point + implementations)
-│   ├── main.cpp           # CLI entry point and REPL
-│   ├── Scanner.cpp        # Lexer implementation
-│   ├── Parser.cpp         # Parser implementation
-│   ├── Interpreter.cpp    # Interpreter implementation
-│   └── stb_impl.cpp       # stb library linkage
-├── include/               # C++ headers
-│   ├── Token.h            # Token types and lexemes
-│   ├── Scanner.h          # Lexer (source -> tokens)
-│   ├── Parser.h           # Parser (tokens -> AST)
-│   ├── Expr.h / Stmt.h    # AST node definitions (template-parameterized)
-│   ├── Resolver.h         # Variable resolution pass
-│   ├── Interpreter.h      # Tree-walk interpreter + visitor
-│   ├── NativeFunctions.h  # All 40+ built-in function classes
-│   ├── MacValue.h         # Value type (std::variant with 10 alternatives)
-│   ├── MacCallable.h      # Base class for callable objects
-│   ├── MacFunction.h      # User-defined functions
-│   ├── MacLambda.h        # Lambda / arrow function wrapper
-│   ├── MacClass.h         # Class definitions
-│   ├── MacInstance.h       # Class instances
-│   ├── MacArray.h         # Array type
-│   ├── MacMap.h           # Map type
-│   ├── MacMeme.h          # Meme type (wraps pixel data)
-│   ├── MacGif.h           # GIF builder type
-│   ├── MacTimeline.h      # Timeline animation type
-│   ├── MemeRenderer.h     # Text-on-image rendering (stb_truetype)
-│   ├── MemeEffects.h      # Pixel-level image effects
-│   ├── MemeLayout.h       # Layout combinators (beside, stack, grid)
-│   ├── GifEncoder.h       # GIF89a encoder with LZW compression
-│   ├── Environment.h      # Scope / variable binding
-│   ├── AstPrinter.h       # Debug AST printer
-│   ├── RuntimeError.h     # Runtime exception
-│   ├── Return.h           # Return control flow exception
-│   ├── ParserError.h      # Parse error exception
-│   └── stb/               # Vendored stb headers (image I/O, fonts)
-├── stdlib/prelude.mac     # Standard library (loaded before user code)
+├── src/                       # C++ source files
+│   ├── main.cpp               # CLI entry point, REPL, --analyze mode
+│   ├── Scanner.cpp            # Lexer
+│   ├── Parser.cpp             # Recursive descent parser
+│   ├── Interpreter.cpp        # Interpreter (thin — most logic in headers)
+│   └── stb_impl.cpp           # stb library linkage
+├── include/                   # C++ headers
+│   ├── Token.h                # Token types (~55 types incl. AT, FAT_ARROW, EFFECT, STYLE)
+│   ├── Scanner.h              # Lexer with column tracking
+│   ├── Parser.h               # Parser declarations
+│   ├── Expr.h                 # 24 expression AST nodes (incl. MemeLiteralExpr, SaveExpr, GifBlockExpr, TimelineBlockExpr, GridBlockExpr)
+│   ├── Stmt.h                 # 14 statement AST nodes (incl. EffectStmt, StyleStmt)
+│   ├── Resolver.h             # Variable scope resolution
+│   ├── Interpreter.h          # Tree-walk interpreter + all visitors
+│   ├── NativeRegistry.h       # Centralized native function definitions
+│   ├── NativeFunctions.h      # Native function implementations
+│   ├── MacValue.h             # Value variant (string, double, bool, nil, callable, instance, array, map, meme, gif, timeline)
+│   ├── MacCallable.h          # Base callable interface
+│   ├── MacFunction.h          # User-defined functions
+│   ├── MacLambda.h            # Lambda / arrow functions
+│   ├── MacClass.h             # Class definitions
+│   ├── MacInstance.h           # Class instances
+│   ├── MacArray.h / MacMap.h  # Collection types
+│   ├── MacMeme.h              # Meme type + TextStyle struct + template registry
+│   ├── MacGif.h               # GIF builder
+│   ├── MacTimeline.h          # Timeline with 8 transitions + 4 easing curves
+│   ├── MemeRenderer.h         # Text rendering (stb_truetype) with style support
+│   ├── MemeEffects.h          # 18 pixel-level effects
+│   ├── MemeLayout.h           # Layout combinators (beside, stack, grid)
+│   ├── GifEncoder.h           # GIF89a encoder with LZW compression
+│   ├── MacAnalyzer.h          # C++ analyzer for --analyze mode (LSP backend)
+│   ├── AnalyzerTypes.h        # Analysis result structs + JSON serialization
+│   ├── AnalyzerRegistry.h     # Native function registration for analyzer
+│   ├── AnalyzerWalk.h         # AST walking + semantic token/hint collection
+│   ├── AnalyzerInference.h    # Type inference engine
+│   └── stb/                   # Vendored stb headers
+├── stdlib/prelude.mac         # Standard library (classes, constants, presets)
 ├── assets/
-│   ├── templates/         # Built-in meme template images
-│   └── fonts/             # Meme font (TTF)
-├── tests/                 # Test suite (46 tests across 19 categories)
-├── examples/              # Example programs
-├── mac-lang/              # VS Code extension + LSP (TypeScript)
-├── webapp/                # Web GIF studio (Python)
-├── tools/                 # Build tools (template image generator)
-└── .github/workflows/     # CI/CD pipeline
+│   ├── templates/             # 10 built-in template images
+│   └── fonts/                 # Meme font (TTF)
+├── tests/                     # 57 tests across 20 categories
+├── examples/                  # 9 progressive examples (01-07 + 02b, 03b)
+├── mac-lang/                  # VS Code extension + LSP
+│   ├── src/server.ts          # LSP server (thin adapter over mac --analyze)
+│   ├── src/extension.ts       # VS Code extension entry point
+│   ├── src/legacy/            # Archived TS scanner/parser/analyzer
+│   └── syntaxes/              # TextMate grammar
+├── webapp/                    # Web GIF studio (Python + HTML/CSS/JS)
+├── tools/gen_templates.cpp    # Template image generator
+├── .claude/skills/            # Claude Code agent skill
+└── .github/workflows/ci.yml   # CI/CD (test + lint + release + publish)
 ```
 
 ## Interpreter Pipeline
 
 ```
-Source Code -> Scanner -> Parser -> Resolver -> Interpreter -> Output
-               (tokens)   (AST)    (scopes)    (execution)
+Source Code → Scanner → Parser → Resolver → Interpreter → Output
+               tokens    AST      scopes     execution
 ```
 
-### Scanner (`include/Scanner.h` + `src/Scanner.cpp`)
+### Scanner
 
-Tokenizes source code. The scanner is an iterator — it yields tokens lazily. Handles all Mac operators including `|>` (pipe), `>>` (compose), and `->` (arrow).
+Tokenizes source with column tracking. Handles `@`, `=>`, `---`, `|>`, `>>`, `->`, and keywords `effect`, `style`. Contextual keywords `gif`, `timeline`, `grid` remain as identifiers (detected by lookahead in parser).
 
-### Parser (`include/Parser.h` + `src/Parser.cpp`)
+### Parser
 
-Recursive descent parser producing a template-parameterized AST (`Expr<T>`, `Stmt<T>`). The template parameter is the value type used during interpretation (`MacValue`).
+Recursive descent with template-parameterized AST. Precedence chain:
 
-Key parsing decisions:
-- Arrow functions are parsed in `primary()` with lookahead: single-param `IDENTIFIER ARROW` and multi-param `(ids) ARROW` with backtracking.
-- Precedence chain: expression -> pipe -> compose -> assignment -> logicalOr -> ... -> primary.
-- Explicit template instantiations at the bottom of `Parser.cpp` for all parser methods.
+```
+expression → save (=>) → pipe (|>) → compose (>>) → assignment → logicalOr → ... → call → primary
+```
 
-### Resolver (`include/Resolver.h`)
+Primary parses: literals, variables, lambdas, arrows, `@template` meme literals, `gif`/`timeline`/`grid` blocks.
 
-Static analysis pass that resolves variable scopes before execution. Walks the AST and records how many scopes deep each variable reference is. Header-only — includes `Interpreter.h` at line 292 (after closing its own namespace) to break a circular dependency.
+### Interpreter
 
-### Interpreter (`include/Interpreter.h` + `src/Interpreter.cpp`)
+Visitor pattern over 24 expression types and 14 statement types. v2 syntax visitors (`visitMemeLiteralExpr`, `visitGifBlockExpr`, etc.) desugar to the same runtime operations as the classic builder API.
 
-Tree-walk interpreter implementing the Visitor pattern over all expression and statement types. Key behaviors:
-- **Pipe operator** (`|>`): prepends the left-hand value as the first argument to the right-hand function call.
-- **Compose operator** (`>>`): creates a `ComposedFunction` that chains two callables.
-- **Operator overloading**: `visitBinaryExpr` checks for dunder methods (`__add__`, `__mul__`, etc.) on `MacInstance` before falling back to built-in operators.
-- **Variable arity**: arity check is skipped when `arity() == -1` (used by `range`, `sort`).
-
-The constructor registers all 40+ native functions via the `defn()` lambda.
+The binary resolves `stdlib/` and `assets/` relative to its own location (not cwd) so it works from any directory after installation.
 
 ## Meme Subsystem
 
-### Templates and Rendering
+### Templates (10 built-in)
 
-`MemeRenderer.h` loads template images via `stb_image`, renders text using `stb_truetype` (white text with black outline, auto-sizing), and writes output via `stb_image_write`. Templates are PNG images in `assets/templates/`.
+`two_panel`, `three_panel`, `bottom_text`, `blank`, `dark`, `wide` (16:9), `tall` (9:16), `square` (1:1), `four_panel`, `caption_bar`. Custom templates via file path.
 
-### Effects (`MemeEffects.h`)
+### Text Rendering (`MemeRenderer.h`)
 
-Pixel-level transforms operating on RGBA buffers in-place: saturate, contrast, brightness, blur, sharpen, pixelate, invert, sepia, noise, vignette, jpeg quality simulation.
+Renders text with stb_truetype. Supports `TextStyle` for customizable color, outline width/color, shadow offset/color, and font size override. Auto-sizes text, word-wraps at 90% width, uppercase by default.
 
-Effects are exposed as native functions in two patterns:
-- `ParamEffectCreator` — takes a parameter, returns a `PartialEffect` callable (e.g., `blur(5)`)
-- `DirectEffect` — no parameter, directly callable (e.g., `sepia`)
+### Effects (`MemeEffects.h`) — 18 total
 
-Both work with `|>` and `>>`.
+**Parameterized**: blur, pixelate, noise, saturate, contrast, brightness, jpeg, hueShift, glow, posterize, chromatic, threshold, tint
 
-### Layout (`MemeLayout.h`)
+**Direct**: invert, sepia, sharpen, vignette, grayscale
 
-Compositing functions: `beside` (horizontal), `stack` (vertical), `grid` (cols x rows), `pad`, `border`. All operate on rendered pixel buffers.
+Exposed via `ParamEffectCreator` (returns `PartialEffect`) and `DirectEffect`. All composable with `>>` and pipeable with `|>`.
 
-### GIF Encoding (`GifEncoder.h`)
+### Animations (`MacTimeline.h`)
 
-GIF89a format writer with:
-- 6x6x6 color cube + 40 grayscale palette (256 entries)
-- LZW compression with dictionary reset on table full
-- Netscape looping extension for animated GIFs
-- Per-frame delay in centiseconds
+8 transitions: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe, fadeBlack, zoom
 
-### Timeline (`MacTimeline.h`)
+4 easing curves: ease (smoothstep), easeIn (cubic), easeOut (inverse cubic), easeInOut
 
-Keyframe-based animation with transitions (crossfade, slide, wipe). `renderFrames()` generates intermediate frames at ~15fps for smooth transitions between keyframes.
+### Output
 
-## Standard Library (`stdlib/prelude.mac`)
+All user saves go to `~/mac/output/` via `toOutputPath()`. The directory is created automatically.
 
-Loaded automatically before user code. Defines Mac-language classes:
-- `Size`, `Duration` — value types with operator overloading (`__add__`, `__mul__`, `__eq__`)
-- `Position` — `Top`, `Bottom`, `Center` constants
-- `Format` — `PNG`, `JPG`, `GIF` constants
-- `Template`, `Meme`, `Frame`, `Gif` — meme API types
-- `deepfry` — composed effect preset
-- Timeline API wrappers (`Timeline`, `at`, `transition`, `hold`, `render`, `loop`)
-- Transition constants (`crossfade`, `slideLeft`, etc.)
+## LSP Architecture
 
-These Mac-level classes call native C++ functions prefixed with `_` (e.g., `_resolve_template`, `_meme_save`, `_gif_save`).
+The LSP uses **Architecture B**: the C++ binary is the single source of truth.
 
-## Native Functions (`include/NativeFunctions.h`)
+```
+VS Code ←LSP→ server.ts (thin adapter) ←JSON→ mac --analyze file.mac
+```
 
-All built-in functions are classes extending `MacCallable`. Organized by domain:
-- **Core**: `clock`, `type`, `len`, `input`
-- **Math**: `sqrt`, `abs`, `pow`, `floor`, `ceil`
-- **Strings**: `substr`, `split`, `upper`, `lower`, `trim`, `replace`
-- **Arrays**: `push`, `pop`, `map`, `filter`, `reduce`, `find`, `any`, `all`, `sort`, `reverse`, `flatten`, `flatMap`, `zip`, `enumerate`, `take`, `drop`, `join`, `each`, `range`
-- **Effects**: `ParamEffectCreator` and `DirectEffect` wrappers
-- **Layout**: `beside`, `stack`, `grid`, `pad`, `border`
-- **Timeline**: `timeline`, `_timeline_keyframe`, `_timeline_transition`, `_timeline_hold`, `_timeline_loop`, `_timeline_render`
-- **Meme bridge**: `animate`, `toGrid`
+`mac --analyze` runs Scanner + Parser + MacAnalyzer and outputs JSON with: symbols, references, diagnostics, properties, folding ranges, semantic tokens, param hints, chain hints, signatures, classes.
 
-## VS Code Extension (`mac-lang/`)
+The TS server (322 lines) maps JSON to LSP responses. No TS scanner/parser — zero language logic in TypeScript.
 
-Self-contained TypeScript project providing:
-- Syntax highlighting via TextMate grammar (`syntaxes/mac.tmLanguage.json`)
-- LSP server with hover, go-to-definition, autocomplete, diagnostics
-- Code snippets and file icons
+### LSP Features
 
-The LSP mirrors the C++ scanner/parser in TypeScript for real-time analysis. See `mac-lang/LSP.md` for details.
+Hover, go-to-definition (prelude + user code), inlay type hints, semantic tokens, document symbols, folding ranges, signature help, find all references, completion.
 
 ## Web GIF Studio (`webapp/`)
 
-Python HTTP server (`server.py`) that:
-1. Serves a browser UI for building animated memes
-2. Accepts frame data via REST API (`POST /api/generate`)
-3. Generates Mac source code from the request
-4. Executes it via `subprocess.run([mac_binary, script_path])`
-5. Returns the generated GIF
+Python HTTP server generating v2 Mac scripts from browser UI. 10 templates, 12 effect presets, style customization, live script preview.
 
-Launch with `PORT=9001 ./webapp/run.sh`.
+## CI/CD
+
+GitHub Actions: test (Ubuntu + macOS), lint LSP (TypeScript), release (3 platforms), publish. Tagged releases (`v*`) produce downloadable binaries.
