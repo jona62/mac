@@ -461,7 +461,13 @@ namespace callable {
         int shadow = static_cast<int>(getNum("shadow", 0));
         if (shadow > 0) { style.shadowOffsetX = shadow; style.shadowOffsetY = shadow; }
 
-        style.fontSizeOverride = static_cast<float>(getNum("fontSize", 0));
+        // fontSize accepts a number or a preset: "sm", "md", "lg", "xlg"
+        auto fontSizeStr = getStr("fontSize");
+        if (fontSizeStr == "sm") style.fontSizeOverride = -1;
+        else if (fontSizeStr == "md") style.fontSizeOverride = -2;
+        else if (fontSizeStr == "lg") style.fontSizeOverride = -3;
+        else if (fontSizeStr == "xlg") style.fontSizeOverride = -4;
+        else style.fontSizeOverride = static_cast<float>(getNum("fontSize", 0));
 
         return style;
     }

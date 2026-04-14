@@ -181,7 +181,17 @@ namespace meme {
 
             std::string upper = toUpper(text);
             float maxWidth = imgW * 0.9f;
-            float fontSize = regionH * 0.7f;
+
+            // Resolve fontSize: presets (sm/md/lg/xlg encoded as -1..-4),
+            // absolute pixel value (> 0), or auto-size (0)
+            float fontSize = 0;
+            float fso = activeStyle.fontSizeOverride;
+            if (fso == -1)      fontSize = regionH * 0.25f; // sm
+            else if (fso == -2) fontSize = regionH * 0.40f; // md
+            else if (fso == -3) fontSize = regionH * 0.55f; // lg
+            else if (fso == -4) fontSize = regionH * 0.70f; // xlg
+            else if (fso > 0)   fontSize = fso;             // absolute px
+            else                fontSize = regionH * 0.70f; // auto (default)
             if (fontSize < 10.0f) fontSize = 10.0f;
 
             float scale = 0;
@@ -191,9 +201,8 @@ namespace meme {
             while (fontSize >= 8.0f) {
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
                 lines = wrapText(fontInfo, upper, scale, maxWidth);
-                float lineHeight = fontSize * 1.2f;
+                float lineHeight = fontSize * 1.1f;
                 float blockHeight = lines.size() * lineHeight;
-                // Check: widest line fits and total block fits in region
                 bool fits = (blockHeight <= regionH * 0.85f);
                 if (fits) {
                     for (auto& l : lines) {
