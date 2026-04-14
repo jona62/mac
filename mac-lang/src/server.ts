@@ -264,7 +264,10 @@ connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] => {
         if (sym.token.line <= 0) continue; // skip native/prelude symbols
         if (!sym.type || sym.type.tag === "unknown") continue;
 
-        const typeStr = formatMacType(sym.type);
+        // For composed functions, show the pipeline instead of fun(1)
+        const typeStr = (sym.type.tag === "function" && sym.description)
+            ? sym.description
+            : formatMacType(sym.type);
         const position = Position.create(
             sym.token.line - 1,
             sym.token.column - 1 + sym.name.length
