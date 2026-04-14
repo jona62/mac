@@ -9,6 +9,7 @@
 #include "Parser.h"
 #include "Resolver.h"
 #include "MacAnalyzer.h"
+#include "MacMeme.h"
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -154,7 +155,7 @@ void run_prompt() {
 void analyze_file(const char *path) {
     string source = readFile(path);
     if (source.empty()) {
-        cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\",\"source\":\"user\"}],\"properties\":[],\"foldingRanges\":[],\"semanticTokens\":[],\"paramHints\":[],\"chainHints\":[],\"signatures\":[],\"classes\":[]}" << endl;
+        cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\",\"source\":\"user\"}],\"properties\":[],\"foldingRanges\":[],\"semanticTokens\":[],\"paramHints\":[],\"chainHints\":[],\"signatures\":[],\"classes\":[],\"templates\":[]}" << endl;
         return;
     }
 
@@ -178,5 +179,20 @@ void analyze_file(const char *path) {
     parser::Parser parser(tokens);
     auto statements = parser.parse<value::MacValue>();
     macAnalyzer.analyze(statements, "user");
+
+    // Populate built-in templates for LSP completions
+    for (auto& [name, path] : meme::MacMeme::templateMap()) {
+        macAnalyzer.addTemplate(name, "", "Built-in template");
+    }
+    // Scan meme subdirectory for dotted templates
+    auto memeDir = resolvePath("assets/templates/meme");
+    if (std::filesystem::is_directory(memeDir)) {
+        for (auto& entry : std::filesystem::directory_iterator(memeDir)) {
+            if (!entry.is_regular_file()) continue;
+            auto stem = entry.path().stem().string();
+            macAnalyzer.addTemplate("meme." + stem, "meme", "Meme image");
+        }
+    }
+
     cout << macAnalyzer.toJson() << endl;
 }

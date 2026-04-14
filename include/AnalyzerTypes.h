@@ -132,6 +132,12 @@ namespace analyzer {
         std::vector<ClassMember> members;
     };
 
+    struct TemplateInfo {
+        std::string name;        // e.g. "blank" or "meme.shrek_smirk"
+        std::string category;    // e.g. "" or "meme"
+        std::string description; // e.g. "600x600 blank template" or "Meme image"
+    };
+
     struct AnalysisResult {
         std::vector<SymbolDef> symbols;
         std::vector<Reference> references;
@@ -143,6 +149,7 @@ namespace analyzer {
         std::vector<ChainHint> chainHints;
         std::vector<Signature> signatures;
         std::vector<ClassInfo> classes;
+        std::vector<TemplateInfo> templates;
     };
 
     struct Scope {
@@ -335,6 +342,16 @@ namespace analyzer {
                   << "}";
             }
             o << "]}";
+        }
+
+        o << "],\"templates\":[";
+        for (size_t i = 0; i < r.templates.size(); i++) {
+            const auto& t = r.templates[i];
+            if (i) o << ",";
+            o << "{\"name\":" << J(t.name)
+              << ",\"category\":" << J(t.category)
+              << ",\"description\":" << J(t.description)
+              << "}";
         }
 
         o << "]}";

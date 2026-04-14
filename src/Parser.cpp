@@ -745,6 +745,17 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
     }
     Token templateName = previous();
 
+    // Dotted template name: @category.name (e.g. @meme.shrek_smirk)
+    if (templateName.type == TokenType::IDENTIFIER &&
+        peek().type == TokenType::DOT && current + 1 < tokens.size() &&
+        tokens[current + 1].type == TokenType::IDENTIFIER) {
+        advance(); // consume DOT
+        advance(); // consume second IDENTIFIER
+        auto first = std::get<std::string>(templateName.lexeme);
+        auto second = std::get<std::string>(previous().lexeme);
+        templateName.lexeme = token::TokenValue(first + "." + second);
+    }
+
     // Optional size: 400x300
     int width = 0, height = 0;
     if (peek().type == TokenType::NUMBER) {

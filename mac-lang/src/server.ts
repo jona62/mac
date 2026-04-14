@@ -166,6 +166,12 @@ interface ClassInfo {
     members: ClassMember[];
 }
 
+interface TemplateInfo {
+    name: string;
+    category: string;
+    description: string;
+}
+
 interface AnalysisResult {
     symbols: SymbolDef[];
     references: Reference[];
@@ -177,6 +183,7 @@ interface AnalysisResult {
     chainHints: ChainHintData[];
     signatures: SignatureData[];
     classes: ClassInfo[];
+    templates: TemplateInfo[];
 }
 
 interface CallContext {
@@ -231,7 +238,7 @@ const tokenLegend: SemanticTokensLegend = { tokenTypes: TOKEN_TYPES, tokenModifi
 connection.onInitialize((_params: InitializeParams): InitializeResult => ({
     capabilities: {
         textDocumentSync: TextDocumentSyncKind.Full,
-        completionProvider: { triggerCharacters: ["."] },
+        completionProvider: { triggerCharacters: [".", "@"] },
         hoverProvider: true,
         definitionProvider: true,
         inlayHintProvider: true,
@@ -502,6 +509,53 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     const result = analysisCache.get(params.textDocument.uri);
     const doc = documents.get(params.textDocument.uri);
     if (!result || !doc) return items;
+
+    // Template completions after @ or @category.
+    const templates = result.templates || [];
+    if (templates.length > 0) {
+        const lineStart = Position.create(params.position.line, 0);
+        const prefix = doc.getText(Range.create(lineStart, params.position));
+
+        if (params.context?.triggerCharacter === "@") {
+            // After @: show built-in templates + category names
+            const categories = new Set<string>();
+            for (const t of templates) {
+                if (t.category) {
+                    categories.add(t.category);
+                } else {
+                    pushCompletion(items, seen, {
+                        label: t.name,
+                        kind: CompletionItemKind.Constant,
+                        detail: t.description,
+                    });
+                }
+            }
+            for (const cat of categories) {
+                pushCompletion(items, seen, {
+                    label: cat,
+                    kind: CompletionItemKind.Module,
+                    detail: `Template category`,
+                });
+            }
+            return items;
+        }
+
+        // After @category. : show templates in that category
+        const catMatch = prefix.match(/@(\w+)\.$/);
+        if (catMatch && params.context?.triggerCharacter === ".") {
+            const category = catMatch[1];
+            for (const t of templates) {
+                if (t.category !== category) continue;
+                const shortName = t.name.includes(".") ? t.name.split(".").pop()! : t.name;
+                pushCompletion(items, seen, {
+                    label: shortName,
+                    kind: CompletionItemKind.Constant,
+                    detail: t.description,
+                });
+            }
+            return items;
+        }
+    }
 
     if (params.context?.triggerCharacter === ".") {
         const ownerType = resolveCompletionOwnerType(doc, params.position, result);

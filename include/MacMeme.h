@@ -70,6 +70,28 @@ namespace meme {
                 if (std::filesystem::exists(binPath)) return binPath;
                 return it->second;
             }
+
+            // Dotted name → subdirectory lookup (e.g. "meme.shrek_smirk")
+            auto dot = name.find('.');
+            if (dot != std::string::npos) {
+                auto category = name.substr(0, dot);
+                auto base = name.substr(dot + 1);
+                // Don't treat "file.jpg" as a dotted category
+                static const std::vector<std::string> imgExts =
+                    {"png", "jpg", "jpeg", "gif", "bmp", "webp"};
+                bool catIsExt = std::find(imgExts.begin(), imgExts.end(), category) != imgExts.end();
+                bool baseIsExt = std::find(imgExts.begin(), imgExts.end(), base) != imgExts.end();
+                if (!catIsExt && !baseIsExt) {
+                    std::string dir = "assets/templates/" + category + "/";
+                    for (auto& e : imgExts) {
+                        auto path = dir + base + "." + e;
+                        auto binPath = binaryDir() + "/" + path;
+                        if (std::filesystem::exists(binPath)) return binPath;
+                        if (std::filesystem::exists(path)) return path;
+                    }
+                }
+            }
+
             // Treat as a direct file path — try binary-relative first
             auto binPath = binaryDir() + "/" + name;
             if (std::filesystem::exists(binPath)) return binPath;

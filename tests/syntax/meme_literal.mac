@@ -15,3 +15,11 @@ print type(m2);                  // expect: instance
 print m.topText;                 // expect: Hello
 print m.bottomText;              // expect: World
 print m2.bottomText;             // expect: Just this
+
+// Dotted template name (category.name)
+var m3 = @meme.shrek_smirk {
+    top: "Dotted"
+    bottom: "Template"
+};
+print type(m3);                  // expect: instance
+print m3.topText;                // expect: Dotted

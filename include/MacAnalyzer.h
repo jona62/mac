@@ -38,6 +38,11 @@ namespace analyzer {
             return result;
         }
 
+        void addTemplate(const std::string& name, const std::string& category,
+                         const std::string& description) {
+            result.templates.push_back({name, category, description});
+        }
+
         std::string toJson() const { return analyzer::toJson(result); }
 
     private:
