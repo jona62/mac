@@ -210,7 +210,41 @@ namespace analyzer {
                 for (auto& st : p->body) analyzeStmt(st.get());
                 endScope();
             }
-            else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) { analyzeExpr(p->value.get()); analyzeExpr(p->func.get()); }
+            else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) {
+                analyzeExpr(p->value.get());
+                auto inputType = inferType(p->value.get());
+                // HOF call in pipe: bind lambda params with inferred types
+                if (auto* call = dynamic_cast<expr::Call<MV>*>(p->func.get())) {
+                    analyzeExpr(call->callee.get());
+                    if (auto* callee = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
+                        auto name = tokName(callee->name);
+                        for (auto& arg : call->arguments) {
+                            if (auto* lambda = dynamic_cast<expr::LambdaExpr<MV>*>(arg.get())) {
+                                auto elemType = extractElem(inputType);
+                                beginScope();
+                                if (name == "reduce" && lambda->params.size() >= 2) {
+                                    // reduce((acc, elem) -> ..., initial): acc = initial type, elem = element type
+                                    auto initType = call->arguments.size() >= 2
+                                        ? inferType(call->arguments.back().get()) : "unknown";
+                                    define(lambda->params[0], "parameter", initType);
+                                    define(lambda->params[1], "parameter", elemType);
+                                } else {
+                                    // map/filter/each/etc: all params get element type
+                                    for (auto& prm : lambda->params) define(prm, "parameter", elemType);
+                                }
+                                for (auto& st : lambda->body) analyzeStmt(st.get());
+                                endScope();
+                            } else {
+                                analyzeExpr(arg.get());
+                            }
+                        }
+                    } else {
+                        for (auto& arg : call->arguments) analyzeExpr(arg.get());
+                    }
+                } else {
+                    analyzeExpr(p->func.get());
+                }
+            }
             else if (auto* p = dynamic_cast<expr::ComposeExpr<MV>*>(e)) { analyzeExpr(p->left.get()); analyzeExpr(p->right.get()); }
         }
 
