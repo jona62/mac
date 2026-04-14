@@ -977,6 +977,8 @@ export class Analyzer {
             if (resolver) return resolver([inputType]);
             const def = this.resolve(name);
             if (def?.kind === "class") return { tag: "instance", className: def.name };
+            // Meme piped through any callable (user-defined effect, composed function) → Meme
+            if (inputType.tag === "instance" && inputType.className === "Meme") return inputType;
             return T_UNKNOWN;
         }
 
@@ -998,6 +1000,8 @@ export class Analyzer {
 
             const resolver = NATIVE_RETURN_TYPES.get(name);
             if (resolver) return resolver([inputType]);
+            // Meme piped through any callable → Meme
+            if (inputType.tag === "instance" && inputType.className === "Meme") return inputType;
             return T_UNKNOWN;
         }
 
