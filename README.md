@@ -2,6 +2,13 @@
 
 Meme as Code. A programming language where memes are first-class citizens.
 
+```mac
+@two_panel {
+    top: "Me: it works on my machine"
+    bottom: "Prod: lol no"
+} |> glitch => "meme.png"
+```
+
 ## Install
 
 ```bash
@@ -14,89 +21,129 @@ Or build from source:
 cmake -S . -B build && cmake --build build
 ```
 
-## Memes
+## Quick Start
 
 ```mac
-var m = Meme(Template("two_panel"))
-    .text(Top, "Writing Java")
-    .text(Bottom, "Writing Mac");
+// Create a meme with @template
+@two_panel {
+    top: "Before Mac"
+    bottom: "After Mac"
+} => "before_after.png"
 
-m.save(PNG, "meme.png");
+// One-liner
+@blank "Hello from Mac!" => "hello.png"
+
+// Specify size
+@square 800x800 {
+    top: "High res"
+    bottom: "Square format"
+} => "square.png"
+
+// Use any image as a template
+@"path/to/photo.png" {
+    top: "Custom template"
+} => "custom.png"
 ```
 
-### Templates
+## Effects
 
-`two_panel` `three_panel` `bottom_text` `blank` — or use any image path: `Template("path/to/image.png")`
-
-### Animated GIFs
+Compose effect presets with `>>`, apply with `|>`.
 
 ```mac
-var t = Template("two_panel");
+effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2)
+effect vintage = sepia >> brightness(0.9)
+effect cyberpunk = hueShift(180) >> contrast(1.5) >> chromatic(3) >> glow(4)
 
-Gif()
-    .frame(Meme(t).text(Top, "Monday").text(Bottom, "Coding"), Duration(400))
-    .frame(Meme(t).text(Top, "Friday").text(Bottom, "Deploying"), Duration(400))
-    .save("week.gif");
+@two_panel {
+    top: "Normal"
+    bottom: "Glitched"
+} |> glitch => "glitched.png"
 ```
 
-### Operator Composition
+18 built-in effects: `blur`, `pixelate`, `noise`, `saturate`, `contrast`, `brightness`, `jpeg`, `invert`, `sepia`, `sharpen`, `vignette`, `grayscale`, `hueShift`, `glow`, `posterize`, `chromatic`, `threshold`, `tint`
+
+## Animation
 
 ```mac
-// Meme + Duration = Frame
-var f1 = Meme(t).text(Top, "Frame 1") + Duration(300);
-var f2 = Meme(t).text(Top, "Frame 2") + Duration(300);
+// GIF with frame timing
+gif loop {
+    @blank "3" : 500ms
+    @blank "2" : 500ms
+    @blank "1" : 500ms
+    @blank "GO!" : 1s
+} => "countdown.gif"
 
-// Gif + Frame = Gif
-(Gif() + f1 + f2).save("composed.gif");
+// Timeline with transitions and easing
+timeline loop {
+    @two_panel { top: "Act 1" } : 3s
+    --- crossfade 200ms ease ---
+    @two_panel { top: "Act 2" } : 3s
+    --- fadeBlack 300ms ---
+    @two_panel { top: "Act 3" } : 3s
+} => "story.gif"
 ```
 
-### Meme Types
+8 transitions: `crossfade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `wipe`, `fadeBlack`, `zoom`
 
-| Type | Example |
-|------|---------|
-| `Template` | `Template("two_panel")` |
-| `Meme` | `Meme(tmpl).text(Top, "hi")` |
-| `Size` | `Size(400, 300)` — supports `+`, `*` |
-| `Duration` | `Duration(300)` — supports `+`, `*` |
-| `Position` | `Top`, `Bottom`, `Center` |
-| `Format` | `PNG`, `JPG`, `GIF` |
-| `Frame` | `meme + Duration(300)` |
-| `Gif` | `Gif().frame(m, dur).save(path)` |
+4 easing curves: `ease`, `easeIn`, `easeOut`, `easeInOut`
+
+## Functional Pipelines
+
+```mac
+var quotes = [
+    ["Debugging", "print('here')"],
+    ["Testing", "works on my machine"],
+    ["Deploying", "YOLO"]
+]
+
+quotes
+    |> map(q -> @two_panel { top: q[0] bottom: q[1] })
+    |> reduce((tl, m) -> tl
+        .frame(m, Duration(3000))
+        .transition(crossfade, Duration(200)), Timeline())
+    |> save("lifecycle.gif")
+```
+
+## Layout
+
+```mac
+// Effects comparison grid
+grid 2x2 {
+    @blank "Clean" |> sharpen
+    @blank "Vintage" |> vintage
+    @blank "Glitch" |> glitch
+    @blank "Deepfry" |> deepfry
+} |> pad(5) |> border(2) => "comparison.png"
+```
+
+## Templates
+
+10 built-in: `two_panel`, `three_panel`, `bottom_text`, `blank`, `caption_bar`, `four_panel`, `wide` (16:9), `tall` (9:16), `square` (1:1), `dark`
+
+Or use any image: `@"path/to/image.png" { ... }`
 
 ## Language
 
-Mac is a dynamically typed language with functions, closures, classes, arrays, maps, lambdas, and operator overloading.
+Mac is a dynamically typed language with functions, closures, classes, arrays, maps, arrow functions, pipes, and operator overloading.
 
 See [LANGUAGE.md](LANGUAGE.md) for the full reference.
 
 ## VS Code Extension
 
-The `mac-lang/` directory provides syntax highlighting, LSP (autocomplete, hover, go-to-definition, diagnostics), snippets, and file icons.
+Syntax highlighting, LSP (hover, go-to-definition, inlay hints, semantic tokens, signature help, find references, document symbols), snippets, and file icons.
 
 ```bash
 cd mac-lang && npm install && npx tsc && cd ..
 ln -sf "$(pwd)/mac-lang" ~/.vscode/extensions/mac-lang
 ```
 
-Reload VS Code (`Cmd+Shift+P` → "Developer: Reload Window") to activate the LSP.
-
 ## Development
 
 ```bash
-cmake --build build && bash tests/run_tests.sh  # 46 tests
+cmake --build build && bash tests/run_tests.sh
 ```
 
-See [docs/BUILDING.md](docs/BUILDING.md) for detailed build instructions and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for project structure.
-
-## Web GIF Studio
-
-Launch the browser UI on port `9001`:
-
-```bash
-PORT=9001 ./webapp/run.sh
-```
-
-Then open `http://localhost:9001`.
+See [docs/BUILDING.md](docs/BUILDING.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## License
 

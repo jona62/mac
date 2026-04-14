@@ -31,30 +31,28 @@ Passes the left-hand value as the first argument to the right-hand function.
 
 ```mac
 [1, 2, 3] |> map(x -> x * 2);           // [2, 4, 6]
-[1, 2, 3] |> filter(x -> x > 1) |> reverse;  // [3, 2]
 "hello" |> upper;                        // HELLO
-```
-
-Pipes chain naturally for multi-step transformations:
-
-```mac
 "a,b,c" |> split(",") |> map(upper) |> join("-");  // A-B-C
 ```
 
 ### Compose `>>`
 
-Creates a new function by chaining two functions together. The output of the first becomes the input of the second.
+Creates a new function by chaining two functions together.
 
 ```mac
 var pipeline = (x -> x * 2) >> (x -> x + 1);
 print pipeline(5);  // 11
+
+effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
 ```
 
-Compose is used heavily for effect presets:
+### Save `=>`
+
+Exports any meme, GIF, timeline, or rendered result to a file. Auto-detects format from extension.
 
 ```mac
-var glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
-var vintage = sepia >> brightness(0.9);
+@blank "hello" => "hello.png"
+gif { ... } => "animation.gif"
 ```
 
 ## Control Flow
@@ -87,26 +85,16 @@ fun counter() {
 
 ### Arrow Functions
 
-Lightweight syntax for single-expression functions.
-
 ```mac
-// Single parameter
 var double = x -> x * 2;
-print double(5);  // 10
-
-// Multiple parameters
 var add = (a, b) -> a + b;
-print add(3, 4);  // 7
 
-// Inline with higher-order functions
-[1, 2, 3] |> map(x -> x * 2);           // [2, 4, 6]
-[1, 2, 3] |> filter(x -> x > 1);        // [2, 3]
-[1, 2, 3] |> reduce((a, b) -> a + b, 0); // 6
+[1, 2, 3] |> map(x -> x * 2);
+[1, 2, 3] |> reduce((a, b) -> a + b, 0);
 
-// Nested arrows (currying)
+// Currying
 var mul = x -> y -> x * y;
 var triple = mul(3);
-print triple(4);  // 12
 ```
 
 ## Classes
@@ -121,20 +109,15 @@ class Dog < Animal {
     speak() { return "Woof!"; }
     parent() { return super.speak(); }
 }
-
-print Dog("Rex").speak();
 ```
 
 ## Operator Overloading
-
-Any class can define dunder methods:
 
 ```mac
 class Vec {
     init(x, y) { this.x = x; this.y = y; }
     __add__(other) { return Vec(this.x + other.x, this.y + other.y); }
     __mul__(n) { return Vec(this.x * n, this.y * n); }
-    __neg__() { return Vec(-this.x, -this.y); }
     __eq__(other) { return this.x == other.x and this.y == other.y; }
 }
 ```
@@ -147,163 +130,69 @@ class Vec {
 | `/`      | `__div__`   | `>`      | `__gt__`    |
 | `%`      | `__mod__`   | `-x`     | `__neg__`   |
 
-## Built-in Functions
+## Meme Literals
 
-### Core
-
-| Function             | Description               |
-| -------------------- | ------------------------- |
-| `clock()`            | Unix timestamp            |
-| `type(x)`            | Type name as string       |
-| `len(x)`             | Length of string or array  |
-| `input(prompt)`      | Read line from stdin       |
-| `print x`            | Print to stdout            |
-
-### Math
-
-| Function            | Description          |
-| ------------------- | -------------------- |
-| `sqrt(n)`           | Square root          |
-| `abs(n)`            | Absolute value       |
-| `pow(b, e)`         | Exponentiation       |
-| `floor(n)`          | Round down           |
-| `ceil(n)`           | Round up             |
-
-### Strings
-
-| Function                   | Description                        |
-| -------------------------- | ---------------------------------- |
-| `substr(s, start, len)`    | Substring                          |
-| `split(s, delim)`          | Split string into array            |
-| `upper(s)`                 | Uppercase                          |
-| `lower(s)`                 | Lowercase                          |
-| `trim(s)`                  | Strip leading/trailing whitespace  |
-| `replace(s, from, to)`     | Replace all occurrences            |
-| `join(arr, sep)`           | Join array elements into string    |
+The `@template` syntax creates memes as language-level literals.
 
 ```mac
-"hello" |> upper;                              // HELLO
-"  hi  " |> trim;                             // hi
-"hello world" |> replace("world", "mac");      // hello mac
-"a,b,c" |> split(",") |> map(upper) |> join("-"); // A-B-C
+// Block syntax with named positions
+@two_panel {
+    top: "Hello"
+    bottom: "World"
+} => "meme.png"
+
+// One-liner (center text)
+@blank "Just this" => "simple.png"
+
+// With size
+@two_panel 800x600 {
+    top: "High res"
+    bottom: "800 by 600"
+} => "hires.png"
+
+// Custom image as template
+@"path/to/photo.png" {
+    top: "Custom template"
+} => "custom.png"
 ```
 
-### Arrays
+Positions: `top`, `bottom`, `center`
 
-| Function               | Description                                   |
-| ---------------------- | --------------------------------------------- |
-| `push(arr, val)`       | Append value (mutates)                        |
-| `pop(arr)`             | Remove and return last element (mutates)      |
-| `map(arr, fn)`         | Transform each element                        |
-| `filter(arr, fn)`      | Keep elements where fn returns true           |
-| `reduce(arr, fn, init)`| Fold left with accumulator                    |
-| `find(arr, fn)`        | First element matching predicate, or nil      |
-| `any(arr, fn)`         | True if any element satisfies predicate       |
-| `all(arr, fn)`         | True if all elements satisfy predicate        |
-| `sort(arr)`            | Sort copy (numbers/strings)                   |
-| `sort(arr, fn)`        | Sort copy with comparator                     |
-| `reverse(arr)`         | Reversed copy                                 |
-| `flatten(arr)`         | Flatten one level of nesting                  |
-| `flatMap(arr, fn)`     | Map then flatten                              |
-| `zip(a, b)`            | Pair elements into `[[a0, b0], [a1, b1], ...]`|
-| `enumerate(arr)`       | Returns `[[0, el0], [1, el1], ...]`           |
-| `take(arr, n)`         | First n elements                              |
-| `drop(arr, n)`         | Skip first n elements                         |
-| `each(arr, fn)`        | Call fn for side effects, returns nil          |
-| `range(end)`           | `[0, 1, ..., end-1]`                          |
-| `range(start, end)`    | `[start, ..., end-1]`                         |
-| `range(start, end, step)` | `[start, start+step, ...]`                 |
+### Templates
 
-```mac
-print range(5);                              // [0, 1, 2, 3, 4]
-print range(2, 5);                           // [2, 3, 4]
-print range(0, 10, 3);                       // [0, 3, 6, 9]
-print [1,2,3] |> reduce((a,b) -> a + b, 0); // 6
-print zip([1,2], ["a","b"]);                 // [[1, a], [2, b]]
-print ["x","y"] |> enumerate;               // [[0, x], [1, y]]
-print [3,1,2] |> sort;                       // [1, 2, 3]
-print [1,2,3] |> reverse;                   // [3, 2, 1]
-print [1,2,3,4] |> find(x -> x > 2);        // 3
-print [1,2,3] |> any(x -> x > 2);           // true
-print [1,2,3] |> all(x -> x > 0);           // true
-print [1,2,3] |> take(2);                   // [1, 2]
-print [1,2,3] |> drop(1);                   // [2, 3]
-print ["a","b","c"] |> join("-");            // a-b-c
-print [[1,2],[3],[4,5]] |> flatten;          // [1, 2, 3, 4, 5]
-```
+10 built-in templates:
 
-## Arrays and Maps
+| Template       | Size      | Description                            |
+| -------------- | --------- | -------------------------------------- |
+| `two_panel`    | 600x600   | Top and bottom panels with divider     |
+| `three_panel`  | 800x500   | Three vertical panels                  |
+| `bottom_text`  | 600x400   | Image area on top, text area at bottom |
+| `blank`        | 600x600   | Plain white canvas                     |
+| `caption_bar`  | 600x500   | 70% image, 30% caption bar            |
+| `four_panel`   | 600x600   | 2x2 grid with dividers                |
+| `wide`         | 1200x675  | 16:9 landscape (YouTube)              |
+| `tall`         | 675x1200  | 9:16 portrait (stories/reels)         |
+| `square`       | 800x800   | 1:1 (Instagram)                       |
+| `dark`         | 600x600   | Dark background                       |
 
-```mac
-var a = [1, 2, 3];
-print a[0];         // 1
-a[1] = 99;
-push(a, 4);
-
-var m = {name: "Mac"};
-print m.name;       // Mac
-print m["name"];    // Mac
-m.version = 1;
-
-for (var x in a) print x;
-for (var key in m) print key;
-```
-
-## Templates
-
-Templates define the background canvas for memes. Use a built-in name or a path to a custom image.
-
-| Template       | Size    | Description                                    |
-| -------------- | ------- | ---------------------------------------------- |
-| `two_panel`    | 600x600 | Top and bottom panels with divider             |
-| `three_panel`  | 800x500 | Three vertical panels                          |
-| `bottom_text`  | 600x400 | Image area on top, text area at bottom         |
-| `blank`        | 600x600 | Plain white canvas                             |
-| `caption_bar`  | 600x500 | 70% image area, 30% white caption bar          |
-| `four_panel`   | 600x600 | 2x2 grid with dividers                         |
-
-```mac
-var t = Template("two_panel");
-var custom = Template("path/to/image.png");
-```
-
-## Memes
-
-```mac
-var t = Template("two_panel");
-var m = Meme(t)
-    .text(Top, "Top caption")
-    .text(Bottom, "Bottom caption");
-
-m.save(PNG, "output.png");
-```
-
-Text positions: `Top`, `Bottom`, `Center`
-
-Output formats: `PNG`, `JPG`, `GIF`
-
-### Saving
-
-The `save()` function works with any exportable type — memes, GIFs, timelines, and effect/layout results:
-
-```mac
-save(meme |> sepia, "sepia.png");
-save(grid_result, "grid.png");
-```
-
-### Resizing
-
-```mac
-m.resize(Size(400, 400));
-```
+Or use any image: `@"path/to/image.png"`
 
 ## Effects
 
-Effects are pure functions that transform meme pixel data. They work with the pipe operator and can be composed with `>>`.
+Effects are pure functions that transform meme pixel data. Apply with `|>`, compose with `>>`.
+
+### Effect Keyword
+
+```mac
+effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+effect vintage = sepia >> brightness(0.9);
+effect cyberpunk = hueShift(180) >> contrast(1.5) >> chromatic(3) >> glow(4);
+effect comic = posterize(5) >> contrast(1.4) >> sharpen;
+
+@two_panel { top: "hello" } |> glitch => "out.png"
+```
 
 ### Parameterized Effects
-
-These return a partial effect when called with a parameter, ready to be piped or composed.
 
 | Effect              | Description                          |
 | ------------------- | ------------------------------------ |
@@ -314,10 +203,14 @@ These return a partial effect when called with a parameter, ready to be piped or
 | `contrast(factor)`  | Contrast multiplier                  |
 | `brightness(factor)`| Brightness multiplier                |
 | `jpeg(quality)`     | JPEG compression artifact simulation |
+| `hueShift(degrees)` | HSL hue rotation (0-360)             |
+| `glow(radius)`      | Bloom via blur + screen blend        |
+| `posterize(levels)`  | Reduce to N color levels            |
+| `chromatic(offset)` | RGB channel displacement             |
+| `threshold(level)`  | Black/white binarize                 |
+| `tint(hexColor)`    | Color overlay blend                  |
 
 ### Direct Effects
-
-These take no parameters and can be used directly.
 
 | Effect      | Description          |
 | ----------- | -------------------- |
@@ -325,112 +218,122 @@ These take no parameters and can be used directly.
 | `sepia`     | Sepia tone           |
 | `sharpen`   | Sharpen              |
 | `vignette`  | Dark vignette border |
+| `grayscale` | Convert to grayscale |
 
-### Presets
+## Animation
 
-Compose effects into reusable presets:
+### GIF Blocks
 
 ```mac
-var glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
-var vintage = sepia >> brightness(0.9);
-var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
-
-Meme(t).text(Top, "hello") |> glitch;
+gif loop {
+    @blank "3" : 500ms
+    @blank "2" : 500ms
+    @blank "1" : 500ms
+    @blank "GO!" : 1s
+} => "countdown.gif"
 ```
+
+Duration units: `ms` (milliseconds), `s` (seconds)
+
+### Timeline Blocks
+
+```mac
+timeline loop {
+    @two_panel { top: "Scene 1" } : 3s
+    --- crossfade 200ms ease ---
+    @two_panel { top: "Scene 2" } : 3s
+    --- fadeBlack 300ms ---
+    @two_panel { top: "Scene 3" } : 3s
+} => "story.gif"
+```
+
+### Transitions
+
+`crossfade` `slideLeft` `slideRight` `slideUp` `slideDown` `wipe` `fadeBlack` `zoom`
+
+### Easing
+
+Add an easing keyword after the duration in `--- transition duration [easing] ---`:
+
+`ease` `easeIn` `easeOut` `easeInOut`
+
+Default is linear.
 
 ## Layout
 
-Layout functions combine multiple rendered memes into composite images.
-
-| Function            | Description                            |
-| ------------------- | -------------------------------------- |
-| `beside(a, b)`      | Place two memes side by side           |
-| `stack(a, b)`       | Stack two memes vertically             |
-| `grid(cols, arr)`   | Arrange array of memes in a grid       |
-| `toGrid(arr, c, r)` | Pipeline-friendly grid from array      |
-| `pad(meme, px)`     | Add padding around a meme              |
-| `border(meme, px)`  | Add a border around a meme             |
-
 ```mac
-var a = Meme(t).text(Top, "Left");
-var b = Meme(t).text(Top, "Right");
-beside(a, b) |> pad(5) |> border(2);
+// Side by side
+beside(meme1, meme2) => "row.png"
 
-// Grid from array
-[m1, m2, m3, m4] |> toGrid(2, 2) |> pad(5);
+// Vertical stack
+stack(meme1, meme2) => "col.png"
+
+// Grid
+grid 2x2 {
+    @blank "A" |> sepia
+    @blank "B" |> vintage
+    @blank "C" |> glitch
+    @blank "D" |> deepfry
+} |> pad(5) |> border(2) => "grid.png"
 ```
 
-## Timeline & Animation
+## Built-in Functions
 
-Timeline builds animated GIFs with keyframes, transitions, and timing control. It uses method chaining like Gif.
+### Core
 
-```mac
-var t = Template("two_panel");
+| Function         | Description               |
+| ---------------- | ------------------------- |
+| `clock()`        | Unix timestamp            |
+| `type(x)`        | Type name as string       |
+| `len(x)`         | Length of string or array  |
+| `input(prompt)`  | Read line from stdin       |
+| `print x`        | Print to stdout            |
+| `save(x, path)`  | Save any exportable type   |
 
-Timeline()
-    .frame(Meme(t).text(Top, "Frame 1") |> clean, Duration(2000))
-    .transition(crossfade, Duration(150))
-    .frame(Meme(t).text(Top, "Frame 2") |> vintage, Duration(2000))
-    .transition(slideLeft, Duration(150))
-    .frame(Meme(t).text(Top, "Frame 3") |> glitch, Duration(2000))
-    .loop(0)
-    .render("animation.gif");
-```
+### Math
 
-### Timeline Methods
+`sqrt(n)` `abs(n)` `pow(b, e)` `floor(n)` `ceil(n)`
 
-| Method                           | Description                           |
-| -------------------------------- | ------------------------------------- |
-| `Timeline()`                     | Create a new timeline                 |
-| `.frame(meme, duration)`         | Add a keyframe with hold duration     |
-| `.transition(type, duration)`    | Set transition to next frame          |
-| `.loop(count)`                   | Set loop count (0 = infinite)         |
-| `.render(path)`                  | Render timeline to GIF                |
-| `.save(path)`                    | Alias for `.render()`                 |
+### Strings
 
-### Operator Overloading
+`substr(s, start, len)` `split(s, delim)` `upper(s)` `lower(s)` `trim(s)` `replace(s, from, to)` `join(arr, sep)`
 
-`Timeline + Frame` adds the frame to the timeline:
+### Arrays
 
-```mac
-var f1 = Meme(t).text(Top, "A") + Duration(500);
-var f2 = Meme(t).text(Top, "B") + Duration(500);
-var tl = Timeline() + f1 + f2;
-tl.render("composed.gif");
-```
+| Function               | Description                                   |
+| ---------------------- | --------------------------------------------- |
+| `push(arr, val)`       | Append value (mutates)                        |
+| `pop(arr)`             | Remove and return last element                |
+| `map(arr, fn)`         | Transform each element                        |
+| `filter(arr, fn)`      | Keep elements where fn returns true           |
+| `reduce(arr, fn, init)`| Fold left with accumulator                    |
+| `find(arr, fn)`        | First match or nil                            |
+| `any(arr, fn)`         | True if any element satisfies predicate       |
+| `all(arr, fn)`         | True if all elements satisfy predicate        |
+| `sort(arr)`            | Sort copy                                     |
+| `reverse(arr)`         | Reversed copy                                 |
+| `flatten(arr)`         | Flatten one level                             |
+| `flatMap(arr, fn)`     | Map then flatten                              |
+| `zip(a, b)`            | Pair elements into tuples                     |
+| `enumerate(arr)`       | Returns `[(index, element)]`                  |
+| `take(arr, n)`         | First n elements                              |
+| `drop(arr, n)`         | Skip first n elements                         |
+| `each(arr, fn)`        | Call fn for side effects                      |
+| `range(end)`           | `[0, 1, ..., end-1]`                          |
+| `range(start, end)`    | `[start, ..., end-1]`                         |
+| `range(start, end, step)` | `[start, start+step, ...]`                 |
 
-### Transition Types
-
-`crossfade` `slideLeft` `slideRight` `slideUp` `slideDown` `wipe`
-
-### Simple GIF Builder
-
-For frame-by-frame GIFs without transitions:
-
-```mac
-Gif()
-    .frame(Meme(t).text(Top, "1"), Duration(1000))
-    .frame(Meme(t).text(Top, "2"), Duration(1000))
-    .save("countdown.gif");
-```
-
-### Pipelines
-
-Use `animate` for simple GIFs, or `reduce` to fold memes into a Timeline:
+## Arrays and Maps
 
 ```mac
-// Array -> Gif (uniform timing, no transitions)
-["Mon", "Tue", "Wed"]
-    |> map(d -> Meme(t).text(Top, d))
-    |> animate(Duration(400));
+var a = [1, 2, 3];
+print a[0];
+push(a, 4);
 
-// Array -> Timeline (fold with reduce)
-var tl = memes |> reduce((tl, m) -> tl
-    .frame(m, Duration(2000))
-    .transition(crossfade, Duration(150)), Timeline());
-tl.loop(0).render("week.gif");
+var m = {name: "Mac"};
+print m.name;
+m.version = 1;
 
-// Array of Frames -> Timeline (using + operator)
-var frames = memes |> map(m -> m + Duration(500));
-var tl = frames |> reduce((tl, f) -> tl + f, Timeline());
+for (var x in a) print x;
+for (var key in m) print key;
 ```
