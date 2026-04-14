@@ -25,6 +25,9 @@ import {
 
 import { TextDocument } from "vscode-languageserver-textdocument";
 
+import * as fs from "fs";
+import * as path from "path";
+
 import { Scanner, ScanError } from "./scanner";
 import { Parser } from "./parser";
 import { ParseError } from "./ast";
@@ -44,6 +47,47 @@ const documents = new TextDocuments(TextDocument);
 
 // Cache analysis results by document URI
 const analysisCache = new Map<string, AnalysisResult>();
+
+// Prelude symbol locations — maps "Meme", "Timeline" etc. to line/col in prelude.mac
+const preludeLocations = new Map<string, { line: number; col: number }>();
+let preludePath: string | null = null;
+
+function indexPrelude(): void {
+    // Search up from this file to find stdlib/prelude.mac
+    const candidates = [
+        path.resolve(__dirname, "../../stdlib/prelude.mac"),
+        path.resolve(__dirname, "../../../stdlib/prelude.mac"),
+    ];
+    for (const p of candidates) {
+        if (fs.existsSync(p)) {
+            preludePath = p;
+            break;
+        }
+    }
+    if (!preludePath) return;
+
+    const src = fs.readFileSync(preludePath, "utf-8");
+    const lines = src.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+        // Match: class Name {
+        const classMatch = lines[i].match(/^class\s+(\w+)/);
+        if (classMatch) {
+            preludeLocations.set(classMatch[1], { line: i, col: lines[i].indexOf(classMatch[1]) });
+        }
+        // Match: var Name = ...
+        const varMatch = lines[i].match(/^var\s+(\w+)/);
+        if (varMatch) {
+            preludeLocations.set(varMatch[1], { line: i, col: lines[i].indexOf(varMatch[1]) });
+        }
+        // Match: fun Name(...)
+        const funMatch = lines[i].match(/^fun\s+(\w+)/);
+        if (funMatch) {
+            preludeLocations.set(funMatch[1], { line: i, col: lines[i].indexOf(funMatch[1]) });
+        }
+    }
+}
+
+indexPrelude();
 
 // ============================================================
 // Initialization
@@ -159,8 +203,15 @@ connection.onDefinition((params: DefinitionParams): Location | null => {
     const ref = findReferenceAtPosition(result.references, params.position);
     if (!ref || !ref.definition) return null;
 
-    // Skip native functions (line 0 means synthetic / built-in)
-    if (ref.definition.token.line <= 0) return null;
+    // Built-in / prelude symbol — jump to prelude.mac if available
+    if (ref.definition.token.line <= 0) {
+        const loc = preludeLocations.get(ref.definition.name);
+        if (loc && preludePath) {
+            const uri = "file://" + preludePath;
+            return Location.create(uri, Range.create(loc.line, loc.col, loc.line, loc.col + ref.definition.name.length));
+        }
+        return null;
+    }
 
     const defLine = ref.definition.token.line - 1;
     const defCol = ref.definition.token.column - 1;
