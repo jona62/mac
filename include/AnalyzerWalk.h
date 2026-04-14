@@ -67,8 +67,10 @@ namespace analyzer {
         }
         else if (auto* p = dynamic_cast<stmt::ForInStmt<MV>*>(s)) {
             analyzeExpr(p->iterable.get());
+            auto iterType = inferType(p->iterable.get());
+            auto elemType = extractElem(iterType);
             beginScope();
-            define(p->varName, "variable", "unknown");
+            define(p->varName, "variable", elemType);
             analyzeStmt(p->body.get());
             endScope();
         }

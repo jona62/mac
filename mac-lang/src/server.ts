@@ -62,12 +62,30 @@ const preludePath = findPath(
     path.resolve(__dirname, "../../../stdlib/prelude.mac"),
 );
 
+// Maps symbol names AND "ClassName.method" to positions in prelude.mac
 const preludeLocations = new Map<string, { line: number; col: number }>();
 if (preludePath) {
     const lines = fs.readFileSync(preludePath, "utf-8").split("\n");
+    let currentClass = "";
     for (let i = 0; i < lines.length; i++) {
-        const m = lines[i].match(/^(class|var|fun)\s+(\w+)/);
-        if (m) preludeLocations.set(m[2], { line: i, col: lines[i].indexOf(m[2]) });
+        const classMatch = lines[i].match(/^class\s+(\w+)/);
+        if (classMatch) {
+            currentClass = classMatch[1];
+            preludeLocations.set(currentClass, { line: i, col: lines[i].indexOf(currentClass) });
+            continue;
+        }
+        if (lines[i].match(/^}/)) { currentClass = ""; continue; }
+        const varMatch = lines[i].match(/^var\s+(\w+)/);
+        if (varMatch) { preludeLocations.set(varMatch[1], { line: i, col: lines[i].indexOf(varMatch[1]) }); continue; }
+        const funMatch = lines[i].match(/^fun\s+(\w+)/);
+        if (funMatch) { preludeLocations.set(funMatch[1], { line: i, col: lines[i].indexOf(funMatch[1]) }); continue; }
+        // Methods inside classes: "    methodName(params) {"
+        if (currentClass) {
+            const methodMatch = lines[i].match(/^\s+(\w+)\s*\(/);
+            if (methodMatch && methodMatch[1] !== "if" && methodMatch[1] !== "for" && methodMatch[1] !== "while") {
+                preludeLocations.set(currentClass + "." + methodMatch[1], { line: i, col: lines[i].indexOf(methodMatch[1]) });
+            }
+        }
     }
 }
 
@@ -127,14 +145,29 @@ documents.onDidChangeContent((change) => {
 connection.onDefinition((params: DefinitionParams): Location | null => {
     const r = analysisCache.get(params.textDocument.uri);
     if (!r) return null;
+
+    // Check property accesses first (.text, .frame, .transition, etc.)
+    const prop = findAt(r.properties, params.position);
+    if (prop && preludePath) {
+        // Try "ClassName.method" first, then just the property name
+        const loc = preludeLocations.get(prop.ownerType + "." + prop.name)
+            ?? preludeLocations.get(prop.name);
+        if (loc) return Location.create("file://" + preludePath,
+            Range.create(loc.line, loc.col, loc.line, loc.col + prop.name.length));
+    }
+
+    // Then check variable/function references
     const ref = findAt(r.references, params.position);
     if (!ref) return null;
     if (ref.defLine <= 0) {
         const loc = preludeLocations.get(ref.defName);
-        if (loc && preludePath) return Location.create("file://" + preludePath, Range.create(loc.line, loc.col, loc.line, loc.col + ref.defName.length));
+        if (loc && preludePath) return Location.create("file://" + preludePath,
+            Range.create(loc.line, loc.col, loc.line, loc.col + ref.defName.length));
         return null;
     }
-    return Location.create(params.textDocument.uri, Range.create(ref.defLine - 1, Math.max(0, ref.defCol - 1), ref.defLine - 1, Math.max(0, ref.defCol - 1) + ref.defName.length));
+    return Location.create(params.textDocument.uri,
+        Range.create(ref.defLine - 1, Math.max(0, ref.defCol - 1),
+                     ref.defLine - 1, Math.max(0, ref.defCol - 1) + ref.defName.length));
 });
 
 // --- Hover ---
@@ -163,9 +196,10 @@ connection.languages.inlayHint.on((params: InlayHintParams): InlayHint[] => {
     const hints: InlayHint[] = [];
     const [sL, eL] = [params.range.start.line + 1, params.range.end.line + 1];
 
-    // Type hints for variables
+    // Type hints for variables and parameters
     for (const sym of r.symbols) {
-        if (sym.kind !== "variable" || sym.line < sL || sym.line > eL || sym.line <= 0) continue;
+        if (sym.kind !== "variable" && sym.kind !== "parameter") continue;
+        if (sym.line < sL || sym.line > eL || sym.line <= 0) continue;
         if (!sym.type || sym.type === "unknown") continue;
         const label = sym.type.includes("->") && sym.description ? `: ${sym.description}` : `: ${sym.type}`;
         hints.push({ position: Position.create(sym.line - 1, sym.endCol - 1), label, kind: InlayHintKind.Type, paddingLeft: false, paddingRight: true });
