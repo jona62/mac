@@ -298,19 +298,22 @@ namespace expr {
 
     // --- Mac v2 syntax nodes ---
 
-    // @template { top: "...", bottom: "..." } or @template "one-liner"
+    // @template [WxH] { top: "...", bottom: "..." } or @template "one-liner"
     template <typename T>
     class MemeLiteralExpr : public Expr<T> {
     public:
         struct TextEntry { Token key; shared_ptr<Expr<T>> value; };
-        MemeLiteralExpr(Token templateName, std::vector<TextEntry> entries, bool oneLiner)
-            : templateName(templateName), entries(std::move(entries)), oneLiner(oneLiner) {}
+        MemeLiteralExpr(Token templateName, std::vector<TextEntry> entries, bool oneLiner,
+                        int width = 0, int height = 0)
+            : templateName(templateName), entries(std::move(entries)),
+              oneLiner(oneLiner), width(width), height(height) {}
         T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitMemeLiteralExpr(this);
         }
         Token templateName;
         std::vector<TextEntry> entries;
         bool oneLiner;
+        int width, height; // 0 = template default
     };
 
     // expr => "path"

@@ -589,6 +589,24 @@ namespace interpreter {
                 meme = fn->call(shared_from_this(), {position, textVal});
             }
 
+            // Apply size if specified: @template WxH { ... }
+            if (expr->width > 0 && expr->height > 0) {
+                auto sizeClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("Size")), 0));
+                auto sizeFn = std::get<shared_ptr<callable::MacCallable>>(sizeClass);
+                auto size = sizeFn->call(shared_from_this(), {
+                    MacValue(static_cast<double>(expr->width)),
+                    MacValue(static_cast<double>(expr->height))
+                });
+
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(meme);
+                token::Token resizeTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("resize")), 0);
+                auto method = inst->get(resizeTok);
+                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
+                meme = fn->call(shared_from_this(), {size});
+            }
+
             return meme;
         }
 

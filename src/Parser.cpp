@@ -717,11 +717,34 @@ shared_ptr<stmt::Stmt<T>> Parser::effectDeclaration() {
     return make_shared<stmt::EffectStmt<T>>(name, value);
 }
 
-// @templateName { top: "...", bottom: "..." } or @templateName "one-liner"
+// @templateName [WxH] { top: "...", bottom: "..." } or @templateName "one-liner"
 template <typename T>
 shared_ptr<Expr<T>> Parser::memeLiteral() {
     consume(TokenType::IDENTIFIER, "Expected template name after '@'.");
     Token templateName = previous();
+
+    // Optional size: 400x300
+    int width = 0, height = 0;
+    if (peek().type == TokenType::NUMBER) {
+        // Check if this is WxH (NUMBER then identifier starting with 'x' then NUMBER)
+        // or just a number (could be part of a one-liner like @blank 42)
+        if (current + 1 < tokens.size() && tokens[current + 1].type == TokenType::IDENTIFIER) {
+            auto* xStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
+            if (xStr && xStr->length() > 0 && (*xStr)[0] == 'x') {
+                advance(); // consume width NUMBER
+                width = static_cast<int>(std::get<double>(previous().lexeme));
+                // Parse xH: could be "x300" as one token or "x" then NUMBER
+                advance(); // consume the x... identifier
+                auto xIdent = std::get<std::string>(previous().lexeme);
+                if (xIdent.length() > 1) {
+                    height = std::stoi(xIdent.substr(1));
+                } else {
+                    consume(TokenType::NUMBER, "Expected height after 'x'.");
+                    height = static_cast<int>(std::get<double>(previous().lexeme));
+                }
+            }
+        }
+    }
 
     std::vector<typename expr::MemeLiteralExpr<T>::TextEntry> entries;
 
@@ -735,7 +758,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
             entries.push_back({key, value});
         }
         consume(TokenType::RIGHT_BRACE, "Expected '}' after meme literal.");
-        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false);
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false, width, height);
     }
 
     // One-liner: @template expr (string literal, variable, or any primary expression)
@@ -744,7 +767,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         Token centerKey(TokenType::IDENTIFIER, token::TokenValue(std::string("center")),
                         templateName.line, templateName.column);
         entries.push_back({centerKey, value});
-        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true);
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true, width, height);
     }
 
     throw ParseError(peek(), "Expected '{' or text after @template.");
