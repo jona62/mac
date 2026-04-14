@@ -646,86 +646,61 @@ namespace interpreter {
         }
 
         MacValue visitGifBlockExpr(expr::GifBlockExpr<MacValue>* expr) override {
-            // Create a Gif instance via the prelude class
-            auto gifClass = env->get(token::Token(token::TokenType::IDENTIFIER,
-                token::TokenValue(std::string("Gif")), 0));
-            auto gifFn = std::get<shared_ptr<callable::MacCallable>>(gifClass);
-            auto gif = gifFn->call(shared_from_this(), {});
-
-            auto durClass = env->get(token::Token(token::TokenType::IDENTIFIER,
-                token::TokenValue(std::string("Duration")), 0));
-            auto durFn = std::get<shared_ptr<callable::MacCallable>>(durClass);
+            // Build GIF directly using C++ MacGif to handle both
+            // Meme instances AND rendered maps (from effects)
+            auto rawGif = std::make_shared<meme::MacGif>();
 
             for (auto& frame : expr->frames) {
                 auto meme = evaluate(frame.meme);
-                auto dur = durFn->call(shared_from_this(), {MacValue(frame.durationMs)});
+                int durationMs = static_cast<int>(frame.durationMs);
 
-                // Call gif.frame(meme, duration)
-                auto inst = std::get<shared_ptr<instance::MacInstance>>(gif);
-                token::Token frameTok(token::TokenType::IDENTIFIER,
-                    token::TokenValue(std::string("frame")), 0);
-                auto method = inst->get(frameTok);
-                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
-                gif = fn->call(shared_from_this(), {meme, dur});
+                // getMemePixels handles MacInstance (Meme), MacMap (rendered), etc.
+                auto pd = callable::getMemePixels(meme);
+                auto macMeme = std::make_shared<meme::MacMeme>("", "", "");
+                macMeme->imagePath = "";
+                // Save pixels to temp file so MacGif can load them
+                auto tempPath = callable::saveTempImage(pd.pixels, pd.width, pd.height);
+                macMeme->imagePath = tempPath;
+                macMeme->width = pd.width;
+                macMeme->height = pd.height;
+                rawGif->addFrame(macMeme, durationMs);
             }
 
-            // If loop, the Gif class doesn't support loop — but we still return it
-            return gif;
+            return MacValue(rawGif);
         }
 
         MacValue visitTimelineBlockExpr(expr::TimelineBlockExpr<MacValue>* expr) override {
+            // Build timeline directly using C++ MacTimeline to handle
+            // both Meme instances AND rendered maps (from effects)
+            auto rawTl = std::make_shared<meme::MacTimeline>();
+
+            for (auto& entry : expr->entries) {
+                auto meme = evaluate(entry.frame.meme);
+                int holdMs = static_cast<int>(entry.frame.durationMs);
+
+                auto pd = callable::getMemePixels(meme);
+                rawTl->addKeyframe(std::move(pd.pixels), pd.width, pd.height);
+                rawTl->addHold(holdMs);
+
+                if (entry.transition) {
+                    std::string easing = entry.transition->easing.empty() ? "linear" : entry.transition->easing;
+                    rawTl->setTransition(static_cast<int>(entry.transition->durationMs),
+                                         entry.transition->type, easing);
+                }
+            }
+
+            if (expr->loop) rawTl->setLoop(0);
+
+            // Wrap in a Timeline prelude instance so => and .render() work
             auto tlClass = env->get(token::Token(token::TokenType::IDENTIFIER,
                 token::TokenValue(std::string("Timeline")), 0));
             auto tlFn = std::get<shared_ptr<callable::MacCallable>>(tlClass);
             auto tl = tlFn->call(shared_from_this(), {});
-
-            auto durClass = env->get(token::Token(token::TokenType::IDENTIFIER,
-                token::TokenValue(std::string("Duration")), 0));
-            auto durFn = std::get<shared_ptr<callable::MacCallable>>(durClass);
-
-            for (auto& entry : expr->entries) {
-                auto meme = evaluate(entry.frame.meme);
-                auto dur = durFn->call(shared_from_this(), {MacValue(entry.frame.durationMs)});
-
-                // Call tl.frame(meme, duration)
-                auto inst = std::get<shared_ptr<instance::MacInstance>>(tl);
-                token::Token frameTok(token::TokenType::IDENTIFIER,
-                    token::TokenValue(std::string("frame")), 0);
-                auto method = inst->get(frameTok);
-                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
-                tl = fn->call(shared_from_this(), {meme, dur});
-
-                // Apply transition if present
-                if (entry.transition) {
-                    // Call _timeline_transition directly on the raw C++ timeline
-                    // to pass the easing parameter
-                    auto tlInst = std::get<shared_ptr<instance::MacInstance>>(tl);
-                    token::Token tlTok(token::TokenType::IDENTIFIER,
-                        token::TokenValue(std::string("_tl")), 0);
-                    auto rawTl = tlInst->get(tlTok);
-                    auto tlTransFn = env->get(token::Token(token::TokenType::IDENTIFIER,
-                        token::TokenValue(std::string("_timeline_transition")), 0));
-                    auto transNative = std::get<shared_ptr<callable::MacCallable>>(tlTransFn);
-                    std::vector<MacValue> transArgs = {
-                        rawTl,
-                        MacValue(entry.transition->durationMs),
-                        MacValue(entry.transition->type)
-                    };
-                    if (!entry.transition->easing.empty() && entry.transition->easing != "linear") {
-                        transArgs.push_back(MacValue(entry.transition->easing));
-                    }
-                    transNative->call(shared_from_this(), transArgs);
-                }
-            }
-
-            if (expr->loop) {
-                auto inst = std::get<shared_ptr<instance::MacInstance>>(tl);
-                token::Token loopTok(token::TokenType::IDENTIFIER,
-                    token::TokenValue(std::string("loop")), 0);
-                auto method = inst->get(loopTok);
-                auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
-                tl = fn->call(shared_from_this(), {MacValue(0.0)});
-            }
+            // Replace the internal _tl with our populated one
+            auto inst = std::get<shared_ptr<instance::MacInstance>>(tl);
+            token::Token tlTok(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("_tl")), 0);
+            inst->set(tlTok, MacValue(rawTl));
 
             return tl;
         }
