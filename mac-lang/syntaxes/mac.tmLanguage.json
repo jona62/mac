@@ -9,6 +9,7 @@
     { "include": "#numbers" },
     { "include": "#meme-literal" },
     { "include": "#effect-declaration" },
+    { "include": "#style-declaration" },
     { "include": "#class-declaration" },
     { "include": "#function-declaration" },
     { "include": "#block-keywords" },
@@ -75,6 +76,13 @@
         "2": { "name": "entity.name.function.effect.mac" }
       }
     },
+    "style-declaration": {
+      "match": "\\b(style)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": { "name": "keyword.control.mac" },
+        "2": { "name": "entity.name.type.style.mac" }
+      }
+    },
     "block-keywords": {
       "name": "keyword.control.block.mac",
       "match": "\\b(gif|timeline|grid|loop)\\b(?=\\s+[{\\w\\d])"
@@ -101,7 +109,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(var|fun|effect|class|for|while|if|else|return|print|in|break|continue)\\b"
+      "match": "\\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",

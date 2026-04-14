@@ -117,6 +117,24 @@ namespace analyzer {
             }
             define(p->name, "variable", type, desc);
             if (p->value) analyzeExpr(p->value.get());
+        } else if (auto* p = dynamic_cast<stmt::StyleStmt<MV>*>(s)) {
+            // Build description from style properties
+            std::string desc;
+            for (auto& [key, val] : p->properties) {
+                auto keyName = tokName(key);
+                if (!desc.empty()) desc += ", ";
+                desc += keyName;
+                // Try to extract literal value for description
+                if (auto* lit = dynamic_cast<expr::Literal<MV>*>(val.get())) {
+                    if (auto* sv = std::get_if<std::string>(&lit->value))
+                        desc += ": " + *sv;
+                    else if (auto* dv = std::get_if<double>(&lit->value)) {
+                        std::ostringstream os; os << *dv; desc += ": " + os.str();
+                    }
+                }
+                analyzeExpr(val.get());
+            }
+            define(p->name, "variable", "Style", desc);
         }
     }
 
@@ -306,6 +324,14 @@ namespace analyzer {
             if (p->templateName.line > 0 && currentSource == "user") {
                 result.semanticTokens.push_back({p->templateName.line, tc,
                     static_cast<int>(tname.size()), "class", currentSource});
+            }
+
+            // Emit reference for style name if present
+            if (p->styleName.type != token::TokenType::NONE) {
+                auto sname = tokName(p->styleName);
+                if (!sname.empty()) {
+                    resolveRef(p->styleName);
+                }
             }
 
             // Emit references for position keys in block syntax (top, bottom, center)
