@@ -15,7 +15,7 @@ export type MacType =
     | { tag: "tuple"; elementTypes: MacType[] }
     | { tag: "map"; valueType: MacType }
     | { tag: "instance"; className: string }
-    | { tag: "function"; paramCount: number }
+    | { tag: "function"; paramCount: number; returnType?: MacType }
     | { tag: "class"; className: string }
     | { tag: "unknown" };
 
@@ -35,7 +35,13 @@ export function formatMacType(t: MacType): string {
         case "tuple": return `(${t.elementTypes.map(formatMacType).join(", ")})`;
         case "map": return `{${formatMacType(t.valueType)}}`;
         case "instance": return t.className;
-        case "function": return `fun(${t.paramCount})`;
+        case "function": {
+            if (t.returnType) {
+                const ret = formatMacType(t.returnType);
+                return `${ret} -> ${ret}`;
+            }
+            return `fun(${t.paramCount})`;
+        }
         case "class": return `class ${t.className}`;
         case "unknown": return "unknown";
     }

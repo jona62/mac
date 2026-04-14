@@ -47,7 +47,7 @@ export class Analyzer {
             const sym: Symbol = {
                 name: def.name, kind: "native", token: nativeToken(def.name),
                 params, description: def.description,
-                type: { tag: "function", paramCount: Math.max(0, def.arity) },
+                type: def.type ?? { tag: "function", paramCount: Math.max(0, def.arity) },
             };
             this.currentScope.symbols.set(def.name, sym);
             this.allSymbols.push(sym);
@@ -346,9 +346,14 @@ export class Analyzer {
                 return this.inferPipeType(expr.func, inputType);
             }
             case "compose": {
-                this.analyzeExpr(expr.left);
-                this.analyzeExpr(expr.right);
-                return { tag: "function", paramCount: 1 };
+                const leftType = this.analyzeExpr(expr.left);
+                const rightType = this.analyzeExpr(expr.right);
+                // If either side has a known returnType, propagate it
+                const retType = (rightType.tag === "function" && rightType.returnType)
+                    ? rightType.returnType
+                    : (leftType.tag === "function" && leftType.returnType)
+                    ? leftType.returnType : undefined;
+                return { tag: "function", paramCount: 1, returnType: retType };
             }
         }
     }

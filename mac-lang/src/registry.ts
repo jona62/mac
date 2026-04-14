@@ -2,6 +2,9 @@
 
 import { MacType, T_NUMBER, T_STRING, T_BOOL, T_NIL, T_UNKNOWN, PropertyInfo, SymbolKind } from "./types";
 
+const T_MEME: MacType = { tag: "instance", className: "Meme" };
+const MEME_EFFECT_FN: MacType = { tag: "function", paramCount: 1, returnType: T_MEME };
+
 // ============================================================
 // Native function definitions (name, arity, hover description)
 // ============================================================
@@ -10,6 +13,7 @@ export interface NativeDef {
     name: string;
     arity: number;
     description: string;
+    type?: MacType;
 }
 
 export const NATIVE_FUNCTIONS: NativeDef[] = [
@@ -65,10 +69,10 @@ export const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "contrast", arity: 1, description: "contrast(amount) — Adjust contrast (1.0 = normal). Returns Meme → Meme." },
     { name: "brightness", arity: 1, description: "brightness(amount) — Adjust brightness (1.0 = normal). Returns Meme → Meme." },
     { name: "jpeg", arity: 1, description: "jpeg(quality) — JPEG compression artifacts (low = more artifacts). Returns Meme → Meme." },
-    { name: "invert", arity: 1, description: "invert(meme) — Invert colors. Meme → Meme. Pipeable." },
-    { name: "sepia", arity: 1, description: "sepia(meme) — Sepia tone filter. Meme → Meme. Pipeable." },
-    { name: "sharpen", arity: 1, description: "sharpen(meme) — Sharpen filter. Meme → Meme. Pipeable." },
-    { name: "vignette", arity: 1, description: "vignette(meme) — Dark edges effect. Meme → Meme. Pipeable." },
+    { name: "invert", arity: 1, description: "invert(meme) — Invert colors. Meme → Meme. Pipeable.", type: MEME_EFFECT_FN },
+    { name: "sepia", arity: 1, description: "sepia(meme) — Sepia tone filter. Meme → Meme. Pipeable.", type: MEME_EFFECT_FN },
+    { name: "sharpen", arity: 1, description: "sharpen(meme) — Sharpen filter. Meme → Meme. Pipeable.", type: MEME_EFFECT_FN },
+    { name: "vignette", arity: 1, description: "vignette(meme) — Dark edges effect. Meme → Meme. Pipeable.", type: MEME_EFFECT_FN },
     { name: "beside", arity: 2, description: "beside(meme1, meme2) — Side-by-side layout. Pipeable: m1 |> beside(m2)." },
     { name: "stack", arity: 2, description: "stack(meme1, meme2) — Vertical stack layout. Pipeable: m1 |> stack(m2)." },
     { name: "grid", arity: 2, description: "grid(cols, memesArray) — Grid layout." },
@@ -200,14 +204,14 @@ export const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacT
     ["Timeline", () => ({ tag: "instance", className: "Timeline" })],
     ["timeline", () => ({ tag: "instance", className: "Timeline" })],
 
-    // Effects (parameterized → function, direct → Meme)
-    ["blur", () => ({ tag: "function", paramCount: 1 })],
-    ["pixelate", () => ({ tag: "function", paramCount: 1 })],
-    ["noise", () => ({ tag: "function", paramCount: 1 })],
-    ["saturate", () => ({ tag: "function", paramCount: 1 })],
-    ["contrast", () => ({ tag: "function", paramCount: 1 })],
-    ["brightness", () => ({ tag: "function", paramCount: 1 })],
-    ["jpeg", () => ({ tag: "function", paramCount: 1 })],
+    // Effects (parameterized → Meme->Meme function, direct → Meme when called)
+    ["blur", () => MEME_EFFECT_FN],
+    ["pixelate", () => MEME_EFFECT_FN],
+    ["noise", () => MEME_EFFECT_FN],
+    ["saturate", () => MEME_EFFECT_FN],
+    ["contrast", () => MEME_EFFECT_FN],
+    ["brightness", () => MEME_EFFECT_FN],
+    ["jpeg", () => MEME_EFFECT_FN],
     ["invert", () => ({ tag: "instance", className: "Meme" })],
     ["sepia", () => ({ tag: "instance", className: "Meme" })],
     ["sharpen", () => ({ tag: "instance", className: "Meme" })],
@@ -275,7 +279,7 @@ export const PRELUDE_TYPES: { name: string; kind: SymbolKind; params?: string[];
     { name: "PNG", kind: "variable", description: "Format constant — PNG image output.", type: { tag: "instance", className: "Format" } },
     { name: "JPG", kind: "variable", description: "Format constant — JPG image output.", type: { tag: "instance", className: "Format" } },
     { name: "GIF", kind: "variable", description: "Format constant — GIF image output.", type: { tag: "instance", className: "Format" } },
-    { name: "deepfry", kind: "variable", description: "Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1).", type: { tag: "function", paramCount: 1 } },
+    { name: "deepfry", kind: "variable", description: "Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1).", type: MEME_EFFECT_FN },
     { name: "crossfade", kind: "variable", description: "Timeline transition — cross-fade between frames.", type: T_STRING },
     { name: "slideLeft", kind: "variable", description: "Timeline transition — slide left.", type: T_STRING },
     { name: "slideRight", kind: "variable", description: "Timeline transition — slide right.", type: T_STRING },
