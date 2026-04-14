@@ -129,6 +129,28 @@ body::before {
   vertical-align: middle;
 }
 
+/* Template tabs */
+.tmpl-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tmpl-tab {
+  padding: 6px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.tmpl-tab:hover { border-color: var(--ink); }
+.tmpl-tab.is-active { background: var(--ink); color: var(--surface-strong); border-color: var(--ink); }
+
 /* Template grid */
 .template-grid {
   display: grid;

@@ -98,6 +98,22 @@ TEMPLATE_CATALOG = [
         "previewUrl": "/assets/templates/caption_bar.png",
     },
 ]
+
+# Auto-discover meme templates from assets/templates/meme/
+MEME_TEMPLATE_DIR = ROOT_DIR / "assets" / "templates" / "meme"
+if MEME_TEMPLATE_DIR.is_dir():
+    for img in sorted(MEME_TEMPLATE_DIR.iterdir()):
+        if img.suffix.lower() in (".jpg", ".jpeg", ".png", ".gif"):
+            meme_id = f"meme.{img.stem}"
+            TEMPLATE_CATALOG.append({
+                "id": meme_id,
+                "name": img.stem.replace("_", " ").title(),
+                "description": f"Meme template: {img.stem}",
+                "bestFor": "Classic meme reactions",
+                "previewUrl": f"/assets/templates/meme/{img.name}",
+                "category": "meme",
+            })
+
 TEMPLATE_IDS = {template["id"] for template in TEMPLATE_CATALOG}
 
 

@@ -3,6 +3,7 @@
 const state = {
   templates: [],
   effects: [],
+  templateCategory: "canvas",
   selectedTemplate: "two_panel",
   selectedEffect: "none",
   width: 640,
@@ -50,6 +51,7 @@ const $ = (id) => document.getElementById(id);
 document.addEventListener("DOMContentLoaded", () => {
   loadTemplates();
   bindControls();
+  bindTabs();
   renderPresets();
   render();
 });
@@ -121,10 +123,26 @@ function syncRange(range, num, key) {
   num.addEventListener("change", (e) => update(e.target.value));
 }
 
+function bindTabs() {
+  const tabs = $("tmplTabs");
+  tabs.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tmpl-tab");
+    if (!tab) return;
+    state.templateCategory = tab.dataset.cat;
+    tabs.querySelectorAll(".tmpl-tab").forEach((t) => t.classList.remove("is-active"));
+    tab.classList.add("is-active");
+    renderTemplates();
+  });
+}
+
 function renderTemplates() {
   const grid = $("templateGrid");
   grid.innerHTML = "";
-  state.templates.forEach((t) => {
+  const filtered = state.templates.filter((t) => {
+    if (state.templateCategory === "meme") return t.category === "meme";
+    return t.category !== "meme";
+  });
+  filtered.forEach((t) => {
     const card = document.createElement("button");
     card.type = "button";
     card.className = `tmpl-card${t.id === state.selectedTemplate ? " is-active" : ""}`;
