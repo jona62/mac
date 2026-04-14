@@ -1,0 +1,26 @@
+// Style blocks
+style neon {
+    color: "#00FF41"
+    outline: 4
+    shadow: 3
+}
+
+style bold {
+    color: "#FF0000"
+    outline: 5
+}
+
+// Style creates a variable
+print type(neon);                    // expect: map
+print type(bold);                    // expect: map
+
+// Style applied to meme literal
+var m = @blank neon "Styled";
+print type(m);                       // expect: instance
+
+// Style applied to block meme
+var m2 = @two_panel bold {
+    top: "Hello"
+    bottom: "World"
+};
+print type(m2);                      // expect: instance

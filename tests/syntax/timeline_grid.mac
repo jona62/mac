@@ -1,0 +1,18 @@
+// timeline and grid block syntax
+var tl = timeline loop {
+    @blank "Act 1" : 500ms
+    --- crossfade 150ms ---
+    @blank "Act 2" : 1s
+};
+
+print type(tl);                 // expect: instance
+
+var gridResult = grid 2x2 {
+    @blank "Top Left"
+    @blank "Top Right"
+    @blank "Bottom Left"
+    @blank "Bottom Right"
+};
+
+print type(gridResult);         // expect: map
+print save(gridResult, "grid_block.png"); // expect: true

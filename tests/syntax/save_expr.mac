@@ -1,0 +1,11 @@
+// => save expression syntax
+var savedMeme = @blank "Saved with fat arrow" => "save_expr_meme.png";
+print savedMeme;                // expect: true
+
+var savedGrid = grid 2x2 {
+    @blank "A"
+    @blank "B"
+    @blank "C"
+    @blank "D"
+} => "save_expr_grid.png";
+print savedGrid;                // expect: true

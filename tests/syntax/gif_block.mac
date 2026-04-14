@@ -1,0 +1,12 @@
+// gif block syntax
+var g = gif loop {
+    @blank "3" : 250ms
+    @blank "2" : 250ms
+    @blank "1" : 1s
+};
+
+print type(g);                  // expect: instance
+print g.frameCount;             // expect: 3
+
+g.save("gif_block.gif");
+print "gif block saved";        // expect: gif block saved
