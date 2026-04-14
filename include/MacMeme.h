@@ -1,6 +1,7 @@
 #ifndef MAC_MEME_H
 #define MAC_MEME_H
 
+#include <algorithm>
 #include <filesystem>
 #include <iomanip>
 #include <memory>
