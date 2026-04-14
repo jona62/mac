@@ -21,7 +21,8 @@ namespace meme {
 
         struct Transition {
             int durationMs;
-            std::string type;  // "crossfade", "slideLeft", "slideRight", "slideUp", "slideDown", "wipe"
+            std::string type;    // "crossfade", "slideLeft", "slideRight", "slideUp", "slideDown", "wipe", "fadeBlack", "zoom"
+            std::string easing;  // "linear", "ease", "easeIn", "easeOut", "easeInOut"
         };
 
         struct HoldEvent {
@@ -38,11 +39,12 @@ namespace meme {
             keyframes.push_back({static_cast<int>(keyframes.size()), std::move(pixels), width, height});
         }
 
-        void setTransition(int durationMs, const std::string& type) {
+        void setTransition(int durationMs, const std::string& type,
+                           const std::string& easing = "linear") {
             if (transitions.size() < keyframes.size()) {
-                transitions.push_back({durationMs, type});
+                transitions.push_back({durationMs, type, easing});
             } else if (!transitions.empty()) {
-                transitions.back() = {durationMs, type};
+                transitions.back() = {durationMs, type, easing};
             }
         }
 
@@ -98,6 +100,7 @@ namespace meme {
 
                     for (int f = 1; f < frameCount; f++) {
                         float t = static_cast<float>(f) / frameCount;
+                        t = applyEasing(t, trans.easing);
                         auto frame = renderTransitionFrame(from, to, targetW, targetH, t, trans.type);
                         output.push_back({frame, targetW, targetH, frameDelayCs});
                     }
@@ -130,6 +133,22 @@ namespace meme {
                 }
             }
             return dst;
+        }
+
+        // Easing functions
+        static float applyEasing(float t, const std::string& easing) {
+            if (easing == "ease") {
+                // Cubic bezier approximation (0.25, 0.1, 0.25, 1.0)
+                return t * t * (3.0f - 2.0f * t); // smoothstep
+            } else if (easing == "easeIn") {
+                return t * t * t;
+            } else if (easing == "easeOut") {
+                float u = 1.0f - t;
+                return 1.0f - u * u * u;
+            } else if (easing == "easeInOut") {
+                return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
+            }
+            return t; // linear (default)
         }
 
         static std::vector<unsigned char> renderTransitionFrame(
@@ -214,6 +233,45 @@ namespace meme {
                             std::memcpy(&result[di], &to[di], 4);
                         } else {
                             std::memcpy(&result[di], &from[di], 4);
+                        }
+                    }
+                }
+            } else if (type == "fadeBlack") {
+                // Fade to black then fade in from black
+                int n = w * h * 4;
+                if (t < 0.5f) {
+                    float fade = 1.0f - t * 2.0f; // 1→0 in first half
+                    for (int i = 0; i < n; i += 4) {
+                        result[i + 0] = static_cast<unsigned char>(from[i + 0] * fade);
+                        result[i + 1] = static_cast<unsigned char>(from[i + 1] * fade);
+                        result[i + 2] = static_cast<unsigned char>(from[i + 2] * fade);
+                        result[i + 3] = 255;
+                    }
+                } else {
+                    float fade = (t - 0.5f) * 2.0f; // 0→1 in second half
+                    for (int i = 0; i < n; i += 4) {
+                        result[i + 0] = static_cast<unsigned char>(to[i + 0] * fade);
+                        result[i + 1] = static_cast<unsigned char>(to[i + 1] * fade);
+                        result[i + 2] = static_cast<unsigned char>(to[i + 2] * fade);
+                        result[i + 3] = 255;
+                    }
+                }
+            } else if (type == "zoom") {
+                // Zoom out from center of 'from', zoom in to 'to'
+                float scale = t < 0.5f ? 1.0f + t : 2.0f - t; // 1→1.5→1
+                auto& src = t < 0.5f ? from : to;
+                int cx = w / 2, cy = h / 2;
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        int sx = cx + static_cast<int>((x - cx) / scale);
+                        int sy = cy + static_cast<int>((y - cy) / scale);
+                        int di = (y * w + x) * 4;
+                        if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+                            int si = (sy * w + sx) * 4;
+                            std::memcpy(&result[di], &src[si], 4);
+                        } else {
+                            result[di] = result[di+1] = result[di+2] = 0;
+                            result[di+3] = 255;
                         }
                     }
                 }

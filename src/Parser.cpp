@@ -822,12 +822,22 @@ shared_ptr<Expr<T>> Parser::timelineBlock() {
             consume(TokenType::IDENTIFIER, "Expected transition type after '---'.");
             std::string transType = std::get<std::string>(previous().lexeme);
             double transMs = parseDuration();
-            consume(TokenType::TRIPLE_DASH, "Expected '---' after transition duration.");
+            // Optional easing: ease, easeIn, easeOut, easeInOut
+            std::string easing = "linear";
+            if (peek().type == TokenType::IDENTIFIER) {
+                auto* s = std::get_if<std::string>(&peek().lexeme);
+                if (s && (*s == "ease" || *s == "easeIn" || *s == "easeOut" || *s == "easeInOut")) {
+                    advance();
+                    easing = *s;
+                }
+            }
+            consume(TokenType::TRIPLE_DASH, "Expected '---' after transition.");
             // Attach transition to the previous entry
             if (!entries.empty()) {
                 auto trans = std::make_shared<typename expr::TimelineBlockExpr<T>::Transition>();
                 trans->type = transType;
                 trans->durationMs = transMs;
+                trans->easing = easing;
                 entries.back().transition = trans;
             }
             continue;

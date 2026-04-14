@@ -350,7 +350,7 @@ namespace expr {
     class TimelineBlockExpr : public Expr<T> {
     public:
         struct TFrame { shared_ptr<Expr<T>> meme; double durationMs; };
-        struct Transition { std::string type; double durationMs; };
+        struct Transition { std::string type; double durationMs; std::string easing; };
         struct Entry { TFrame frame; std::shared_ptr<Transition> transition; }; // transition to NEXT frame
         TimelineBlockExpr(Token keyword, bool loop, std::vector<Entry> entries)
             : keyword(keyword), loop(loop), entries(std::move(entries)) {}

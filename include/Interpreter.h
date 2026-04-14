@@ -673,14 +673,24 @@ namespace interpreter {
 
                 // Apply transition if present
                 if (entry.transition) {
-                    auto transInst = std::get<shared_ptr<instance::MacInstance>>(tl);
-                    token::Token transTok(token::TokenType::IDENTIFIER,
-                        token::TokenValue(std::string("transition")), 0);
-                    auto transMethod = transInst->get(transTok);
-                    auto transFn = std::get<shared_ptr<callable::MacCallable>>(transMethod);
-                    auto transDur = durFn->call(shared_from_this(), {MacValue(entry.transition->durationMs)});
-                    tl = transFn->call(shared_from_this(),
-                        {MacValue(entry.transition->type), transDur});
+                    // Call _timeline_transition directly on the raw C++ timeline
+                    // to pass the easing parameter
+                    auto tlInst = std::get<shared_ptr<instance::MacInstance>>(tl);
+                    token::Token tlTok(token::TokenType::IDENTIFIER,
+                        token::TokenValue(std::string("_tl")), 0);
+                    auto rawTl = tlInst->get(tlTok);
+                    auto tlTransFn = env->get(token::Token(token::TokenType::IDENTIFIER,
+                        token::TokenValue(std::string("_timeline_transition")), 0));
+                    auto transNative = std::get<shared_ptr<callable::MacCallable>>(tlTransFn);
+                    std::vector<MacValue> transArgs = {
+                        rawTl,
+                        MacValue(entry.transition->durationMs),
+                        MacValue(entry.transition->type)
+                    };
+                    if (!entry.transition->easing.empty() && entry.transition->easing != "linear") {
+                        transArgs.push_back(MacValue(entry.transition->easing));
+                    }
+                    transNative->call(shared_from_this(), transArgs);
                 }
             }
 

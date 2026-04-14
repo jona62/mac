@@ -965,10 +965,14 @@ namespace callable {
             auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
             int durationMs = static_cast<int>(std::get<double>(args[1]));
             auto transType = std::get<std::string>(args[2]);
-            tl->setTransition(durationMs, transType);
+            std::string easing = "linear";
+            if (args.size() > 3 && std::holds_alternative<std::string>(args[3])) {
+                easing = std::get<std::string>(args[3]);
+            }
+            tl->setTransition(durationMs, transType, easing);
             return value::MacValue(tl);
         }
-        int arity() override { return 3; }
+        int arity() override { return -1; } // variable arity: 3 or 4
         std::string toString() override { return "<native fn>"; }
     };
 

@@ -176,6 +176,8 @@ var slideRight = "slideRight";
 var slideUp = "slideUp";
 var slideDown = "slideDown";
 var wipe = "wipe";
+var fadeBlack = "fadeBlack";
+var zoom = "zoom";
 
 // Animation timeline with transitions between keyframes.
 // Chain .frame() and .transition() to build the sequence,
