@@ -85,7 +85,7 @@
     },
     "stdlib-types": {
       "name": "support.class.mac",
-      "match": "\\b(Template|Meme|Gif|Frame|Size|Duration|Position|Format)\\b"
+      "match": "\\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\\b"
     },
     "stdlib-constants": {
       "name": "support.constant.mac",

@@ -1,26 +1,24 @@
-// Test timeline creation and types
-var tl = timeline();
-print type(tl);             // expect: timeline
+// Timeline as a class
+var tl = Timeline();
+print type(tl);             // expect: instance
 
-// Timeline with keyframes
+// Method chaining
 var t = Template("assets/templates/blank.png");
 var m1 = Meme(t).text(Top, "frame 1");
 var m2 = Meme(t).text(Top, "frame 2");
 
-tl = _timeline_keyframe(tl, m1);
-print type(tl);             // expect: timeline
+var tl2 = Timeline()
+    .frame(m1, Duration(500))
+    .transition(crossfade, Duration(300))
+    .frame(m2, Duration(500))
+    .loop(0);
+print type(tl2);            // expect: instance
 
-tl = _timeline_hold(tl, 500);
-print type(tl);             // expect: timeline
-
-tl = _timeline_transition(tl, 300, crossfade);
-print type(tl);             // expect: timeline
-
-tl = _timeline_keyframe(tl, m2);
-print type(tl);             // expect: timeline
-
-tl = _timeline_hold(tl, 500);
-tl = _timeline_loop(tl, 0);
-print type(tl);             // expect: timeline
+// Operator overloading: Timeline + Frame
+var tl3 = Timeline();
+var f1 = m1 + Duration(400);
+var f2 = m2 + Duration(400);
+tl3 = tl3 + f1 + f2;
+print type(tl3);            // expect: instance
 
 print "timeline ok";        // expect: timeline ok

@@ -20,9 +20,14 @@ set(SOURCES
 # Create the executable
 add_executable(mac ${SOURCES})
 
-# Copy assets to build directory
-file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY ${CMAKE_SOURCE_DIR}/stdlib DESTINATION ${CMAKE_BINARY_DIR})
+# Copy assets and stdlib to build directory on every build
+add_custom_command(TARGET mac POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/stdlib ${CMAKE_BINARY_DIR}/stdlib
+    COMMENT "Copying assets and stdlib to build directory"
+)
 
 # Custom target to run the executable
 add_custom_target(run

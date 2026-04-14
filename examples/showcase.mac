@@ -35,19 +35,17 @@ var styled = [
 
 // Build animation with timeline — long holds so text is readable
 Timeline()
-    |> at(0, styled[0])
-    |> hold(4000)
-    |> at(0, styled[1])
-    |> hold(4000)
-    |> at(0, styled[2])
-    |> hold(4000)
-    |> transition(150, crossfade)
-    |> at(0, styled[3])
-    |> hold(4000)
-    |> at(0, styled[4])
-    |> hold(3000)
-    |> loop(0)
-    |> render("showcase.gif");
+    .frame(styled[0], Duration(4000))
+    .transition(crossfade, Duration(150))
+    .frame(styled[1], Duration(4000))
+    .transition(crossfade, Duration(150))
+    .frame(styled[2], Duration(4000))
+    .transition(crossfade, Duration(150))
+    .frame(styled[3], Duration(4000))
+    .transition(crossfade, Duration(150))
+    .frame(styled[4], Duration(3000))
+    .loop(0)
+    .render("showcase.gif");
 
 print "Showcase GIF saved!";
 

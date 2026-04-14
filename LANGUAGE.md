@@ -362,35 +362,42 @@ beside(a, b) |> pad(5) |> border(2);
 
 ## Timeline & Animation
 
-The Timeline API builds animated GIFs with keyframes, transitions, and timing control.
+Timeline builds animated GIFs with keyframes, transitions, and timing control. It uses method chaining like Gif.
 
 ```mac
 var t = Template("two_panel");
 
 Timeline()
-    |> at(0, Meme(t).text(Top, "Frame 1") |> clean)
-    |> hold(2500)
-    |> at(0, Meme(t).text(Top, "Frame 2") |> vintage)
-    |> hold(2500)
-    |> transition(150, crossfade)
-    |> at(0, Meme(t).text(Top, "Frame 3") |> glitch)
-    |> hold(2000)
-    |> loop(0)
-    |> render("animation.gif");
+    .frame(Meme(t).text(Top, "Frame 1") |> clean, Duration(2000))
+    .transition(crossfade, Duration(150))
+    .frame(Meme(t).text(Top, "Frame 2") |> vintage, Duration(2000))
+    .transition(slideLeft, Duration(150))
+    .frame(Meme(t).text(Top, "Frame 3") |> glitch, Duration(2000))
+    .loop(0)
+    .render("animation.gif");
 ```
 
-### Timeline Functions
+### Timeline Methods
 
-| Function                    | Description                           |
-| --------------------------- | ------------------------------------- |
-| `Timeline()`                | Create a new timeline                 |
-| `at(tl, timeMs, meme)`     | Add a keyframe                        |
-| `transition(tl, ms, type)` | Add transition between keyframes      |
-| `hold(tl, ms)`             | Hold the current frame                |
-| `loop(tl, count)`          | Set loop count (0 = infinite)         |
-| `render(tl, path)`         | Render timeline to GIF                |
+| Method                           | Description                           |
+| -------------------------------- | ------------------------------------- |
+| `Timeline()`                     | Create a new timeline                 |
+| `.frame(meme, duration)`         | Add a keyframe with hold duration     |
+| `.transition(type, duration)`    | Set transition to next frame          |
+| `.loop(count)`                   | Set loop count (0 = infinite)         |
+| `.render(path)`                  | Render timeline to GIF                |
+| `.save(path)`                    | Alias for `.render()`                 |
 
-Default hold: 2000ms. Default transition: 150ms.
+### Operator Overloading
+
+`Timeline + Frame` adds the frame to the timeline:
+
+```mac
+var f1 = Meme(t).text(Top, "A") + Duration(500);
+var f2 = Meme(t).text(Top, "B") + Duration(500);
+var tl = Timeline() + f1 + f2;
+tl.render("composed.gif");
+```
 
 ### Transition Types
 
@@ -398,7 +405,7 @@ Default hold: 2000ms. Default transition: 150ms.
 
 ### Simple GIF Builder
 
-For straightforward frame-by-frame GIFs without transitions:
+For frame-by-frame GIFs without transitions:
 
 ```mac
 Gif()
@@ -407,12 +414,18 @@ Gif()
     .save("countdown.gif");
 ```
 
-### Animate Helper
+### Pipeline Helpers
 
-Convert an array of memes into a GIF with uniform frame duration:
+Convert an array of memes into animation:
 
 ```mac
+// Array -> Gif (uniform timing, no transitions)
 ["Mon", "Tue", "Wed"]
     |> map(d -> Meme(t).text(Top, d))
     |> animate(Duration(400));
+
+// Array -> Timeline (uniform timing with transitions)
+["Mon", "Tue", "Wed"]
+    |> map(d -> Meme(t).text(Top, d))
+    |> sequence(Duration(2000), crossfade, Duration(150));
 ```

@@ -140,10 +140,33 @@ var slideUp = "slideUp";
 var slideDown = "slideDown";
 var wipe = "wipe";
 
-// High-level timeline API (wraps _timeline_* natives)
-fun Timeline() { return timeline(); }
-fun at(tl, timeMs, meme) { return _timeline_keyframe(tl, meme); }
-fun transition(tl, durationMs, transType) { return _timeline_transition(tl, durationMs, transType); }
-fun hold(tl, durationMs) { return _timeline_hold(tl, durationMs); }
-fun render(tl, path) { return _timeline_render(tl, path); }
-fun loop(tl, count) { return _timeline_loop(tl, count); }
+class Timeline {
+    init() {
+        this._tl = timeline();
+    }
+    frame(memeObj, duration) {
+        _timeline_keyframe(this._tl, memeObj);
+        _timeline_hold(this._tl, duration.ms);
+        return this;
+    }
+    transition(transType, duration) {
+        _timeline_transition(this._tl, duration.ms, transType);
+        return this;
+    }
+    loop(count) {
+        _timeline_loop(this._tl, count);
+        return this;
+    }
+    render(path) {
+        _timeline_render(this._tl, path);
+        return this;
+    }
+    save(path) {
+        _timeline_render(this._tl, path);
+        return this;
+    }
+    __add__(other) {
+        this.frame(other.meme, other.duration);
+        return this;
+    }
+}

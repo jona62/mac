@@ -191,19 +191,15 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "grid", arity: 2, description: "grid(cols, memesArray) — Grid layout." },
     { name: "pad", arity: 2, description: "pad(meme, pixels) — Add white padding. Pipeable." },
     { name: "border", arity: 2, description: "border(meme, pixels) — Add black border. Pipeable." },
-    // Timeline
+    // Timeline internals
     { name: "timeline", arity: 0, description: "Internal: creates a raw timeline object." },
     { name: "_timeline_keyframe", arity: 2, description: "Internal: adds a keyframe to a timeline." },
     { name: "_timeline_transition", arity: 3, description: "Internal: adds a transition to a timeline." },
     { name: "_timeline_hold", arity: 2, description: "Internal: holds the last frame on a timeline." },
     { name: "_timeline_loop", arity: 2, description: "Internal: sets the loop count on a timeline." },
     { name: "_timeline_render", arity: 2, description: "Internal: renders a timeline to an animated GIF." },
-    { name: "Timeline", arity: 0, description: "Timeline() — Create an empty animation timeline." },
-    { name: "at", arity: 3, description: "at(timeline, timeMs, meme) — Add keyframe. Returns timeline. Pipeable." },
-    { name: "transition", arity: 3, description: "transition(timeline, durationMs, type) — Add transition. Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe." },
-    { name: "hold", arity: 2, description: "hold(timeline, durationMs) — Hold last frame. Returns timeline. Pipeable." },
-    { name: "render", arity: 2, description: "render(timeline, path) — Render timeline to animated GIF." },
-    { name: "loop", arity: 2, description: "loop(timeline, count) — Set loop count. Returns timeline. Pipeable." },
+    // Meme bridge
+    { name: "sequence", arity: 4, description: "sequence(memes, holdDuration, transitionType, transitionDuration) — Build a Timeline from an array of memes with uniform timing." },
 ];
 
 // Known properties/methods for built-in types
@@ -221,6 +217,13 @@ const KNOWN_PROPERTIES: PropertyInfo[] = [
     { name: "frame", ownerType: "Gif", kind: "method", params: ["meme", "duration"], description: "Add a frame to the GIF. Returns `this` for chaining." },
     { name: "save", ownerType: "Gif", kind: "method", params: ["path"], description: "Render all frames and save as an animated GIF." },
     { name: "_frames", ownerType: "Gif", kind: "field", description: "Array of frame data maps." },
+    // Timeline
+    { name: "frame", ownerType: "Timeline", kind: "method", params: ["meme", "duration"], description: "Add a keyframe with hold duration. Returns `this` for chaining." },
+    { name: "transition", ownerType: "Timeline", kind: "method", params: ["type", "duration"], description: "Set transition to next frame. Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe." },
+    { name: "loop", ownerType: "Timeline", kind: "method", params: ["count"], description: "Set loop count (0 = infinite). Returns `this` for chaining." },
+    { name: "render", ownerType: "Timeline", kind: "method", params: ["path"], description: "Render timeline to animated GIF." },
+    { name: "save", ownerType: "Timeline", kind: "method", params: ["path"], description: "Render timeline to animated GIF. Alias for render()." },
+    { name: "_tl", ownerType: "Timeline", kind: "field", description: "Internal: raw C++ timeline object." },
     // Template
     { name: "name", ownerType: "Template", kind: "field", description: "The template name or path as provided." },
     { name: "path", ownerType: "Template", kind: "field", description: "Resolved file path to the template image." },
@@ -316,10 +319,7 @@ const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
     // Timeline
     ["Timeline",  () => ({ tag: "instance", className: "Timeline" })],
     ["timeline",  () => ({ tag: "instance", className: "Timeline" })],
-    ["at",        () => ({ tag: "instance", className: "Timeline" })],
-    ["transition",() => ({ tag: "instance", className: "Timeline" })],
-    ["hold",      () => ({ tag: "instance", className: "Timeline" })],
-    ["loop",      () => ({ tag: "instance", className: "Timeline" })],
+    ["sequence",  () => ({ tag: "instance", className: "Timeline" })],
 
     // Effects (parameterized) — return a Meme→Meme function
     ["blur",       () => ({ tag: "function", paramCount: 1 })],
@@ -355,6 +355,11 @@ const METHOD_RETURN_TYPES = new Map<string, MacType>([
     ["Meme.save",   T_NIL],
     ["Gif.frame",   { tag: "instance", className: "Gif" }],
     ["Gif.save",    T_NIL],
+    ["Timeline.frame",      { tag: "instance", className: "Timeline" }],
+    ["Timeline.transition",  { tag: "instance", className: "Timeline" }],
+    ["Timeline.loop",       { tag: "instance", className: "Timeline" }],
+    ["Timeline.render",     { tag: "instance", className: "Timeline" }],
+    ["Timeline.save",       { tag: "instance", className: "Timeline" }],
 ]);
 
 // Field types keyed by "ClassName.field"
@@ -463,6 +468,12 @@ export class Analyzer {
                 params: [],
                 description: "Animated GIF builder. Chain `.frame(meme, duration)` to add frames, `.save(path)` to export. `Gif + Frame` adds a frame.",
                 type: { tag: "class", className: "Gif" },
+            },
+            {
+                name: "Timeline", kind: "class",
+                params: [],
+                description: "Animation timeline with transitions. Chain `.frame(meme, duration)`, `.transition(type, duration)`, `.loop(count)`, `.render(path)`. `Timeline + Frame` adds a frame.",
+                type: { tag: "class", className: "Timeline" },
             },
             { name: "Top", kind: "variable", description: "Position constant — top of the meme.", type: { tag: "instance", className: "Position" } },
             { name: "Bottom", kind: "variable", description: "Position constant — bottom of the meme.", type: { tag: "instance", className: "Position" } },
