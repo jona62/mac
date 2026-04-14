@@ -289,38 +289,50 @@ namespace analyzer {
         }
         // --- Mac v2 syntax nodes ---
         else if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
-            // Emit reference for the template name (resolves to Template class)
-            auto templateDef = resolve("Template");
+            auto tname = tokName(p->templateName);
+            int tc = p->templateName.column > 0 ? p->templateName.column : 1;
+            int tec = tc + static_cast<int>(tname.size());
+
+            // Emit reference for the template name → Template class in prelude
+            auto* templateDef = resolve("Template");
             if (templateDef) {
-                int c = p->templateName.column > 0 ? p->templateName.column : 1;
-                auto tname = tokName(p->templateName);
-                int ec = c + static_cast<int>(tname.size());
-                // Semantic token for template name
-                if (p->templateName.line > 0 && currentSource == "user") {
-                    result.semanticTokens.push_back({p->templateName.line, c,
-                        static_cast<int>(tname.size()), "class", currentSource});
-                }
+                result.references.push_back({p->templateName.line, tc, tec,
+                    templateDef->line, templateDef->col, templateDef->endCol,
+                    templateDef->name, currentSource, templateDef->source,
+                    templateDef->visibility, templateDef->ownerType});
             }
-            // Emit references for position keys (top, bottom, center -> Position constants)
-            for (auto& entry : p->entries) {
-                auto keyName = tokName(entry.key);
-                // Map position key to the constant name
-                std::string constName;
-                if (keyName == "top") constName = "Top";
-                else if (keyName == "bottom") constName = "Bottom";
-                else if (keyName == "center") constName = "Center";
-                if (!constName.empty()) {
-                    auto* posDef = resolve(constName);
-                    if (posDef) {
-                        int c = entry.key.column > 0 ? entry.key.column : 1;
-                        result.references.push_back({entry.key.line, c,
-                            c + static_cast<int>(keyName.size()),
-                            posDef->line, posDef->col, posDef->endCol,
-                            posDef->name, currentSource, posDef->source,
-                            posDef->visibility, posDef->ownerType});
+
+            // Semantic token for template name (colored as a type/class)
+            if (p->templateName.line > 0 && currentSource == "user") {
+                result.semanticTokens.push_back({p->templateName.line, tc,
+                    static_cast<int>(tname.size()), "class", currentSource});
+            }
+
+            // Emit references for position keys in block syntax (top, bottom, center)
+            // Only for block syntax — one-liners don't have user-visible position keys
+            if (!p->oneLiner) {
+                for (auto& entry : p->entries) {
+                    auto keyName = tokName(entry.key);
+                    std::string constName;
+                    if (keyName == "top") constName = "Top";
+                    else if (keyName == "bottom") constName = "Bottom";
+                    else if (keyName == "center") constName = "Center";
+                    if (!constName.empty()) {
+                        auto* posDef = resolve(constName);
+                        if (posDef) {
+                            int kc = entry.key.column > 0 ? entry.key.column : 1;
+                            result.references.push_back({entry.key.line, kc,
+                                kc + static_cast<int>(keyName.size()),
+                                posDef->line, posDef->col, posDef->endCol,
+                                posDef->name, currentSource, posDef->source,
+                                posDef->visibility, posDef->ownerType});
+                        }
                     }
+                    analyzeExpr(entry.value.get());
                 }
-                analyzeExpr(entry.value.get());
+            } else {
+                // One-liner: just analyze the text value
+                for (auto& entry : p->entries) analyzeExpr(entry.value.get());
             }
         }
         else if (auto* p = dynamic_cast<expr::SaveExpr<MV>*>(e)) {
