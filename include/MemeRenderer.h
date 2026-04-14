@@ -117,18 +117,18 @@ namespace meme {
                 throw std::runtime_error("MemeRenderer: cannot init font");
             }
 
-            // Draw top text (upper half)
+            // Draw top text (upper half) — anchored to top edge
             if (!topText.empty()) {
                 int regionY = 0;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH, activeStyle);
+                drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH, activeStyle, -1);
             }
 
-            // Draw bottom text (lower half)
+            // Draw bottom text (lower half) — anchored to bottom edge
             if (!bottomText.empty()) {
                 int regionY = h / 2;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH, activeStyle);
+                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH, activeStyle, 1);
             }
 
             outWidth = w;
@@ -168,14 +168,16 @@ namespace meme {
             return lines;
         }
 
-        // Draw text centered in a horizontal strip of the image
+        // Draw text in a horizontal strip of the image
+        // align: -1 = top edge, 0 = center, 1 = bottom edge
         static void drawMemeText(std::vector<unsigned char>& pixels,
                                  int imgW, int imgH,
                                  stbtt_fontinfo& fontInfo,
                                  const std::vector<unsigned char>& fontData,
                                  const std::string& text,
                                  int regionY, int regionH,
-                                 const TextStyle& activeStyle = TextStyle{}) {
+                                 const TextStyle& activeStyle = TextStyle{},
+                                 int align = 0) {
 
             std::string upper = toUpper(text);
             float maxWidth = imgW * 0.9f;
@@ -212,9 +214,20 @@ namespace meme {
             int ascent, descent, lineGap;
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
             float ascentPx = ascent * scale;
-            float lineHeight = fontSize * 1.2f;
+            float lineHeight = fontSize * 1.1f;
             float blockHeight = lines.size() * lineHeight;
-            float blockStartY = regionY + (regionH - blockHeight) / 2.0f;
+            float margin = regionH * 0.08f;
+            float blockStartY;
+            if (align < 0) {
+                // Top-aligned: anchor to top edge with margin
+                blockStartY = regionY + margin;
+            } else if (align > 0) {
+                // Bottom-aligned: anchor to bottom edge with margin
+                blockStartY = regionY + regionH - blockHeight - margin;
+            } else {
+                // Centered (e.g. for center: text)
+                blockStartY = regionY + (regionH - blockHeight) / 2.0f;
+            }
 
             // Draw each line
             for (size_t li = 0; li < lines.size(); ++li) {
