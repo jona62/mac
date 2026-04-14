@@ -36,11 +36,29 @@ namespace analyzer {
         std::string name, ownerType, kind, description;
     };
 
+    struct FoldRange { int startLine, endLine; };
+
+    struct SemanticToken { int line, col, length; std::string tokenType; };
+
+    struct ParamHint { int line, col; std::string name; };
+
+    struct ChainHint { int line, endCol; std::string type; };
+
+    struct Signature {
+        std::string name, returnType, description;
+        std::vector<std::string> params;
+    };
+
     struct AnalysisResult {
         std::vector<SymbolDef> symbols;
         std::vector<Reference> references;
         std::vector<Diagnostic> diagnostics;
         std::vector<PropertyRef> properties;
+        std::vector<FoldRange> foldingRanges;
+        std::vector<SemanticToken> semanticTokens;
+        std::vector<ParamHint> paramHints;
+        std::vector<ChainHint> chainHints;
+        std::vector<Signature> signatures;
     };
 
     struct Scope {
@@ -98,6 +116,43 @@ namespace analyzer {
                   << ",\"kind\":" << J(p.kind)
                   << ",\"description\":" << J(p.description) << "}";
             }
+            o << "],\"foldingRanges\":[";
+            for (size_t i = 0; i < result.foldingRanges.size(); i++) {
+                auto& f = result.foldingRanges[i];
+                if (i) o << ",";
+                o << "{\"startLine\":" << f.startLine << ",\"endLine\":" << f.endLine << "}";
+            }
+            o << "],\"semanticTokens\":[";
+            for (size_t i = 0; i < result.semanticTokens.size(); i++) {
+                auto& t = result.semanticTokens[i];
+                if (i) o << ",";
+                o << "{\"line\":" << t.line << ",\"col\":" << t.col
+                  << ",\"length\":" << t.length << ",\"tokenType\":" << J(t.tokenType) << "}";
+            }
+            o << "],\"paramHints\":[";
+            for (size_t i = 0; i < result.paramHints.size(); i++) {
+                auto& h = result.paramHints[i];
+                if (i) o << ",";
+                o << "{\"line\":" << h.line << ",\"col\":" << h.col << ",\"name\":" << J(h.name) << "}";
+            }
+            o << "],\"chainHints\":[";
+            for (size_t i = 0; i < result.chainHints.size(); i++) {
+                auto& h = result.chainHints[i];
+                if (i) o << ",";
+                o << "{\"line\":" << h.line << ",\"endCol\":" << h.endCol << ",\"type\":" << J(h.type) << "}";
+            }
+            o << "],\"signatures\":[";
+            for (size_t i = 0; i < result.signatures.size(); i++) {
+                auto& s = result.signatures[i];
+                if (i) o << ",";
+                o << "{\"name\":" << J(s.name) << ",\"returnType\":" << J(s.returnType)
+                  << ",\"description\":" << J(s.description) << ",\"params\":[";
+                for (size_t j = 0; j < s.params.size(); j++) {
+                    if (j) o << ",";
+                    o << J(s.params[j]);
+                }
+                o << "]}";
+            }
             o << "]}";
             return o.str();
         }
@@ -144,6 +199,8 @@ namespace analyzer {
             }
             else if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(s)) {
                 define(p->name, "function", "fun(" + std::to_string(p->params.size()) + ")");
+                addFoldRange(p->name.line, p->body);
+                addSignature(p);
                 beginScope();
                 for (auto& prm : p->params) define(prm, "parameter", "unknown");
                 for (auto& st : p->body) analyzeStmt(st.get());
@@ -155,9 +212,17 @@ namespace analyzer {
             else if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(s)) {
                 define(p->name, "class", "class " + tokName(p->name));
                 if (p->superclass) resolveRef(p->superclass->name);
+                // Fold the class body (approximate: from class line to last method's last line)
+                if (!p->methods.empty()) {
+                    int endLine = p->name.line;
+                    for (auto& m : p->methods)
+                        if (!m->body.empty()) endLine = std::max(endLine, lastLineOf(m->body));
+                    result.foldingRanges.push_back({p->name.line, endLine + 1});
+                }
                 beginScope();
                 for (auto& m : p->methods) {
                     define(m->name, "method", "fun(" + std::to_string(m->params.size()) + ")");
+                    addFoldRange(m->name.line, m->body);
                     beginScope();
                     for (auto& prm : m->params) define(prm, "parameter", "unknown");
                     for (auto& st : m->body) analyzeStmt(st.get());
@@ -185,6 +250,8 @@ namespace analyzer {
             else if (auto* p = dynamic_cast<expr::Call<MV>*>(e)) {
                 analyzeExpr(p->callee.get());
                 for (auto& a : p->arguments) analyzeExpr(a.get());
+                collectParamHints(p);
+                collectChainHint(p);
             }
             else if (auto* p = dynamic_cast<expr::Get<MV>*>(e)) {
                 analyzeExpr(p->object.get());
@@ -266,6 +333,10 @@ namespace analyzer {
             SymbolDef sym{name, kind, type, desc, tok.line, c, c + static_cast<int>(name.size())};
             currentScope->symbols[name] = sym;
             result.symbols.push_back(sym);
+            if (tok.line > 0) {
+                result.semanticTokens.push_back({tok.line, c,
+                    static_cast<int>(name.size()), semanticKind(kind)});
+            }
         }
 
         SymbolDef* resolve(const std::string& name) {
@@ -284,6 +355,10 @@ namespace analyzer {
             int ec = c + static_cast<int>(name.size());
             if (def) {
                 result.references.push_back({tok.line, c, ec, def->line, def->col, def->name});
+                if (tok.line > 0) {
+                    result.semanticTokens.push_back({tok.line, c,
+                        static_cast<int>(name.size()), semanticKind(def->kind)});
+                }
             } else if (!nativeNames.count(name) && name != "this" && name != "super") {
                 result.diagnostics.push_back({tok.line, c, ec,
                     "Undefined variable '" + name + "'.", "warning"});
@@ -581,12 +656,145 @@ namespace analyzer {
 
         // --- Native registration ---
 
+        // --- Folding, semantic tokens, param hints, chain hints ---
+
+        void addFoldRange(int startLine,
+                          const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
+            if (!body.empty()) {
+                int endLine = lastLineOf(body);
+                if (endLine > startLine) result.foldingRanges.push_back({startLine, endLine});
+            }
+        }
+
+        int lastLineOf(const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body) {
+            // Rough heuristic: use the last statement's token line
+            // This works for most cases since statements are sequential
+            if (body.empty()) return 0;
+            auto* last = body.back().get();
+            if (auto* p = dynamic_cast<stmt::ExpressionStmt<MV>*>(last)) return tokenLine(p->expression.get());
+            if (auto* p = dynamic_cast<stmt::PrintStmt<MV>*>(last)) return tokenLine(p->expression.get());
+            if (auto* p = dynamic_cast<stmt::VarStmt<MV>*>(last)) return p->name.line;
+            if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(last)) return p->keyword.line;
+            if (auto* p = dynamic_cast<stmt::FunctionStmt<MV>*>(last)) return p->name.line;
+            if (auto* p = dynamic_cast<stmt::ClassStmt<MV>*>(last)) return p->name.line;
+            return 0;
+        }
+
+        int tokenLine(expr::Expr<MV>* e) {
+            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.line;
+            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return c->paren.line;
+            return 0;
+        }
+
+        static std::string semanticKind(const std::string& kind) {
+            if (kind == "parameter") return "parameter";
+            if (kind == "function") return "function";
+            if (kind == "method") return "method";
+            if (kind == "class") return "class";
+            if (kind == "native") return "function";
+            return "variable";
+        }
+
+        void collectParamHints(expr::Call<MV>* call) {
+            if (auto* var = dynamic_cast<expr::Variable<MV>*>(call->callee.get())) {
+                auto name = tokName(var->name);
+                auto* def = resolve(name);
+                // User-defined function with known params
+                if (def && def->kind == "function") {
+                    // Look up the FunctionStmt to get param names — we stored them via define()
+                    // For natives, use the signature registry
+                }
+                // Check signatures
+                for (auto& sig : result.signatures) {
+                    if (sig.name == name) {
+                        for (size_t i = 0; i < sig.params.size() && i < call->arguments.size(); i++) {
+                            auto* arg = call->arguments[i].get();
+                            int argCol = getExprCol(arg);
+                            if (argCol > 0) result.paramHints.push_back({getExprLine(arg), argCol, sig.params[i]});
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        void collectChainHint(expr::Call<MV>* call) {
+            // Method call: obj.method(...) — emit chain hint with return type
+            if (auto* get = dynamic_cast<expr::Get<MV>*>(call->callee.get())) {
+                auto objType = inferType(get->object.get());
+                auto method = tokName(get->name);
+                auto key = objType + "." + method;
+                auto it = knownProps.find(key);
+                if (it != knownProps.end() && it->second.kind == "method") {
+                    // Find the return type
+                    std::string retType = objType; // chainable methods return this
+                    int line = call->paren.line;
+                    int endCol = call->paren.column + 1; // after closing paren
+                    result.chainHints.push_back({line, endCol, retType});
+                }
+            }
+        }
+
+        void addSignature(stmt::FunctionStmt<MV>* fn) {
+            Signature sig;
+            sig.name = tokName(fn->name);
+            sig.returnType = "unknown";
+            sig.description = "";
+            for (auto& p : fn->params) sig.params.push_back(tokName(p));
+            result.signatures.push_back(sig);
+        }
+
+        int getExprLine(expr::Expr<MV>* e) {
+            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.line;
+            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return c->paren.line;
+            return 0;
+        }
+
+        int getExprCol(expr::Expr<MV>* e) {
+            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) return v->name.column;
+            if (auto* c = dynamic_cast<expr::Call<MV>*>(e)) return getExprCol(c->callee.get());
+            return 0;
+        }
+
         void registerNatives() {
             auto reg = [&](const std::string& name, const std::string& desc, const std::string& type = "fun(1)") {
                 nativeNames.insert(name);
                 token::Token tok(token::TokenType::IDENTIFIER, token::TokenValue(name), 0);
                 define(tok, "native", type, desc);
             };
+            auto sig = [&](const std::string& name, std::vector<std::string> params,
+                           const std::string& ret, const std::string& desc = "") {
+                result.signatures.push_back({name, ret, desc, std::move(params)});
+            };
+            // Key function signatures for param hints
+            sig("blur", {"radius"}, "Meme -> Meme");
+            sig("pixelate", {"blockSize"}, "Meme -> Meme");
+            sig("noise", {"amount"}, "Meme -> Meme");
+            sig("saturate", {"factor"}, "Meme -> Meme");
+            sig("contrast", {"factor"}, "Meme -> Meme");
+            sig("brightness", {"factor"}, "Meme -> Meme");
+            sig("jpeg", {"quality"}, "Meme -> Meme");
+            sig("map", {"array", "fn"}, "[T]");
+            sig("filter", {"array", "fn"}, "[T]");
+            sig("reduce", {"array", "fn", "initial"}, "T");
+            sig("find", {"array", "fn"}, "T");
+            sig("zip", {"array1", "array2"}, "[(A, B)]");
+            sig("take", {"array", "n"}, "[T]");
+            sig("drop", {"array", "n"}, "[T]");
+            sig("join", {"array", "separator"}, "string");
+            sig("replace", {"str", "from", "to"}, "string");
+            sig("substr", {"str", "start", "length"}, "string");
+            sig("split", {"str", "delimiter"}, "[string]");
+            sig("pad", {"meme", "pixels"}, "Meme");
+            sig("border", {"meme", "pixels"}, "Meme");
+            sig("beside", {"meme1", "meme2"}, "Meme");
+            sig("stack", {"meme1", "meme2"}, "Meme");
+            sig("animate", {"memes", "duration"}, "Gif");
+            sig("toGrid", {"memes", "cols", "rows"}, "Meme");
+            sig("save", {"target", "path"}, "bool");
+            sig("pow", {"base", "exponent"}, "number");
+            sig("len", {"value"}, "number");
+            sig("type", {"value"}, "string");
             reg("clock","Current time."); reg("len","Length of string/array.");
             reg("substr","Substring."); reg("split","Split string."); reg("type","Type name.");
             reg("sqrt","Square root."); reg("abs","Absolute value.");
