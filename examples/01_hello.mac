@@ -1,0 +1,42 @@
+// 01 — Hello, Mac!
+// The basics: variables, expressions, functions, and control flow.
+
+print "Hello, Mac!";
+
+// Variables
+var x = 6;
+var y = 7;
+print x * y;
+
+// Strings
+var greeting = "Welcome to " + "Mac!";
+print greeting;
+
+// Functions
+fun fib(n) {
+    if (n <= 1) return n;
+    return fib(n - 1) + fib(n - 2);
+}
+print fib(10);
+
+// Classes
+class Dog {
+    init(name) {
+        this.name = name;
+    }
+    speak() {
+        return this.name + " says woof!";
+    }
+}
+print Dog("Rex").speak();
+
+// Arrays and maps
+var nums = [1, 2, 3, 4, 5];
+print nums;
+var config = { name: "Mac", version: 1 };
+print config;
+
+// Control flow
+for (var i = 0; i < 3; i = i + 1) {
+    print i;
+}

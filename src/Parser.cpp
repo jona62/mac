@@ -394,6 +394,26 @@ shared_ptr<Expr<T>> Parser::primary() {
         return make_shared<expr::LambdaExpr<T>>(param, std::vector<Token>{param}, stmts);
     }
 
+    // Contextual keyword blocks: gif, timeline, grid — must check BEFORE generic identifier
+    if (peek().type == TokenType::IDENTIFIER) {
+        auto* s = std::get_if<std::string>(&peek().lexeme);
+        if (s && (*s == "gif" || *s == "timeline" || *s == "grid")) {
+            if (current + 1 < tokens.size()) {
+                auto nextType = tokens[current + 1].type;
+                auto* nextStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
+                bool isBlock = (nextType == TokenType::LEFT_BRACE) ||
+                    (nextStr && *nextStr == "loop") ||
+                    (nextType == TokenType::NUMBER);
+                if (isBlock) {
+                    advance();
+                    if (*s == "gif") return gifBlock<T>();
+                    if (*s == "timeline") return timelineBlock<T>();
+                    if (*s == "grid") return gridBlock<T>();
+                }
+            }
+        }
+    }
+
     if (match(TokenType::IDENTIFIER)) return make_shared<expr::Variable<T>>(previous());
 
     if (match(TokenType::LEFT_PAREN)) {
@@ -443,27 +463,6 @@ shared_ptr<Expr<T>> Parser::primary() {
     if (match(TokenType::LEFT_BRACE)) return mapLiteral<T>();
 
     if (match(TokenType::AT)) return memeLiteral<T>();
-
-    // Contextual keyword blocks: gif, timeline, grid
-    if (peek().type == TokenType::IDENTIFIER) {
-        auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && (*s == "gif" || *s == "timeline" || *s == "grid")) {
-            // Look ahead: must be followed by { or loop or NxM
-            if (current + 1 < tokens.size()) {
-                auto next = tokens[current + 1].type;
-                auto* nextStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
-                bool isBlock = (next == TokenType::LEFT_BRACE) ||
-                    (nextStr && *nextStr == "loop") ||
-                    (next == TokenType::NUMBER);
-                if (isBlock) {
-                    advance(); // consume gif/timeline/grid
-                    if (*s == "gif") return gifBlock<T>();
-                    if (*s == "timeline") return timelineBlock<T>();
-                    if (*s == "grid") return gridBlock<T>();
-                }
-            }
-        }
-    }
 
     throw ParseError(peek(), "Expected expression.");
 }
@@ -739,8 +738,8 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false);
     }
 
-    // One-liner: @template "text"
-    if (peek().type == TokenType::STRING) {
+    // One-liner: @template expr (string literal, variable, or any primary expression)
+    if (peek().type != TokenType::SEMICOLON && peek().type != TokenType::END_OF_FILE) {
         auto value = primary<T>();
         Token centerKey(TokenType::IDENTIFIER, token::TokenValue(std::string("center")),
                         templateName.line, templateName.column);
@@ -748,7 +747,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true);
     }
 
-    throw ParseError(peek(), "Expected '{' or string after @template.");
+    throw ParseError(peek(), "Expected '{' or text after @template.");
 }
 
 // gif [loop] { @tmpl "text" : 400ms, ... }

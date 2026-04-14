@@ -1,0 +1,38 @@
+// 05 — Functional Programming
+// Pipes, arrows, higher-order functions, and reduce.
+
+// Arrow functions
+var double = x -> x * 2;
+var add = (a, b) -> a + b;
+print double(5);
+print add(3, 4);
+
+// Pipe operator — chain transformations
+print [1, 2, 3, 4, 5]
+    |> filter(x -> x > 2)
+    |> map(x -> x * 10)
+    |> reverse;
+
+// String pipelines
+print "hello world" |> upper;
+print "a,b,c" |> split(",") |> map(upper) |> join(" - ");
+
+// Reduce — fold into a single value
+print [1, 2, 3, 4, 5] |> reduce((sum, n) -> sum + n, 0);
+
+// Zip + map — combine two arrays
+var names = ["Alice", "Bob", "Charlie"];
+var scores = [95, 87, 92];
+var pairs = zip(names, scores);
+print pairs;
+
+// Enumerate
+print ["a", "b", "c"] |> enumerate;
+
+// Range
+print range(5);
+print range(1, 10, 2);
+
+// Compose — build pipelines for later
+var pipeline = (x -> x * 2) >> (x -> x + 1) >> (x -> x * x);
+print pipeline(3);

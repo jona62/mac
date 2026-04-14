@@ -1,0 +1,40 @@
+// 04 — Animation
+// Build GIFs and timelines with block syntax.
+
+// Simple countdown GIF
+gif loop {
+    @blank "3" : 500ms
+    @blank "2" : 500ms
+    @blank "1" : 500ms
+    @blank "GO!" : 1s
+} => "countdown.gif";
+
+// Multi-frame story
+gif loop {
+    @two_panel { top: "MONDAY"    bottom: "Let's go!" } : 600ms
+    @two_panel { top: "WEDNESDAY" bottom: "Almost there" } : 600ms
+    @two_panel { top: "FRIDAY"    bottom: "Ship it!" } : 800ms
+} => "week.gif";
+
+// Timeline with transitions between frames
+// Use --- type duration --- between frames
+timeline loop {
+    @two_panel {
+        top: "Act 1"
+        bottom: "The setup"
+    } : 3s
+    --- crossfade 200ms ---
+    @two_panel {
+        top: "Act 2"
+        bottom: "The conflict"
+    } : 3s
+    --- slideLeft 200ms ---
+    @two_panel {
+        top: "Act 3"
+        bottom: "The resolution"
+    } : 3s
+} => "story.gif";
+
+// Transition types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe
+
+print "Animations saved to output/";

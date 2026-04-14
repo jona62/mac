@@ -1,0 +1,25 @@
+// 02 — Your First Meme
+// Create memes with @template literals and save with =>.
+
+// A simple meme — one line of text
+@blank "Hello from Mac!" => "hello.png";
+
+// A two-panel meme with named positions
+@two_panel {
+    top: "Me explaining Mac to my team"
+    bottom: "My team: just use Photoshop"
+} => "first_meme.png";
+
+// Templates: two_panel, three_panel, bottom_text, blank
+// Positions: top, bottom, center
+// Save: => auto-detects format from extension
+
+// Save a meme to a variable, then export
+var m = @two_panel {
+    top: "Before Mac"
+    bottom: "After Mac"
+};
+print type(m);
+m => "before_after.png";
+
+print "Memes saved to output/";

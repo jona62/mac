@@ -1,5 +1,6 @@
-// Mac v2 Syntax Showcase
-// Every bespoke feature in one file
+// 07 — Showcase
+// Everything together: v2 syntax, functional pipelines, effects,
+// animation, and data-driven meme generation.
 
 // ── Effect Presets ──────────────────────────────────────
 
@@ -7,23 +8,14 @@ effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
 effect vintage = sepia >> brightness(0.9);
 effect clean = sharpen >> contrast(1.1);
 
-// ── Static Memes ────────────────────────────────────────
+// ── Hero Meme ───────────────────────────────────────────
 
 @two_panel {
     top: "Me: it works on my machine"
     bottom: "Prod: lol no"
-} |> glitch => "glitched_meme.png";
+} |> glitch => "hero.png";
 
-@two_panel {
-    top: "Before functional programming"
-    bottom: "After functional programming"
-} |> vintage => "vintage_meme.png";
-
-@blank "Mac: where memes are first-class citizens" => "tagline.png";
-
-print "Static memes saved!";
-
-// ── Countdown GIF ───────────────────────────────────────
+// ── Countdown ───────────────────────────────────────────
 
 gif loop {
     @blank "Ready?" : 800ms
@@ -33,26 +25,32 @@ gif loop {
     @blank "GO!" : 1s
 } => "countdown.gif";
 
-print "Countdown saved!";
-
 // ── Developer Week Arc ──────────────────────────────────
 
-gif loop {
-    @two_panel { top: "MONDAY"    bottom: "Fresh deploy" } : 600ms
-    @two_panel { top: "TUESDAY"   bottom: "Minor refactor" } : 600ms
-    @two_panel { top: "WEDNESDAY" bottom: "CI is broken" } : 600ms
-    @two_panel { top: "THURSDAY"  bottom: "Hotfix at 2am" } : 600ms
-    @two_panel { top: "FRIDAY"    bottom: "Ship it anyway" } : 800ms
-} => "dev_week.gif";
+var days = [
+    ["MONDAY",    "Fresh deploy, clean slate"],
+    ["TUESDAY",   "Minor refactor, no big deal"],
+    ["WEDNESDAY", "Why is CI failing?"],
+    ["THURSDAY",  "Emergency hotfix at 2am"],
+    ["FRIDAY",    "Ship it anyway"]
+];
 
-print "Dev week saved!";
+var day_memes = days |> map(d -> @two_panel {
+    top: d[0]
+    bottom: d[1]
+});
+
+// Fold into a GIF with uniform timing
+var week = day_memes |> reduce(
+    (g, m) -> g.frame(m, Duration(700)), Gif());
+week.save("dev_week.gif");
 
 // ── Cinematic Timeline ──────────────────────────────────
 
 timeline loop {
     @two_panel {
         top: "Act 1: The Setup"
-        bottom: "git commit -m 'initial commit'"
+        bottom: "git init"
     } : 3s
     --- crossfade 200ms ---
     @two_panel {
@@ -66,11 +64,9 @@ timeline loop {
     } : 3s
     --- crossfade 200ms ---
     @blank "fin." : 2s
-} => "three_act.gif";
+} => "three_acts.gif";
 
-print "Timeline saved!";
-
-// ── Effects Grid ────────────────────────────────────────
+// ── Effects Comparison ──────────────────────────────────
 
 grid 2x2 {
     @blank "Clean" |> clean
@@ -79,14 +75,13 @@ grid 2x2 {
     @blank "Deepfry" |> deepfry
 } |> pad(5) |> border(2) => "effects_grid.png";
 
-print "Grid saved!";
-
 // ── Data-Driven Pipeline ────────────────────────────────
-// v2 syntax composes with functional features
+// Generate memes from data, apply escalating effects,
+// fold into a cinematic timeline.
 
 var quotes = [
     ["Debugging", "print('here')"],
-    ["Testing", "works on my machine"],
+    ["Testing",   "works on my machine"],
     ["Deploying", "YOLO"],
     ["Monitoring", "This is fine"]
 ];
@@ -96,11 +91,9 @@ var memes = quotes |> map(q -> @two_panel {
     bottom: q[1]
 });
 
-// Fold into a timeline with transitions
 var tl = memes |> reduce((tl, m) -> tl
     .frame(m, Duration(3000))
     .transition(crossfade, Duration(200)), Timeline());
 tl.loop(0).render("dev_lifecycle.gif");
 
-print "Pipeline saved!";
-print "All done!";
+print "Showcase complete! Check output/";

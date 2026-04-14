@@ -1,0 +1,33 @@
+// 03 — Effects & Composition
+// Apply visual effects with |> and compose presets with >>.
+
+// Direct effects — just pipe through them
+@blank "Clean" |> sharpen => "clean.png";
+@blank "Moody" |> sepia => "moody.png";
+@blank "Inverted" |> invert => "inverted.png";
+
+// Parameterized effects — configure then apply
+@blank "Blurry" |> blur(8) => "blurry.png";
+@blank "Noisy" |> noise(0.3) => "noisy.png";
+@blank "Pixelated" |> pixelate(6) => "pixelated.png";
+
+// Compose presets with >> — chain effects into a reusable pipeline
+effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+effect vintage = sepia >> brightness(0.9);
+effect hype = saturate(3.0) >> contrast(2.0) >> brightness(1.2);
+
+// Apply presets
+@two_panel {
+    top: "Normal code review"
+    bottom: "Code review at 3am"
+} |> glitch => "glitch_meme.png";
+
+@two_panel {
+    top: "2015 vibes"
+    bottom: "Miss those days"
+} |> vintage => "vintage_meme.png";
+
+// Chain multiple pipes
+@blank "Maximum overdrive" |> hype |> pixelate(3) => "overdrive.png";
+
+print "Effects saved to output/";
