@@ -1,0 +1,68 @@
+// Array
+//
+// Array manipulation and functional programming functions.
+// All pipeable with |>.
+
+// Append a value to an array in place.
+fun push(array, value) -> nil;
+
+// Remove and return the last element from an array.
+fun pop(array) -> T;
+
+// Apply a function to each element and return a new array.
+fun map(array, fn) -> [T];
+
+// Return a new array containing only elements where fn returns true.
+fun filter(array, fn) -> [T];
+
+// Fold an array into a single value.
+// fn(accumulator, element) is called for each element.
+fun reduce(array, fn, initial) -> T;
+
+// Return the first element where fn returns true, or nil.
+fun find(array, fn) -> T;
+
+// Return true if any element passes the predicate.
+fun any(array, fn) -> bool;
+
+// Return true if every element passes the predicate.
+fun all(array, fn) -> bool;
+
+// Sort an array using natural order for numbers or strings.
+fun sort(array) -> [T];
+
+// Return a reversed copy of an array.
+fun reverse(array) -> [T];
+
+// Return the first n elements.
+fun take(array, count) -> [T];
+
+// Return the array without the first n elements.
+fun drop(array, count) -> [T];
+
+// Flatten one level of nested arrays.
+fun flatten(array) -> [T];
+
+// Map each element, then flatten one nesting level.
+fun flatMap(array, fn) -> [T];
+
+// Combine two arrays into pairs: [[a[0], b[0]], [a[1], b[1]], ...]
+fun zip(left, right) -> [(A, B)];
+
+// Return index-value pairs: [[0, elem], [1, elem], ...]
+fun enumerate(array) -> [(number, T)];
+
+// Call a function for each element. Returns nil.
+fun each(array, fn) -> nil;
+
+// Join array elements into a string with a separator.
+fun join(array, separator) -> string;
+
+// Generate numbers from 0 up to end.
+fun range(end) -> [number];
+
+// Generate numbers from start up to end.
+fun range(start, end) -> [number];
+
+// Generate numbers from start up to end with step.
+fun range(start, end, step) -> [number];

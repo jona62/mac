@@ -1,0 +1,15 @@
+// Frame
+//
+// A single animation frame pairing a Meme with a Duration.
+// Created by the + operator: Meme + Duration = Frame.
+// Add frames to Gif or Timeline with the + operator.
+
+class Frame {
+    init(meme, duration);
+
+    // The Meme for this frame.
+    meme;
+
+    // The Duration for this frame.
+    duration;
+}

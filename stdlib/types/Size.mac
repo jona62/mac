@@ -1,0 +1,15 @@
+// Size
+//
+// Pixel dimensions for resizing memes.
+// Supports +, *, == operators.
+
+class Size {
+    init(width, height);
+
+    width;
+    height;
+
+    __add__(other) -> Size;
+    __mul__(n) -> Size;
+    __eq__(other) -> bool;
+}

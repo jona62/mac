@@ -1,0 +1,13 @@
+// Format
+//
+// Image output format for saving memes.
+// Use the constants PNG, JPG, or GIF.
+
+class Format {
+    init(name);
+    __eq__(other) -> bool;
+}
+
+var PNG = Format("png");
+var JPG = Format("jpg");
+var GIF = Format("gif");

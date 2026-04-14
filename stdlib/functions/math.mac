@@ -1,0 +1,18 @@
+// Math
+//
+// Mathematical functions.
+
+// Return the square root of a number.
+fun sqrt(value) -> number;
+
+// Return the absolute value of a number.
+fun abs(value) -> number;
+
+// Raise a number to a power.
+fun pow(base, exponent) -> number;
+
+// Round a number down to the nearest integer.
+fun floor(value) -> number;
+
+// Round a number up to the nearest integer.
+fun ceil(value) -> number;

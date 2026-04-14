@@ -1,0 +1,13 @@
+// Position
+//
+// Text placement on a meme.
+// Use the constants Top, Bottom, or Center.
+
+class Position {
+    init(name);
+    __eq__(other) -> bool;
+}
+
+var Top = Position("top");
+var Bottom = Position("bottom");
+var Center = Position("center");

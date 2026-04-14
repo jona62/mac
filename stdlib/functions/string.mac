@@ -1,0 +1,21 @@
+// String
+//
+// String manipulation functions. All pipeable.
+
+// Return part of a string.
+fun substr(str, start, length) -> string;
+
+// Split a string into an array of substrings.
+fun split(str, delimiter) -> [string];
+
+// Return an uppercase copy of a string.
+fun upper(str) -> string;
+
+// Return a lowercase copy of a string.
+fun lower(str) -> string;
+
+// Return a string without surrounding whitespace.
+fun trim(str) -> string;
+
+// Replace all instances of one substring with another.
+fun replace(str, from, to) -> string;

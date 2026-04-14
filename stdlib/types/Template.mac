@@ -1,0 +1,15 @@
+// Template
+//
+// A meme background image. Pass a built-in name or a file path.
+// Built-in templates: two_panel, three_panel, bottom_text, blank,
+// caption_bar, four_panel.
+
+class Template {
+    init(nameOrPath);
+
+    // The template name as provided.
+    name;
+
+    // The resolved file path to the image.
+    path;
+}

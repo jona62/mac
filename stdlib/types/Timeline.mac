@@ -1,0 +1,31 @@
+// Timeline
+//
+// Animation builder with transitions between keyframes.
+// Chain .frame() and .transition() to build the sequence,
+// then .render() or .save() to export.
+//
+// Timeline + Frame adds a keyframe.
+
+class Timeline {
+    init();
+
+    // Add a keyframe with hold duration.
+    // Returns this for chaining.
+    frame(memeObj, duration) -> Timeline;
+
+    // Set the transition type and duration to the next keyframe.
+    // Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe
+    transition(transType, duration) -> Timeline;
+
+    // Set loop count. 0 = infinite.
+    loop(count) -> Timeline;
+
+    // Render the timeline to an animated GIF.
+    render(path) -> Timeline;
+
+    // Alias for render().
+    save(path) -> Timeline;
+
+    // Timeline + Frame = Timeline (adds keyframe)
+    __add__(other) -> Timeline;
+}

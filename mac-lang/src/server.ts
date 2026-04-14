@@ -205,6 +205,49 @@ const preludePath = findPath(
 
 const preludeUri = preludePath ? `file://${preludePath}` : null;
 
+// Index stdlib declaration files for go-to-definition on built-ins
+const declIndex = new Map<string, { uri: string; line: number; col: number }>();
+
+function indexDeclDir(dirPath: string | null): void {
+    if (!dirPath || !fs.existsSync(dirPath)) return;
+    for (const file of fs.readdirSync(dirPath)) {
+        if (!file.endsWith(".mac")) continue;
+        const filePath = path.join(dirPath, file);
+        const uri = `file://${filePath}`;
+        const lines = fs.readFileSync(filePath, "utf-8").split("\n");
+        for (let i = 0; i < lines.length; i++) {
+            // fun name(...)
+            const funMatch = lines[i].match(/^fun\s+(\w+)/);
+            if (funMatch) { declIndex.set(funMatch[1], { uri, line: i, col: lines[i].indexOf(funMatch[1]) }); continue; }
+            // class Name
+            const classMatch = lines[i].match(/^class\s+(\w+)/);
+            if (classMatch) { declIndex.set(classMatch[1], { uri, line: i, col: lines[i].indexOf(classMatch[1]) }); continue; }
+            // var Name
+            const varMatch = lines[i].match(/^var\s+(\w+)/);
+            if (varMatch) { declIndex.set(varMatch[1], { uri, line: i, col: lines[i].indexOf(varMatch[1]) }); continue; }
+            // method inside class: "    name(..."
+            if (lines[i].match(/^\s{4}\w/) && !lines[i].match(/^\s{4}\/\//)) {
+                const methodMatch = lines[i].match(/^\s+(\w+)\s*[\(;]/);
+                if (methodMatch) {
+                    // Find the owning class by scanning backward
+                    let owner = "";
+                    for (let j = i - 1; j >= 0; j--) {
+                        const cm = lines[j].match(/^class\s+(\w+)/);
+                        if (cm) { owner = cm[1]; break; }
+                    }
+                    if (owner) {
+                        declIndex.set(`${owner}.${methodMatch[1]}`, { uri, line: i, col: lines[i].indexOf(methodMatch[1]) });
+                    }
+                }
+            }
+        }
+    }
+}
+
+const stdlibDir = preludePath ? path.dirname(preludePath) : null;
+indexDeclDir(stdlibDir ? path.join(stdlibDir, "types") : null);
+indexDeclDir(stdlibDir ? path.join(stdlibDir, "functions") : null);
+
 function runAnalysis(text: string): AnalysisResult | null {
     const tmpFile = path.join(os.tmpdir(), `mac-lsp-${Date.now()}.mac`);
     try {
@@ -260,12 +303,14 @@ connection.onDefinition((params: DefinitionParams): Location | null => {
 
     const prop = findAt(result.properties.filter((item) => item.source === "user"), params.position);
     if (prop) {
-        return locationForDefinition(params.textDocument.uri, prop.defSource, prop.defLine, prop.defCol, prop.defEndCol);
+        return locationForDefinition(params.textDocument.uri, prop.defSource, prop.defLine, prop.defCol, prop.defEndCol,
+                                     prop.name, prop.ownerType);
     }
 
     const ref = findAt(result.references.filter((item) => item.source === "user"), params.position);
     if (!ref) return null;
-    return locationForDefinition(params.textDocument.uri, ref.defSource, ref.defLine, ref.defCol, ref.defEndCol);
+    return locationForDefinition(params.textDocument.uri, ref.defSource, ref.defLine, ref.defCol, ref.defEndCol,
+                                 ref.defName, ref.defOwnerType);
 });
 
 connection.onHover((params: HoverParams): Hover | null => {
@@ -540,10 +585,23 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     return items;
 });
 
-function locationForDefinition(docUri: string, source: string, line: number, col: number, endCol: number): Location | null {
-    const targetUri = source === "prelude" ? preludeUri : source === "user" ? docUri : null;
-    if (!targetUri || line <= 0) return null;
-    return Location.create(targetUri, toRange(line, col, endCol));
+function locationForDefinition(docUri: string, source: string, line: number, col: number, endCol: number,
+                               defName?: string, defOwnerType?: string): Location | null {
+    // User code — jump within the file
+    if (source === "user" && line > 0) return Location.create(docUri, toRange(line, col, endCol));
+
+    // Native or prelude — jump to declaration files
+    if (source === "native" || source === "prelude") {
+        // Try "OwnerType.name" first (for methods), then just "name"
+        const keys = [];
+        if (defOwnerType && defName) keys.push(`${defOwnerType}.${defName}`);
+        if (defName) keys.push(defName);
+        for (const key of keys) {
+            const loc = declIndex.get(key);
+            if (loc) return Location.create(loc.uri, Range.create(loc.line, loc.col, loc.line, loc.col + (defName ?? "").length));
+        }
+    }
+    return null;
 }
 
 function refreshAnalysis(doc: TextDocument): void {

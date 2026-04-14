@@ -1,0 +1,20 @@
+// Gif
+//
+// Animated GIF builder. Add frames with .frame(), then .save().
+// For transitions between frames, use Timeline instead.
+//
+// Gif + Frame adds the frame to the animation.
+
+class Gif {
+    init();
+
+    // Add a frame with the given meme and duration.
+    // Returns this for chaining.
+    frame(memeObj, duration) -> Gif;
+
+    // Render all frames and save as an animated GIF.
+    save(path);
+
+    // Gif + Frame = Gif (adds the frame)
+    __add__(other) -> Gif;
+}

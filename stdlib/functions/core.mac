@@ -1,0 +1,21 @@
+// Core
+//
+// Essential built-in functions for I/O, types, and general use.
+
+// Return the current wall-clock time in seconds.
+fun clock() -> number;
+
+// Return the number of characters in a string or elements in an array.
+fun len(value) -> number;
+
+// Return the runtime type name for a value.
+// Returns: "number", "string", "bool", "nil", "array", "map",
+//          "function", "instance", "meme", "gif", "timeline"
+fun type(value) -> string;
+
+// Print a prompt and return the entered line.
+fun input(prompt) -> string;
+
+// Save a Meme, Gif, Timeline, or rendered result to disk.
+// Returns true on success.
+fun save(target, path) -> bool;

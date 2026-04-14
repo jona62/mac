@@ -1,0 +1,25 @@
+// Meme
+//
+// The core image type. Wraps a template with text overlays.
+// Chain .text() calls to add captions, then .save() to export
+// or pipe through effects with |>.
+//
+// Meme + Duration creates a Frame for animation.
+
+class Meme {
+    init(template);
+
+    // Add text at a position (Top, Bottom, or Center).
+    // Returns a new Meme — chainable.
+    text(position, str) -> Meme;
+
+    // Save the meme to a file.
+    // format: PNG, JPG, or GIF. path: output file path.
+    save(format, path);
+
+    // Return a new Meme resized to the given Size.
+    resize(size) -> Meme;
+
+    // Meme + Duration = Frame
+    __add__(other) -> Frame;
+}

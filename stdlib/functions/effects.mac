@@ -1,0 +1,52 @@
+// Effects
+//
+// Image effects that transform meme pixel data.
+// Parameterized effects return a Meme -> Meme function.
+// Direct effects take a meme and return a meme.
+// All work with |> and can be composed with >>.
+//
+// Example:
+//   var glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+//   Meme(t).text(Top, "hello") |> glitch;
+
+// --- Parameterized effects (return Meme -> Meme) ---
+
+// Box blur with the given radius.
+fun blur(radius) -> Meme -> Meme;
+
+// Pixelation at the given block size.
+fun pixelate(blockSize) -> Meme -> Meme;
+
+// Random noise overlay. amount: 0.0 to 1.0.
+fun noise(amount) -> Meme -> Meme;
+
+// Adjust color saturation. 1.0 = normal.
+fun saturate(factor) -> Meme -> Meme;
+
+// Adjust contrast. 1.0 = normal.
+fun contrast(factor) -> Meme -> Meme;
+
+// Adjust brightness. 1.0 = normal.
+fun brightness(factor) -> Meme -> Meme;
+
+// JPEG compression artifacts. Lower quality = more artifacts.
+fun jpeg(quality) -> Meme -> Meme;
+
+// --- Direct effects (Meme -> Meme) ---
+
+// Invert all colors.
+fun invert(meme) -> Meme;
+
+// Apply sepia tone filter.
+fun sepia(meme) -> Meme;
+
+// Sharpen the image.
+fun sharpen(meme) -> Meme;
+
+// Add dark vignette edges.
+fun vignette(meme) -> Meme;
+
+// --- Presets ---
+
+// Composed: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)
+var deepfry: Meme -> Meme;
