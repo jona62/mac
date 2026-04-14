@@ -366,22 +366,35 @@ namespace analyzer {
             analyzeExpr(p->path.get());
         }
         else if (auto* p = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
+            // Semantic token for 'gif' keyword
+            if (p->keyword.line > 0 && currentSource == "user") {
+                auto kw = tokName(p->keyword);
+                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                result.semanticTokens.push_back({p->keyword.line, kc,
+                    static_cast<int>(kw.size()), "keyword", currentSource});
+            }
             for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
         }
         else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
+            // Semantic token for 'timeline' keyword
+            if (p->keyword.line > 0 && currentSource == "user") {
+                auto kw = tokName(p->keyword);
+                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                result.semanticTokens.push_back({p->keyword.line, kc,
+                    static_cast<int>(kw.size()), "keyword", currentSource});
+            }
             for (auto& entry : p->entries) {
                 analyzeExpr(entry.frame.meme.get());
-                // Transition type references (crossfade, slideLeft, etc.)
-                if (entry.transition) {
-                    auto* transDef = resolve(entry.transition->type);
-                    if (transDef) {
-                        // We don't have token positions for transition types in the AST
-                        // but the type string is resolved
-                    }
-                }
             }
         }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
+            // Semantic token for 'grid' keyword
+            if (p->keyword.line > 0 && currentSource == "user") {
+                auto kw = tokName(p->keyword);
+                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                result.semanticTokens.push_back({p->keyword.line, kc,
+                    static_cast<int>(kw.size()), "keyword", currentSource});
+            }
             for (auto& entry : p->entries) analyzeExpr(entry.get());
         }
     }
