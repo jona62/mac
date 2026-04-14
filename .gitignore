@@ -12,3 +12,4 @@ webapp/generated/*
 !webapp/generated/.gitkeep
 webapp/server.pid
 webapp/server.log
+output/

@@ -23,6 +23,18 @@
 
 namespace callable {
 
+    // All user output goes to output/ directory
+    static const std::string OUTPUT_DIR = "output";
+
+    static std::string toOutputPath(const std::string& path) {
+        // Already has a directory component — leave it alone
+        if (path.find('/') != std::string::npos || path.find('\\') != std::string::npos) {
+            return path;
+        }
+        std::filesystem::create_directories(OUTPUT_DIR);
+        return OUTPUT_DIR + "/" + path;
+    }
+
     // --- Time ---
 
     class ClockFunction : public MacCallable {
@@ -261,7 +273,7 @@ namespace callable {
             auto bottomText = std::get<std::string>(args[2]);
             int width = static_cast<int>(std::get<double>(args[3]));
             int height = static_cast<int>(std::get<double>(args[4]));
-            auto outputPath = std::get<std::string>(args[5]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[5]));
             auto m = std::make_shared<meme::MacMeme>("", topText, bottomText);
             m->imagePath = templatePath;
             m->width = width;
@@ -277,7 +289,7 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
             auto framesArr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
-            auto outputPath = std::get<std::string>(args[1]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[1]));
             auto gif = std::make_shared<meme::MacGif>();
             for (auto& frameVal : framesArr->elements) {
                 auto frameMap = std::get<std::shared_ptr<collection::MacMap>>(frameVal);
@@ -610,7 +622,7 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
             auto tempPath = std::get<std::string>(args[0]);
-            auto outputPath = std::get<std::string>(args[1]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[1]));
             int w, h, c;
             unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
             if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
@@ -978,7 +990,7 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
             auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            auto outputPath = std::get<std::string>(args[1]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[1]));
             auto frames = tl->renderFrames();
             if (frames.empty()) return false;
 
@@ -1514,7 +1526,7 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
                              std::vector<value::MacValue> args) override {
             auto& target = args[0];
-            auto outputPath = std::get<std::string>(args[1]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[1]));
 
             // Timeline → render frames and save as GIF
             if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(target)) {
