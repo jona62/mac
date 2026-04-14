@@ -289,7 +289,13 @@ const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
     ["render",    () => T_BOOL],
     ["push",      () => T_NIL],
     ["each",      () => T_NIL],
-    ["reduce",    () => T_UNKNOWN],
+    ["reduce",    (args) => {
+        // reduce(arr, fn, initial) — return type matches the initial value
+        // When piped: arr |> reduce(fn, initial) — initial is args[2]
+        // Direct call: reduce(arr, fn, initial) — initial is args[2]
+        if (args.length >= 3 && args[2].tag !== "unknown") return args[2];
+        return T_UNKNOWN;
+    }],
 
     // Array-preserving (return type matches first arg)
     ["filter",  (args) => args[0]?.tag === "array" ? args[0] : { tag: "array", elementType: T_UNKNOWN }],
@@ -987,6 +993,12 @@ export class Analyzer {
         // x |> name(args) — pipe inserts x as first arg
         if (func.kind === "call" && func.callee.kind === "variable") {
             const name = func.callee.name.lexeme;
+
+            // reduce(fn, initial) — return type matches the initial value
+            if (name === "reduce" && func.args.length >= 2) {
+                const initType = this.analyzeExpr(func.args[1]);
+                if (initType.tag !== "unknown") return initType;
+            }
 
             // map/filter with lambda — try to infer element type from lambda body
             if (name === "map" && func.args.length >= 1 && func.args[0].kind === "lambda") {
