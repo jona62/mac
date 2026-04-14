@@ -1,6 +1,7 @@
-// stdlib/prelude.mac
-// Mac Standard Library — loaded before user code
+// Mac Standard Library
+// Loaded automatically before user code.
 
+// Pixel dimensions. Supports +, *, == operators.
 class Size {
     init(w, h) {
         this.width = w;
@@ -17,6 +18,8 @@ class Size {
     }
 }
 
+// Time in milliseconds for animation frames.
+// Supports +, *, == operators.
 class Duration {
     init(ms) {
         this.ms = ms;
@@ -32,6 +35,8 @@ class Duration {
     }
 }
 
+// Text position on a meme.
+// Use the constants Top, Bottom, or Center.
 class Position {
     init(name) { this.name = name; }
     __eq__(other) { return this.name == other.name; }
@@ -40,6 +45,8 @@ var Top = Position("top");
 var Bottom = Position("bottom");
 var Center = Position("center");
 
+// Image output format.
+// Use the constants PNG, JPG, or GIF.
 class Format {
     init(name) { this.name = name; }
     __eq__(other) { return this.name == other.name; }
@@ -48,6 +55,9 @@ var PNG = Format("png");
 var JPG = Format("jpg");
 var GIF = Format("gif");
 
+// Meme template image.
+// Pass a built-in name (two_panel, three_panel, bottom_text, blank)
+// or a file path: Template("path/to/image.png")
 class Template {
     init(nameOrPath) {
         this.name = nameOrPath;
@@ -55,6 +65,8 @@ class Template {
     }
 }
 
+// A single animation frame pairing a Meme with a Duration.
+// Created by Meme + Duration.
 class Frame {
     init(memeObj, duration) {
         this.meme = memeObj;
@@ -62,6 +74,9 @@ class Frame {
     }
 }
 
+// Meme builder. Chain .text() to add captions,
+// .save() to export, or pipe through effects with |>.
+// Meme + Duration creates a Frame for animation.
 class Meme {
     init(template) {
         this.template = template;
@@ -71,6 +86,9 @@ class Meme {
         this.height = 0;
         this.renderedPath = nil;
     }
+
+    // Add text at a position (Top, Bottom, Center).
+    // Returns a new Meme — chainable.
     text(position, str) {
         var m = Meme(this.template);
         m.topText = this.topText;
@@ -83,6 +101,9 @@ class Meme {
         if (position == Center) m.bottomText = str;
         return m;
     }
+
+    // Save meme to a file.
+    // format: PNG, JPG, or GIF. path: output file path.
     save(format, path) {
         if (this.renderedPath) {
             _save_rendered(this.renderedPath, path);
@@ -91,6 +112,8 @@ class Meme {
                        this.width, this.height, path);
         }
     }
+
+    // Return a new Meme resized to the given Size.
     resize(size) {
         var m = Meme(this.template);
         m.topText = this.topText;
@@ -100,16 +123,24 @@ class Meme {
         m.renderedPath = this.renderedPath;
         return m;
     }
+
+    // Meme + Duration = Frame
     __add__(other) {
         return Frame(this, other);
     }
 }
 
+// Animated GIF builder. Chain .frame() to add frames,
+// .save() to export. Gif + Frame adds a frame.
+// For transitions between frames, use Timeline instead.
 class Gif {
     init() {
         this._frames = [];
         this.frameCount = 0;
     }
+
+    // Add a frame with the given meme and duration.
+    // Returns this — chainable.
     frame(memeObj, duration) {
         push(this._frames, {
             path: memeObj.template.path,
@@ -122,19 +153,23 @@ class Gif {
         this.frameCount = len(this._frames);
         return this;
     }
+
+    // Render all frames and save as an animated GIF.
     save(path) {
         _gif_save(this._frames, path);
     }
+
+    // Gif + Frame = Gif (adds the frame)
     __add__(other) {
         this.frame(other.meme, other.duration);
         return this;
     }
 }
 
-// Composed effect preset
+// Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)
 var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
 
-// Transition type constants
+// Transition type constants for Timeline.
 var crossfade = "crossfade";
 var slideLeft = "slideLeft";
 var slideRight = "slideRight";
@@ -142,31 +177,49 @@ var slideUp = "slideUp";
 var slideDown = "slideDown";
 var wipe = "wipe";
 
+// Animation timeline with transitions between keyframes.
+// Chain .frame() and .transition() to build the sequence,
+// then .render() or .save() to export.
+// Timeline + Frame adds a keyframe.
 class Timeline {
     init() {
         this._tl = timeline();
     }
+
+    // Add a keyframe with hold duration.
+    // Returns this — chainable.
     frame(memeObj, duration) {
         _timeline_keyframe(this._tl, memeObj);
         _timeline_hold(this._tl, duration.ms);
         return this;
     }
+
+    // Set transition to the next keyframe.
+    // Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe
     transition(transType, duration) {
         _timeline_transition(this._tl, duration.ms, transType);
         return this;
     }
+
+    // Set loop count. 0 = infinite.
     loop(count) {
         _timeline_loop(this._tl, count);
         return this;
     }
+
+    // Render timeline to an animated GIF.
     render(path) {
         _timeline_render(this._tl, path);
         return this;
     }
+
+    // Alias for render().
     save(path) {
         _timeline_render(this._tl, path);
         return this;
     }
+
+    // Timeline + Frame = Timeline (adds keyframe)
     __add__(other) {
         this.frame(other.meme, other.duration);
         return this;
