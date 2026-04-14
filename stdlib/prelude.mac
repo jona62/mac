@@ -170,3 +170,14 @@ class Timeline {
         return this;
     }
 }
+
+fun sequence(memes, holdDur, transType, transDur) {
+    var tl = Timeline();
+    for (var i = 0; i < len(memes); i = i + 1) {
+        tl.frame(memes[i], holdDur);
+        if (i + 1 < len(memes)) {
+            tl.transition(transType, transDur);
+        }
+    }
+    return tl;
+}

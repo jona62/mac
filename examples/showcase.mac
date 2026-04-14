@@ -23,47 +23,31 @@ var memes = captions
 var glitch = contrast(1.8) >> noise(0.2) >> pixelate(4);
 var vintage = sepia >> brightness(0.9);
 var clean = sharpen >> contrast(1.1);
+var effects = [clean, vintage, glitch, deepfry, invert];
 
 // Apply different effects to each frame
-var styled = [
-    memes[0] |> clean,
-    memes[1] |> vintage,
-    memes[2] |> glitch,
-    memes[3] |> deepfry,
-    memes[4] |> invert
-];
+var styled = zip(memes, effects) |> map(pair -> pair[0] |> pair[1]);
 
-// Build animation with timeline — long holds so text is readable
-Timeline()
-    .frame(styled[0], Duration(4000))
-    .transition(crossfade, Duration(150))
-    .frame(styled[1], Duration(4000))
-    .transition(crossfade, Duration(150))
-    .frame(styled[2], Duration(4000))
-    .transition(crossfade, Duration(150))
-    .frame(styled[3], Duration(4000))
-    .transition(crossfade, Duration(150))
-    .frame(styled[4], Duration(3000))
-    .loop(0)
-    .render("showcase.gif");
+// Build animation with sequence — uniform hold + transitions
+var tl = styled |> sequence(Duration(4000), crossfade, Duration(150));
+tl.loop(0).render("showcase.gif");
 
 print "Showcase GIF saved!";
 
 // Effects comparison grid
-var grid = [clean, vintage, glitch, deepfry]
+[clean, vintage, glitch, deepfry]
     |> map(fx -> Meme(blank).text(Center, "Mac") |> fx)
     |> toGrid(2, 2)
     |> pad(5)
-    |> border(2);
+    |> border(2)
+    |> save("showcase_grid.png");
 
-save(grid, "showcase_grid.png");
 print "Grid saved!";
 
-// Countdown using simple Gif builder
-var countdown = Gif();
-var nums = ["5", "4", "3", "2", "1", "GO!"];
-for (var i = 0; i < 6; i = i + 1) {
-    countdown.frame(Meme(blank).text(Center, nums[i]), Duration(1000));
-}
-countdown.save("countdown.gif");
+// Countdown using animate pipeline
+["5", "4", "3", "2", "1", "GO!"]
+    |> map(n -> Meme(blank).text(Center, n))
+    |> animate(Duration(1000))
+    |> save("countdown.gif");
+
 print "Countdown saved!";
