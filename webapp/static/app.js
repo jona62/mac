@@ -1,41 +1,25 @@
-const fallbackTemplates = [
-  {
-    id: "two_panel",
-    name: "Two Panel",
-    description: "Classic split-screen rhythm for before-and-after, expectation-vs-reality, or Monday-to-Friday arcs.",
-    bestFor: "Pairing two ideas with a fast payoff.",
-    previewUrl: "/assets/templates/two_panel.png",
-  },
-  {
-    id: "three_panel",
-    name: "Three Panel",
-    description: "Three beats with escalating energy when you want the joke to land in stages.",
-    bestFor: "Setups that need a beginning, middle, and spike.",
-    previewUrl: "/assets/templates/three_panel.png",
-  },
-  {
-    id: "bottom_text",
-    name: "Bottom Text",
-    description: "Poster-style composition with a giant image and a heavy caption block.",
-    bestFor: "One-liners, announcements, and dramatic reveals.",
-    previewUrl: "/assets/templates/bottom_text.png",
-  },
-  {
-    id: "blank",
-    name: "Blank",
-    description: "Minimal empty canvas for countdowns, title cards, or stark graphic loops.",
-    bestFor: "Simple text-driven GIFs and punchy hard cuts.",
-    previewUrl: "/assets/templates/blank.png",
-  },
-];
+// Mac GIF Studio — v2
+
+const state = {
+  templates: [],
+  effects: [],
+  selectedTemplate: "two_panel",
+  selectedEffect: "none",
+  width: 640,
+  height: 640,
+  textColor: "#FFFFFF",
+  outlineWidth: 3,
+  frames: [
+    { top: "MONDAY", bottom: "CODING", duration: 400 },
+    { top: "WEDNESDAY", bottom: "DEBUGGING", duration: 400 },
+    { top: "FRIDAY", bottom: "DEPLOYING", duration: 400 },
+  ],
+  isRendering: false,
+};
 
 const presets = [
   {
-    id: "week",
-    label: "Week Arc",
-    template: "two_panel",
-    width: 640,
-    height: 640,
+    label: "Week Arc", template: "two_panel", width: 640, height: 640,
     frames: [
       { top: "MONDAY", bottom: "SHIPPING FEATURES", duration: 350 },
       { top: "WEDNESDAY", bottom: "FIXING THE EDGE CASE", duration: 350 },
@@ -43,11 +27,7 @@ const presets = [
     ],
   },
   {
-    id: "countdown",
-    label: "Countdown",
-    template: "blank",
-    width: 520,
-    height: 520,
+    label: "Countdown", template: "blank", width: 480, height: 480,
     frames: [
       { top: "", bottom: "3", duration: 240 },
       { top: "", bottom: "2", duration: 240 },
@@ -56,416 +36,306 @@ const presets = [
     ],
   },
   {
-    id: "escalation",
-    label: "Escalation",
-    template: "three_panel",
-    width: 720,
-    height: 720,
+    label: "Escalation", template: "three_panel", width: 720, height: 720,
     frames: [
-      { top: "ME: JUST ONE TINY CHANGE", bottom: "FRAME ONE", duration: 320 },
-      { top: "ME: STILL SAFE", bottom: "FRAME TWO", duration: 320 },
+      { top: "JUST ONE TINY CHANGE", bottom: "FRAME ONE", duration: 320 },
+      { top: "STILL SAFE", bottom: "FRAME TWO", duration: 320 },
       { top: "PRODUCTION:", bottom: "FRAME THREE", duration: 480 },
     ],
   },
 ];
 
-const state = {
-  templates: [...fallbackTemplates],
-  selectedTemplate: "two_panel",
-  width: 640,
-  height: 640,
-  frames: [
-    { top: "MONDAY", bottom: "CODING", duration: 400 },
-    { top: "WEDNESDAY", bottom: "DEBUGGING", duration: 400 },
-    { top: "FRIDAY", bottom: "DEPLOYING", duration: 400 },
-  ],
-  lastResult: null,
-  isRendering: false,
-};
-
-const ui = {};
+const $ = (id) => document.getElementById(id);
 
 document.addEventListener("DOMContentLoaded", () => {
-  cacheElements();
-  bindControls();
-  renderPresetButtons();
   loadTemplates();
+  bindControls();
+  renderPresets();
   render();
 });
 
-function cacheElements() {
-  ui.templateRail = document.getElementById("templateRail");
-  ui.presetStrip = document.getElementById("presetStrip");
-  ui.widthRange = document.getElementById("widthRange");
-  ui.widthInput = document.getElementById("widthInput");
-  ui.heightRange = document.getElementById("heightRange");
-  ui.heightInput = document.getElementById("heightInput");
-  ui.addFrameButton = document.getElementById("addFrameButton");
-  ui.frameList = document.getElementById("frameList");
-  ui.generateButton = document.getElementById("generateButton");
-  ui.scriptPreview = document.getElementById("scriptPreview");
-  ui.statusLine = document.getElementById("statusLine");
-  ui.previewPlaceholder = document.getElementById("previewPlaceholder");
-  ui.gifPreview = document.getElementById("gifPreview");
-  ui.downloadLink = document.getElementById("downloadLink");
-  ui.currentTemplateName = document.getElementById("currentTemplateName");
-  ui.currentTemplateDescription = document.getElementById("currentTemplateDescription");
-  ui.currentTemplateImage = document.getElementById("currentTemplateImage");
-  ui.heroCanvas = document.getElementById("heroCanvas");
-  ui.heroFrames = document.getElementById("heroFrames");
-  ui.heroDuration = document.getElementById("heroDuration");
-  ui.summaryTemplate = document.getElementById("summaryTemplate");
-  ui.summaryFrames = document.getElementById("summaryFrames");
-  ui.summaryDuration = document.getElementById("summaryDuration");
-  ui.sizeBadge = document.getElementById("sizeBadge");
-  ui.durationBadge = document.getElementById("durationBadge");
+async function loadTemplates() {
+  try {
+    const res = await fetch("/api/templates");
+    const data = await res.json();
+    if (data.templates) state.templates = data.templates;
+    if (data.effects) state.effects = data.effects;
+    renderTemplates();
+    renderEffects();
+  } catch {
+    console.warn("Using defaults");
+  }
 }
 
 function bindControls() {
-  syncDimensionControl(ui.widthRange, ui.widthInput, "width");
-  syncDimensionControl(ui.heightRange, ui.heightInput, "height");
+  syncRange($("widthRange"), $("widthNum"), "width");
+  syncRange($("heightRange"), $("heightNum"), "height");
 
-  ui.addFrameButton.addEventListener("click", () => {
-    const lastFrame = state.frames[state.frames.length - 1];
-    state.frames.push({
-      top: lastFrame?.top || "",
-      bottom: lastFrame?.bottom || "",
-      duration: lastFrame?.duration || 400,
-    });
+  $("outlineRange").addEventListener("input", (e) => {
+    state.outlineWidth = +e.target.value;
+    $("outlineVal").textContent = state.outlineWidth + "px";
+    renderScript();
+  });
+
+  $("textColor").addEventListener("input", (e) => {
+    state.textColor = e.target.value;
+    $("textColorHex").value = e.target.value.toUpperCase();
+    renderScript();
+  });
+
+  $("textColorHex").addEventListener("change", (e) => {
+    const v = e.target.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+      state.textColor = v;
+      $("textColor").value = v;
+      renderScript();
+    }
+  });
+
+  $("effectSelect").addEventListener("change", (e) => {
+    state.selectedEffect = e.target.value;
+    renderScript();
+    updateStats();
+  });
+
+  $("addFrameBtn").addEventListener("click", () => {
+    const last = state.frames[state.frames.length - 1] || {};
+    state.frames.push({ top: last.top || "", bottom: last.bottom || "", duration: last.duration || 400 });
     render();
   });
 
-  ui.frameList.addEventListener("input", onFrameInput);
-  ui.frameList.addEventListener("click", onFrameAction);
-  ui.generateButton.addEventListener("click", renderGif);
+  $("frameList").addEventListener("input", onFrameInput);
+  $("frameList").addEventListener("click", onFrameAction);
+  $("renderBtn").addEventListener("click", renderGif);
 }
 
-async function loadTemplates() {
-  try {
-    const response = await fetch("/api/templates");
-    if (!response.ok) {
-      throw new Error("Template fetch failed");
-    }
-    const data = await response.json();
-    if (Array.isArray(data.templates) && data.templates.length > 0) {
-      state.templates = data.templates;
-      if (!state.templates.some((template) => template.id === state.selectedTemplate)) {
-        state.selectedTemplate = state.templates[0].id;
-      }
-      render();
-    }
-  } catch (error) {
-    console.warn("Using fallback template list.", error);
-  }
-}
-
-function renderPresetButtons() {
-  ui.presetStrip.innerHTML = "";
-  presets.forEach((preset) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "preset-button";
-    button.textContent = preset.label;
-    button.addEventListener("click", () => {
-      applyPreset(preset);
-    });
-    ui.presetStrip.appendChild(button);
-  });
-}
-
-function applyPreset(preset) {
-  state.selectedTemplate = preset.template;
-  state.width = preset.width;
-  state.height = preset.height;
-  state.frames = preset.frames.map((frame) => ({ ...frame }));
-  render();
-}
-
-function syncDimensionControl(rangeElement, numberElement, key) {
-  const updateValue = (value) => {
-    const parsed = clampNumber(value, 240, 1200, state[key]);
-    state[key] = parsed;
-    rangeElement.value = String(parsed);
-    numberElement.value = String(parsed);
+function syncRange(range, num, key) {
+  const update = (v) => {
+    const val = Math.max(240, Math.min(1200, Math.round(+v)));
+    state[key] = val;
+    range.value = val;
+    num.value = val;
     render();
   };
-
-  rangeElement.addEventListener("input", (event) => updateValue(event.target.value));
-  numberElement.addEventListener("input", (event) => updateValue(event.target.value));
+  range.addEventListener("input", (e) => update(e.target.value));
+  num.addEventListener("change", (e) => update(e.target.value));
 }
 
-function onFrameInput(event) {
-  const target = event.target;
-  const index = Number(target.dataset.index);
-  if (!Number.isInteger(index) || !state.frames[index]) {
-    return;
-  }
-
-  if (target.dataset.field === "top" || target.dataset.field === "bottom") {
-    state.frames[index][target.dataset.field] = target.value;
-    renderScriptPreview();
-    updateSummary();
-    return;
-  }
-
-  if (target.dataset.field === "duration") {
-    const duration = clampNumber(target.value, 80, 2500, state.frames[index].duration);
-    state.frames[index].duration = duration;
-    const card = target.closest(".frame-card");
-    if (card) {
-      const mirrors = card.querySelectorAll('[data-field="duration"]');
-      mirrors.forEach((mirror) => {
-        if (mirror !== target) {
-          mirror.value = String(duration);
-        }
-      });
-      const durationLabel = card.querySelector(".js-duration-label");
-      if (durationLabel) {
-        durationLabel.textContent = `${duration} ms`;
-      }
-    }
-    updateSummary();
-    renderScriptPreview();
-  }
+function renderTemplates() {
+  const grid = $("templateGrid");
+  grid.innerHTML = "";
+  state.templates.forEach((t) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = `tmpl-card${t.id === state.selectedTemplate ? " is-active" : ""}`;
+    card.title = t.description;
+    card.innerHTML = `
+      <div class="tmpl-card__thumb" style="background-image:url('${CSS.escape(t.previewUrl)}')"></div>
+      <div class="tmpl-card__name">${esc(t.name)}</div>`;
+    card.addEventListener("click", () => { state.selectedTemplate = t.id; render(); });
+    grid.appendChild(card);
+  });
 }
 
-function onFrameAction(event) {
-  const button = event.target.closest("[data-action]");
-  if (!button) {
-    return;
-  }
-
-  const index = Number(button.dataset.index);
-  if (!Number.isInteger(index) || !state.frames[index]) {
-    return;
-  }
-
-  const { action } = button.dataset;
-  if (action === "remove" && state.frames.length > 1) {
-    state.frames.splice(index, 1);
-  } else if (action === "duplicate") {
-    state.frames.splice(index + 1, 0, { ...state.frames[index] });
-  } else if (action === "up" && index > 0) {
-    [state.frames[index - 1], state.frames[index]] = [state.frames[index], state.frames[index - 1]];
-  } else if (action === "down" && index < state.frames.length - 1) {
-    [state.frames[index], state.frames[index + 1]] = [state.frames[index + 1], state.frames[index]];
-  }
-
-  render();
+function renderEffects() {
+  const sel = $("effectSelect");
+  sel.innerHTML = "";
+  state.effects.forEach((e) => {
+    const opt = document.createElement("option");
+    opt.value = e.id;
+    opt.textContent = `${e.name} — ${e.description}`;
+    sel.appendChild(opt);
+  });
 }
 
-function render() {
-  renderTemplateCards();
-  renderFrames();
-  updateSummary();
-  renderScriptPreview();
-  updateCurrentTemplate();
-}
-
-function renderTemplateCards() {
-  ui.templateRail.innerHTML = "";
-  state.templates.forEach((template) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `template-card${template.id === state.selectedTemplate ? " is-selected" : ""}`;
-    const thumb = document.createElement("div");
-    thumb.className = "template-card__thumb";
-    thumb.style.backgroundImage = `url('${CSS.escape(template.previewUrl)}')`;
-    button.appendChild(thumb);
-
-    const content = document.createElement("div");
-    content.className = "template-card__content";
-    content.innerHTML = `
-        <h3>${escapeHtml(template.name)}</h3>
-        <p>${escapeHtml(template.description)}</p>
-        <span class="template-card__best">${escapeHtml(template.bestFor)}</span>
-    `;
-    button.appendChild(content);
-    button.addEventListener("click", () => {
-      state.selectedTemplate = template.id;
+function renderPresets() {
+  const strip = $("presetStrip");
+  strip.innerHTML = "";
+  presets.forEach((p) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn--sm";
+    btn.textContent = p.label;
+    btn.addEventListener("click", () => {
+      state.selectedTemplate = p.template;
+      state.width = p.width;
+      state.height = p.height;
+      state.frames = p.frames.map((f) => ({ ...f }));
       render();
     });
-    ui.templateRail.appendChild(button);
+    strip.appendChild(btn);
   });
 }
 
 function renderFrames() {
-  ui.frameList.innerHTML = "";
-  state.frames.forEach((frame, index) => {
-    const card = document.createElement("article");
+  const list = $("frameList");
+  list.innerHTML = "";
+  state.frames.forEach((f, i) => {
+    const card = document.createElement("div");
     card.className = "frame-card";
     card.innerHTML = `
       <div class="frame-card__head">
-        <div class="frame-meta">
-          <span class="pill">Frame ${index + 1}</span>
-          <strong class="js-duration-label">${frame.duration} ms</strong>
-        </div>
-        <div class="frame-actions">
-          <button type="button" class="frame-button" data-action="up" data-index="${index}">Up</button>
-          <button type="button" class="frame-button" data-action="down" data-index="${index}">Down</button>
-          <button type="button" class="frame-button" data-action="duplicate" data-index="${index}">Duplicate</button>
-          <button type="button" class="frame-button" data-action="remove" data-index="${index}">Remove</button>
+        <span class="frame-card__num">FRAME ${i + 1}</span>
+        <div class="frame-card__actions">
+          <button class="btn btn--sm" data-action="up" data-i="${i}">&uarr;</button>
+          <button class="btn btn--sm" data-action="down" data-i="${i}">&darr;</button>
+          <button class="btn btn--sm" data-action="dup" data-i="${i}">Dup</button>
+          <button class="btn btn--sm" data-action="del" data-i="${i}">&times;</button>
         </div>
       </div>
-      <div class="frame-fields">
-        <label class="field-label">
-          <span>Top Text</span>
-          <textarea data-index="${index}" data-field="top" placeholder="Set up the idea.">${escapeHtml(frame.top)}</textarea>
-        </label>
-        <label class="field-label">
-          <span>Bottom Text</span>
-          <textarea data-index="${index}" data-field="bottom" placeholder="Deliver the payoff.">${escapeHtml(frame.bottom)}</textarea>
-        </label>
-        <div class="dual-control compact-range">
-          <div class="dual-control__head">
-            <label for="durationRange${index}">Frame Duration</label>
-            <span>80-2500 ms</span>
-          </div>
-          <div class="dual-control__row">
-            <input id="durationRange${index}" data-index="${index}" data-field="duration" type="range" min="80" max="2500" step="10" value="${frame.duration}" />
-            <input data-index="${index}" data-field="duration" type="number" min="80" max="2500" step="10" value="${frame.duration}" />
-          </div>
+      <div class="frame-card__fields">
+        <div class="field">
+          <label>Top</label>
+          <textarea data-i="${i}" data-f="top" placeholder="Top caption">${esc(f.top)}</textarea>
         </div>
-      </div>
-    `;
-    ui.frameList.appendChild(card);
+        <div class="field">
+          <label>Bottom</label>
+          <textarea data-i="${i}" data-f="bottom" placeholder="Bottom caption">${esc(f.bottom)}</textarea>
+        </div>
+        <div class="range-row">
+          <label>${f.duration}ms</label>
+          <input type="range" data-i="${i}" data-f="duration" min="80" max="2500" step="10" value="${f.duration}" />
+        </div>
+      </div>`;
+    list.appendChild(card);
   });
 }
 
-function updateSummary() {
-  const template = getSelectedTemplate();
-  const totalDuration = state.frames.reduce((sum, frame) => sum + frame.duration, 0);
-  const durationLabel = formatDuration(totalDuration);
-  const canvasLabel = `${state.width} × ${state.height}`;
-
-  ui.widthRange.value = String(state.width);
-  ui.widthInput.value = String(state.width);
-  ui.heightRange.value = String(state.height);
-  ui.heightInput.value = String(state.height);
-
-  ui.sizeBadge.textContent = canvasLabel;
-  ui.durationBadge.textContent = durationLabel;
-  ui.heroCanvas.textContent = canvasLabel;
-  ui.heroFrames.textContent = String(state.frames.length);
-  ui.heroDuration.textContent = durationLabel;
-  ui.summaryTemplate.textContent = template?.name || "Custom";
-  ui.summaryFrames.textContent = String(state.frames.length);
-  ui.summaryDuration.textContent = `${totalDuration} ms`;
-}
-
-function updateCurrentTemplate() {
-  const template = getSelectedTemplate();
-  if (!template) {
-    return;
+function onFrameInput(e) {
+  const t = e.target;
+  const i = +t.dataset.i;
+  if (!state.frames[i]) return;
+  if (t.dataset.f === "top" || t.dataset.f === "bottom") {
+    state.frames[i][t.dataset.f] = t.value;
+  } else if (t.dataset.f === "duration") {
+    state.frames[i].duration = +t.value;
+    const label = t.closest(".range-row")?.querySelector("label");
+    if (label) label.textContent = t.value + "ms";
   }
-  ui.currentTemplateName.textContent = template.name;
-  ui.currentTemplateDescription.textContent = template.description;
-  ui.currentTemplateImage.src = template.previewUrl;
-  ui.currentTemplateImage.alt = `${template.name} template preview`;
+  renderScript();
+  updateStats();
 }
 
-function renderScriptPreview(scriptFromServer) {
-  ui.scriptPreview.textContent = scriptFromServer || buildMacScriptPreview();
+function onFrameAction(e) {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
+  const i = +btn.dataset.i;
+  const a = btn.dataset.action;
+  if (a === "del" && state.frames.length > 1) state.frames.splice(i, 1);
+  else if (a === "dup") state.frames.splice(i + 1, 0, { ...state.frames[i] });
+  else if (a === "up" && i > 0) [state.frames[i - 1], state.frames[i]] = [state.frames[i], state.frames[i - 1]];
+  else if (a === "down" && i < state.frames.length - 1) [state.frames[i], state.frames[i + 1]] = [state.frames[i + 1], state.frames[i]];
+  render();
 }
 
-function buildMacScriptPreview() {
-  const lines = [`var template = Template("${state.selectedTemplate}");`, "var gif = Gif();", ""];
-  state.frames.forEach((frame) => {
-    const top = normalizeCaption(frame.top);
-    const bottom = normalizeCaption(frame.bottom);
-    const duration = clampNumber(frame.duration, 80, 2500, 400);
-    lines.push(
-      `gif.frame(Meme(template).text(Top, "${top}").text(Bottom, "${bottom}").resize(Size(${state.width}, ${state.height})), Duration(${duration}));`
-    );
+function render() {
+  renderTemplates();
+  renderFrames();
+  updateStats();
+  renderScript();
+}
+
+function updateStats() {
+  $("statCanvas").innerHTML = `${state.width}&times;${state.height}`;
+  $("sizeBadge").innerHTML = `${state.width}&times;${state.height}`;
+  $("statFrames").textContent = state.frames.length;
+  const totalMs = state.frames.reduce((s, f) => s + f.duration, 0);
+  $("statDuration").textContent = totalMs >= 1000 ? (totalMs / 1000).toFixed(1) + "s" : totalMs + "ms";
+  $("widthRange").value = state.width;
+  $("widthNum").value = state.width;
+  $("heightRange").value = state.height;
+  $("heightNum").value = state.height;
+}
+
+function renderScript(serverScript) {
+  $("scriptPreview").textContent = serverScript || buildScript();
+}
+
+function buildScript() {
+  const lines = [];
+  const hasEffect = state.selectedEffect && state.selectedEffect !== "none";
+  const effectMap = {
+    sepia: "sepia", invert: "invert", sharpen: "sharpen", vignette: "vignette",
+    grayscale: "grayscale",
+    glitch: "pixelate(4) >> contrast(1.8) >> noise(0.2)",
+    vintage: "sepia >> brightness(0.9)",
+    deepfry: "saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)",
+    cyberpunk: "hueShift(180) >> contrast(1.5) >> chromatic(3) >> glow(4)",
+    comic: "posterize(5) >> contrast(1.4) >> sharpen",
+    retro: "grayscale >> contrast(1.3) >> noise(0.1)",
+  };
+
+  if (hasEffect) lines.push(`effect fx = ${effectMap[state.selectedEffect] || state.selectedEffect};`, "");
+
+  const hasStyle = state.textColor !== "#FFFFFF" && state.textColor !== "#ffffff";
+  const hasOutline = state.outlineWidth !== 3;
+  if (hasStyle || hasOutline) {
+    lines.push("style custom {");
+    if (hasStyle) lines.push(`    color: "${state.textColor.toUpperCase()}"`);
+    lines.push(`    outline: ${state.outlineWidth}`);
+    lines.push("}", "");
+  }
+
+  lines.push("gif loop {");
+  const stylePart = (hasStyle || hasOutline) ? " custom" : "";
+  const fxPart = hasEffect ? " |> fx" : "";
+  state.frames.forEach((f) => {
+    const top = norm(f.top);
+    const bot = norm(f.bottom);
+    lines.push(`    @${state.selectedTemplate} ${state.width}x${state.height}${stylePart} { top: "${top}" bottom: "${bot}" }${fxPart} : ${f.duration}ms`);
   });
-  lines.push("");
-  lines.push('gif.save("generated.gif");');
+  lines.push('} => "output.gif"');
   return lines.join("\n");
 }
 
 async function renderGif() {
-  if (state.isRendering) {
-    return;
-  }
-
+  if (state.isRendering) return;
   state.isRendering = true;
-  ui.generateButton.disabled = true;
-  ui.generateButton.textContent = "Rendering...";
-  ui.statusLine.textContent = "Rendering GIF through the Mac runtime...";
+  $("renderBtn").disabled = true;
+  $("renderBtn").textContent = "Rendering...";
+  $("statusLine").textContent = "Rendering GIF...";
+  $("statusLine").className = "status";
 
   try {
-    const response = await fetch("/api/generate", {
+    const res = await fetch("/api/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         template: state.selectedTemplate,
         width: state.width,
         height: state.height,
         frames: state.frames,
+        effect: state.selectedEffect,
+        textColor: state.textColor,
+        outlineWidth: state.outlineWidth,
       }),
     });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Render failed");
 
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Render failed.");
-    }
+    $("gifPreview").src = `${data.previewUrl}?v=${Date.now()}`;
+    $("gifPreview").hidden = false;
+    $("placeholder").hidden = true;
+    $("downloadLink").href = data.downloadUrl;
+    $("downloadLink").hidden = false;
 
-    state.lastResult = data;
-    ui.gifPreview.src = `${data.previewUrl}?v=${Date.now()}`;
-    ui.gifPreview.hidden = false;
-    ui.previewPlaceholder.hidden = true;
-    ui.downloadLink.href = data.downloadUrl;
-    ui.downloadLink.download = "mac-meme.gif";
-    ui.downloadLink.hidden = false;
-    ui.statusLine.style.color = "";
-
-    const fileSizeKb = Math.max(1, Math.round((data.summary.fileSizeBytes || 0) / 1024));
-    ui.statusLine.textContent = `Rendered ${data.summary.frameCount} frames at ${data.summary.width} × ${data.summary.height}. Output size: ${fileSizeKb} KB.`;
-    renderScriptPreview(data.script);
-  } catch (error) {
-    ui.statusLine.textContent = error.message;
-    ui.statusLine.style.color = "var(--accent)";
+    const kb = Math.max(1, Math.round((data.summary?.fileSizeBytes || 0) / 1024));
+    $("statusLine").textContent = `${data.summary?.frameCount || "?"} frames, ${kb} KB`;
+    if (data.script) renderScript(data.script);
+  } catch (err) {
+    $("statusLine").textContent = err.message;
+    $("statusLine").className = "status status--error";
   } finally {
     state.isRendering = false;
-    ui.generateButton.disabled = false;
-    ui.generateButton.textContent = "Render GIF";
+    $("renderBtn").disabled = false;
+    $("renderBtn").textContent = "Render GIF";
   }
 }
 
-function getSelectedTemplate() {
-  return state.templates.find((template) => template.id === state.selectedTemplate) || state.templates[0];
+function norm(s) {
+  return String(s || "").replace(/"/g, "'").replace(/\s+/g, " ").trim().slice(0, 120);
 }
 
-function normalizeCaption(text) {
-  return String(text || "")
-    .replaceAll("\\", "\\\\")
-    .replaceAll('"', "'")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120);
-}
-
-function clampNumber(value, min, max, fallback) {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    return fallback;
-  }
-  return Math.max(min, Math.min(max, Math.round(parsed)));
-}
-
-function formatDuration(totalMs) {
-  if (totalMs >= 1000) {
-    return `${(totalMs / 1000).toFixed(totalMs % 1000 === 0 ? 0 : 1)}s`;
-  }
-  return `${totalMs}ms`;
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }

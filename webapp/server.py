@@ -30,30 +30,72 @@ TEMPLATE_CATALOG = [
     {
         "id": "two_panel",
         "name": "Two Panel",
-        "description": "Classic split-screen rhythm for before-and-after, expectation-vs-reality, or Monday-to-Friday arcs.",
+        "description": "Classic split-screen for before-and-after or expectation-vs-reality.",
         "bestFor": "Pairing two ideas with a fast payoff.",
         "previewUrl": "/assets/templates/two_panel.png",
     },
     {
         "id": "three_panel",
         "name": "Three Panel",
-        "description": "Three beats with escalating energy when you want the joke to land in stages.",
+        "description": "Three beats with escalating energy.",
         "bestFor": "Setups that need a beginning, middle, and spike.",
         "previewUrl": "/assets/templates/three_panel.png",
     },
     {
         "id": "bottom_text",
         "name": "Bottom Text",
-        "description": "Poster-style composition with a giant image and a heavy caption block.",
+        "description": "Poster-style with a heavy caption block.",
         "bestFor": "One-liners, announcements, and dramatic reveals.",
         "previewUrl": "/assets/templates/bottom_text.png",
     },
     {
         "id": "blank",
         "name": "Blank",
-        "description": "Minimal empty canvas for countdowns, title cards, or stark graphic loops.",
+        "description": "Plain white canvas.",
         "bestFor": "Simple text-driven GIFs and punchy hard cuts.",
         "previewUrl": "/assets/templates/blank.png",
+    },
+    {
+        "id": "dark",
+        "name": "Dark",
+        "description": "Dark background for neon and high-contrast text.",
+        "bestFor": "Neon styles, dark mode memes.",
+        "previewUrl": "/assets/templates/dark.png",
+    },
+    {
+        "id": "wide",
+        "name": "Wide (16:9)",
+        "description": "Landscape format for YouTube thumbnails.",
+        "bestFor": "Video thumbnails and widescreen memes.",
+        "previewUrl": "/assets/templates/wide.png",
+    },
+    {
+        "id": "tall",
+        "name": "Tall (9:16)",
+        "description": "Portrait format for stories and reels.",
+        "bestFor": "Instagram stories and TikTok.",
+        "previewUrl": "/assets/templates/tall.png",
+    },
+    {
+        "id": "square",
+        "name": "Square (1:1)",
+        "description": "Square format for Instagram posts.",
+        "bestFor": "Instagram feed and social cards.",
+        "previewUrl": "/assets/templates/square.png",
+    },
+    {
+        "id": "four_panel",
+        "name": "Four Panel",
+        "description": "2x2 grid with dividers.",
+        "bestFor": "Multi-beat jokes and comparison grids.",
+        "previewUrl": "/assets/templates/four_panel.png",
+    },
+    {
+        "id": "caption_bar",
+        "name": "Caption Bar",
+        "description": "70% image area, 30% caption bar.",
+        "bestFor": "Image-heavy memes with clean captions.",
+        "previewUrl": "/assets/templates/caption_bar.png",
     },
 ]
 TEMPLATE_IDS = {template["id"] for template in TEMPLATE_CATALOG}
@@ -95,12 +137,46 @@ def build_script(payload: dict[str, object], output_path: Path) -> tuple[str, di
     if len(raw_frames) > MAX_FRAME_COUNT:
         raise ValueError(f"Frame count exceeds the limit of {MAX_FRAME_COUNT}.")
 
+    # Optional effect preset
+    effect_name = str(payload.get("effect") or "").strip()
+    valid_effects = {
+        "": None, "none": None,
+        "sepia": "sepia", "invert": "invert", "sharpen": "sharpen",
+        "vignette": "vignette", "grayscale": "grayscale",
+        "glitch": "pixelate(4) >> contrast(1.8) >> noise(0.2)",
+        "vintage": "sepia >> brightness(0.9)",
+        "deepfry": "saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)",
+        "cyberpunk": "hueShift(180) >> contrast(1.5) >> chromatic(3) >> glow(4)",
+        "comic": "posterize(5) >> contrast(1.4) >> sharpen",
+        "retro": "grayscale >> contrast(1.3) >> noise(0.1)",
+    }
+    if effect_name and effect_name not in valid_effects:
+        raise ValueError("Unknown effect selected.")
+
+    # Optional style
+    style_color = str(payload.get("textColor") or "").strip()
+    style_outline = clamp_int(payload.get("outlineWidth"), 0, 10, 3)
+
     normalized_frames: list[dict[str, object]] = []
-    script_lines = [
-        f"var template = Template({mac_string_literal(template_id)});",
-        "var gif = Gif();",
-        "",
-    ]
+    script_lines: list[str] = []
+
+    # Add effect preset if selected
+    if effect_name and valid_effects.get(effect_name):
+        script_lines.append(f"effect fx = {valid_effects[effect_name]};")
+        script_lines.append("")
+
+    # Add style if customized
+    has_style = bool(style_color) or style_outline != 3
+    if has_style:
+        script_lines.append("style custom {")
+        if style_color:
+            script_lines.append(f'    color: {mac_string_literal(style_color)}')
+        script_lines.append(f"    outline: {style_outline}")
+        script_lines.append("}")
+        script_lines.append("")
+
+    # Build gif block with v2 syntax
+    script_lines.append("gif loop {")
 
     for raw_frame in raw_frames:
         if not isinstance(raw_frame, dict):
@@ -109,26 +185,23 @@ def build_script(payload: dict[str, object], output_path: Path) -> tuple[str, di
         bottom = normalize_caption(raw_frame.get("bottom"))
         duration = clamp_int(raw_frame.get("duration"), 80, 2500, 400)
         normalized_frames.append(
-            {
-                "top": top,
-                "bottom": bottom,
-                "duration": duration,
-            }
-        )
-        script_lines.append(
-            "gif.frame("
-            f"Meme(template).text(Top, {mac_string_literal(top)}).text(Bottom, {mac_string_literal(bottom)}).resize(Size({width}, {height})), "
-            f"Duration({duration})"
-            ");"
+            {"top": top, "bottom": bottom, "duration": duration}
         )
 
-    script_lines.extend(
-        [
-            "",
-            f'gif.save("{output_path.as_posix()}");',
-            'print "GIF saved.";'
-        ]
-    )
+        style_part = " custom" if has_style else ""
+        size_part = f" {width}x{height}"
+        effect_part = " |> fx" if effect_name and valid_effects.get(effect_name) else ""
+        script_lines.append(
+            f"    @{template_id}{size_part}{style_part} {{"
+            f" top: {mac_string_literal(top)}"
+            f" bottom: {mac_string_literal(bottom)}"
+            f" }}{effect_part} : {duration}ms"
+        )
+
+    script_lines.extend([
+        f'}} => "{output_path.as_posix()}";',
+        'print "GIF saved.";',
+    ])
 
     return "\n".join(script_lines) + "\n", {
         "template": template_id,
@@ -242,6 +315,20 @@ class GifStudioHandler(BaseHTTPRequestHandler):
                 self,
                 {
                     "templates": TEMPLATE_CATALOG,
+                    "effects": [
+                        {"id": "none", "name": "None", "description": "No effect applied."},
+                        {"id": "sepia", "name": "Sepia", "description": "Warm sepia tone."},
+                        {"id": "vintage", "name": "Vintage", "description": "Sepia + reduced brightness."},
+                        {"id": "glitch", "name": "Glitch", "description": "Pixelation + contrast + noise."},
+                        {"id": "deepfry", "name": "Deep Fry", "description": "Maximum saturation + contrast + compression."},
+                        {"id": "cyberpunk", "name": "Cyberpunk", "description": "Hue shift + chromatic aberration + glow."},
+                        {"id": "comic", "name": "Comic", "description": "Posterize + contrast + sharpen."},
+                        {"id": "retro", "name": "Retro", "description": "Grayscale + contrast + noise."},
+                        {"id": "grayscale", "name": "Grayscale", "description": "Convert to grayscale."},
+                        {"id": "invert", "name": "Invert", "description": "Invert all colors."},
+                        {"id": "vignette", "name": "Vignette", "description": "Dark edges."},
+                        {"id": "sharpen", "name": "Sharpen", "description": "Sharpen the image."},
+                    ],
                     "limits": {
                         "frameCount": MAX_FRAME_COUNT,
                         "width": {"min": 240, "max": 1200},
