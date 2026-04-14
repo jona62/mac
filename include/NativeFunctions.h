@@ -24,15 +24,20 @@
 namespace callable {
 
     // All user output goes to output/ directory
-    static const std::string OUTPUT_DIR = "output";
+    static std::string getOutputDir() {
+        const char* home = std::getenv("HOME");
+        if (!home) home = ".";
+        std::string dir = std::string(home) + "/mac/output";
+        std::filesystem::create_directories(dir);
+        return dir;
+    }
 
     static std::string toOutputPath(const std::string& path) {
-        // Already has a directory component — leave it alone
-        if (path.find('/') != std::string::npos || path.find('\\') != std::string::npos) {
-            return path;
-        }
-        std::filesystem::create_directories(OUTPUT_DIR);
-        return OUTPUT_DIR + "/" + path;
+        // Already absolute — leave it alone
+        if (!path.empty() && path[0] == '/') return path;
+        // Has directory separators — treat as relative to cwd
+        if (path.find('/') != std::string::npos || path.find('\\') != std::string::npos) return path;
+        return getOutputDir() + "/" + path;
     }
 
     // --- Time ---
