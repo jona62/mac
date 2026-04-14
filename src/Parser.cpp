@@ -720,7 +720,10 @@ shared_ptr<stmt::Stmt<T>> Parser::effectDeclaration() {
 // @templateName [WxH] { top: "...", bottom: "..." } or @templateName "one-liner"
 template <typename T>
 shared_ptr<Expr<T>> Parser::memeLiteral() {
-    consume(TokenType::IDENTIFIER, "Expected template name after '@'.");
+    // Accept identifier (@two_panel) or string (@"path/to/image.png")
+    if (!match(TokenType::IDENTIFIER) && !match(TokenType::STRING)) {
+        throw ParseError(peek(), "Expected template name or path after '@'.");
+    }
     Token templateName = previous();
 
     // Optional size: 400x300

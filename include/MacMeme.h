@@ -33,7 +33,11 @@ namespace meme {
                 {"bottom_text",    "assets/templates/bottom_text.png"},
                 {"blank",          "assets/templates/blank.png"},
                 {"caption_bar",    "assets/templates/caption_bar.png"},
-                {"four_panel",     "assets/templates/four_panel.png"}
+                {"four_panel",     "assets/templates/four_panel.png"},
+                {"wide",           "assets/templates/wide.png"},
+                {"tall",           "assets/templates/tall.png"},
+                {"square",         "assets/templates/square.png"},
+                {"dark",           "assets/templates/dark.png"},
             };
             return map;
         }

@@ -74,6 +74,42 @@ void createFourPanel(const char* path) {
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 
+void createWide(const char* path) {
+    int w = 1200, h = 675; // 16:9
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, w, h/2, 50, 50, 55);
+    fillRect(img.data(), w, h, 0, h/2, w, h/2, 62, 62, 68);
+    fillRect(img.data(), w, h, 0, h/2-2, w, 4, 30, 30, 35);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
+void createTall(const char* path) {
+    int w = 675, h = 1200; // 9:16 (stories/reels)
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, w, h/3, 50, 50, 55);
+    fillRect(img.data(), w, h, 0, h/3, w, h/3, 62, 62, 68);
+    fillRect(img.data(), w, h, 0, 2*h/3, w, h/3, 50, 50, 55);
+    fillRect(img.data(), w, h, 0, h/3-2, w, 4, 30, 30, 35);
+    fillRect(img.data(), w, h, 0, 2*h/3-2, w, 4, 30, 30, 35);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
+void createSquare(const char* path) {
+    int w = 800, h = 800; // 1:1 (Instagram)
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, w, h/2, 45, 45, 50);
+    fillRect(img.data(), w, h, 0, h/2, w, h/2, 58, 58, 63);
+    fillRect(img.data(), w, h, 0, h/2-2, w, 4, 28, 28, 33);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
+void createDark(const char* path) {
+    int w = 600, h = 600;
+    std::vector<unsigned char> img(w * h * 4);
+    fillRect(img.data(), w, h, 0, 0, w, h, 18, 18, 22);
+    stbi_write_png(path, w, h, 4, img.data(), w * 4);
+}
+
 int main() {
     createTwoPanel("../assets/templates/two_panel.png");
     createThreePanel("../assets/templates/three_panel.png");
@@ -81,6 +117,10 @@ int main() {
     createBlank("../assets/templates/blank.png");
     createCaptionBar("../assets/templates/caption_bar.png");
     createFourPanel("../assets/templates/four_panel.png");
-    printf("Generated 6 template images.\n");
+    createWide("../assets/templates/wide.png");
+    createTall("../assets/templates/tall.png");
+    createSquare("../assets/templates/square.png");
+    createDark("../assets/templates/dark.png");
+    printf("Generated 10 template images.\n");
     return 0;
 }

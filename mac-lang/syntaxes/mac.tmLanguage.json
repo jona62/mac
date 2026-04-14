@@ -49,12 +49,24 @@
       "match": "\\b\\d+(ms|s)\\b"
     },
     "meme-literal": {
-      "match": "(@)(\\w+)(?:\\s+(\\d+x\\d+))?",
-      "captures": {
-        "1": { "name": "punctuation.definition.meme.mac" },
-        "2": { "name": "entity.name.tag.template.mac" },
-        "3": { "name": "constant.numeric.size.mac" }
-      }
+      "patterns": [
+        {
+          "match": "(@)(\"[^\"]*\")(?:\\s+(\\d+x\\d+))?",
+          "captures": {
+            "1": { "name": "punctuation.definition.meme.mac" },
+            "2": { "name": "string.quoted.double.template.mac" },
+            "3": { "name": "constant.numeric.size.mac" }
+          }
+        },
+        {
+          "match": "(@)(\\w+)(?:\\s+(\\d+x\\d+))?",
+          "captures": {
+            "1": { "name": "punctuation.definition.meme.mac" },
+            "2": { "name": "entity.name.tag.template.mac" },
+            "3": { "name": "constant.numeric.size.mac" }
+          }
+        }
+      ]
     },
     "effect-declaration": {
       "match": "\\b(effect)\\s+([A-Za-z_]\\w*)",
