@@ -58,8 +58,11 @@ namespace meme {
                                   pixels.data(), width * 4) != 0;
         }
 
-        // Assets directory relative to executable (run from build/)
+        // Assets directory — try binary-relative first, then cwd-relative
         static std::string getAssetsDir() {
+            auto binDir = meme::MacMeme::binaryDir();
+            auto binAssets = binDir + "/assets";
+            if (std::filesystem::exists(binAssets)) return binAssets;
             return "assets";
         }
 

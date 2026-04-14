@@ -1,0 +1,65 @@
+// 03b — Text Styles
+// Customize text color, outline, and shadow with reusable style blocks.
+
+// Define reusable styles
+style neon {
+    color: "#00FF41"
+    outline: 4
+    outlineColor: "#003300"
+    shadow: 3
+    shadowColor: "#00FF4180"
+}
+
+style alert {
+    color: "#FF0000"
+    outline: 5
+    outlineColor: "#440000"
+    shadow: 2
+    shadowColor: "#00000088"
+}
+
+style clean {
+    color: "#333333"
+    outline: 1
+    outlineColor: "#CCCCCC"
+}
+
+style ice {
+    color: "#88CCFF"
+    outline: 3
+    outlineColor: "#002244"
+    shadow: 2
+    shadowColor: "#0044AA80"
+}
+
+// Apply styles to meme literals
+@dark neon {
+    top: "NEON GREEN"
+    bottom: "Hacker vibes"
+} => "neon.png";
+
+@two_panel alert {
+    top: "WARNING"
+    bottom: "Production is down"
+} => "alert.png";
+
+@blank clean "Minimalist design" => "minimal.png";
+
+@dark ice {
+    top: "FROST"
+    bottom: "Cool as ice"
+} => "ice.png";
+
+// Compare default vs styled
+@blank "Default style" => "default.png";
+@blank neon "Neon style" => "neon_oneliner.png";
+
+// Styles work with effects too
+effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
+
+@dark neon {
+    top: "GLITCH"
+    bottom: "NEON"
+} |> glitch => "neon_glitch.png";
+
+print "Styled memes saved to output/";

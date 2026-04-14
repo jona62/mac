@@ -1,4 +1,5 @@
 #include <cstring>
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -9,8 +10,38 @@
 #include "Resolver.h"
 #include "MacAnalyzer.h"
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 using namespace std;
 using namespace token;
+
+// Resolve paths relative to the binary's own directory
+// so assets/stdlib work regardless of where the binary is invoked from
+static string binaryDir;
+
+static string getBinaryDir() {
+    std::filesystem::path exe;
+#ifdef __APPLE__
+    char buf[1024];
+    uint32_t size = sizeof(buf);
+    if (_NSGetExecutablePath(buf, &size) == 0) {
+        exe = std::filesystem::canonical(buf);
+    }
+#elif defined(__linux__)
+    exe = std::filesystem::canonical("/proc/self/exe");
+#endif
+    if (!exe.empty()) return exe.parent_path().string();
+    return ".";
+}
+
+static string resolvePath(const string& relative) {
+    // Try relative to binary first, then cwd
+    auto binPath = binaryDir + "/" + relative;
+    if (std::filesystem::exists(binPath)) return binPath;
+    return relative; // fallback to cwd-relative
+}
 
 static auto interp = make_shared<interpreter::Interpreter>();
 
@@ -32,7 +63,7 @@ string readFile(const char *path) {
 }
 
 void loadPrelude() {
-    string src = readFile("stdlib/prelude.mac");
+    string src = readFile(resolvePath("stdlib/prelude.mac").c_str());
     if (src.empty()) return;
 
     scanner::Scanner scanner(src);
@@ -49,6 +80,9 @@ void loadPrelude() {
 }
 
 int main(int argc, char **argv) {
+    binaryDir = getBinaryDir();
+    meme::MacMeme::binaryDir() = binaryDir;
+
     // --analyze mode: output JSON analysis for LSP
     if (argc == 3 && strcmp(argv[1], "--analyze") == 0) {
         analyze_file(argv[2]);
@@ -126,7 +160,7 @@ void analyze_file(const char *path) {
 
     analyzer::MacAnalyzer macAnalyzer;
 
-    string preludeSource = readFile("stdlib/prelude.mac");
+    string preludeSource = readFile(resolvePath("stdlib/prelude.mac").c_str());
     if (!preludeSource.empty()) {
         scanner::Scanner preludeScanner(preludeSource);
         vector<Token> preludeTokens;

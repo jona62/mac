@@ -1,6 +1,7 @@
 #ifndef MAC_MEME_H
 #define MAC_MEME_H
 
+#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <string>
@@ -53,12 +54,25 @@ namespace meme {
             return map;
         }
 
+        // Binary directory for resolving assets — set by main()
+        static std::string& binaryDir() {
+            static std::string dir = ".";
+            return dir;
+        }
+
         // Resolve a template name to an image file path
         static std::string resolveTemplate(const std::string& name) {
             auto& map = templateMap();
             auto it = map.find(name);
-            if (it != map.end()) return it->second;
-            // Treat as a direct file path
+            if (it != map.end()) {
+                // Try binary-relative path first
+                auto binPath = binaryDir() + "/" + it->second;
+                if (std::filesystem::exists(binPath)) return binPath;
+                return it->second;
+            }
+            // Treat as a direct file path — try binary-relative first
+            auto binPath = binaryDir() + "/" + name;
+            if (std::filesystem::exists(binPath)) return binPath;
             return name;
         }
 
