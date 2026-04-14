@@ -414,9 +414,9 @@ Gif()
     .save("countdown.gif");
 ```
 
-### Pipeline Helpers
+### Pipelines
 
-Convert an array of memes into animation:
+Use `animate` for simple GIFs, or `reduce` to fold memes into a Timeline:
 
 ```mac
 // Array -> Gif (uniform timing, no transitions)
@@ -424,8 +424,13 @@ Convert an array of memes into animation:
     |> map(d -> Meme(t).text(Top, d))
     |> animate(Duration(400));
 
-// Array -> Timeline (uniform timing with transitions)
-["Mon", "Tue", "Wed"]
-    |> map(d -> Meme(t).text(Top, d))
-    |> sequence(Duration(2000), crossfade, Duration(150));
+// Array -> Timeline (fold with reduce)
+var tl = memes |> reduce((tl, m) -> tl
+    .frame(m, Duration(2000))
+    .transition(crossfade, Duration(150)), Timeline());
+tl.loop(0).render("week.gif");
+
+// Array of Frames -> Timeline (using + operator)
+var frames = memes |> map(m -> m + Duration(500));
+var tl = frames |> reduce((tl, f) -> tl + f, Timeline());
 ```

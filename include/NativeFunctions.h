@@ -1504,36 +1504,6 @@ namespace callable {
         std::string toString() override { return "<native fn>"; }
     };
 
-    // sequence(memesArray, holdDuration, transitionType, transitionDuration)
-    // Builds a Timeline from an array of memes with uniform timing and transitions
-    class SequenceFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue> args) override {
-            auto memesArr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
-            auto holdInst = std::get<std::shared_ptr<instance::MacInstance>>(args[1]);
-            auto transType = std::get<std::string>(args[2]);
-            auto transInst = std::get<std::shared_ptr<instance::MacInstance>>(args[3]);
-
-            token::Token msToken(token::TokenType::IDENTIFIER, token::TokenValue(std::string("ms")), 0);
-            int holdMs = static_cast<int>(std::get<double>(holdInst->get(msToken)));
-            int transMs = static_cast<int>(std::get<double>(transInst->get(msToken)));
-
-            auto tl = std::make_shared<meme::MacTimeline>();
-            for (size_t i = 0; i < memesArr->elements.size(); ++i) {
-                auto pd = getMemePixels(memesArr->elements[i]);
-                tl->addKeyframe(std::move(pd.pixels), pd.width, pd.height);
-                tl->addHold(holdMs);
-                if (i + 1 < memesArr->elements.size()) {
-                    tl->setTransition(transMs, transType);
-                }
-            }
-            return value::MacValue(tl);
-        }
-        int arity() override { return 4; }
-        std::string toString() override { return "<native fn>"; }
-    };
-
     // =======================================================================
     // Public save(thing, path) — unified save for all exportable types
     // Handles: Meme instances, Gif, Timeline, rendered maps (from effects/layout)

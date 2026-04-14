@@ -28,8 +28,10 @@ var effects = [clean, vintage, glitch, deepfry, invert];
 // Apply different effects to each frame
 var styled = zip(memes, effects) |> map(pair -> pair[0] |> pair[1]);
 
-// Build animation with sequence — uniform hold + transitions
-var tl = styled |> sequence(Duration(4000), crossfade, Duration(150));
+// Build animation with reduce — fold memes into a timeline
+var tl = styled |> reduce((tl, m) -> tl
+    .frame(m, Duration(4000))
+    .transition(crossfade, Duration(150)), Timeline());
 tl.loop(0).render("showcase.gif");
 
 print "Showcase GIF saved!";

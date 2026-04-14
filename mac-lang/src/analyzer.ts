@@ -198,8 +198,6 @@ const NATIVE_FUNCTIONS: NativeDef[] = [
     { name: "_timeline_hold", arity: 2, description: "Internal: holds the last frame on a timeline." },
     { name: "_timeline_loop", arity: 2, description: "Internal: sets the loop count on a timeline." },
     { name: "_timeline_render", arity: 2, description: "Internal: renders a timeline to an animated GIF." },
-    // Meme bridge
-    { name: "sequence", arity: 4, description: "sequence(memes, holdDuration, transitionType, transitionDuration) — Build a Timeline from an array of memes with uniform timing." },
 ];
 
 // Known properties/methods for built-in types
@@ -328,7 +326,6 @@ const NATIVE_RETURN_TYPES = new Map<string, (argTypes: MacType[]) => MacType>([
     // Timeline
     ["Timeline",  () => ({ tag: "instance", className: "Timeline" })],
     ["timeline",  () => ({ tag: "instance", className: "Timeline" })],
-    ["sequence",  () => ({ tag: "instance", className: "Timeline" })],
 
     // Effects (parameterized) — return a Meme→Meme function
     ["blur",       () => ({ tag: "function", paramCount: 1 })],
