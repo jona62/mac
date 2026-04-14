@@ -203,98 +203,7 @@ const preludePath = findPath(
     path.resolve(__dirname, "../../../stdlib/prelude.mac"),
 );
 
-// Generate mac.d.mac — declaration file for go-to-definition on natives/prelude
-const declPath = path.join(os.tmpdir(), "mac.d.mac");
-let declUri: string | null = null;
-// Maps "source:name" → line number in the declaration file
-const declLineMap = new Map<string, number>();
-
-function generateDeclarations(): void {
-    const result = runAnalysis("// empty");
-    if (!result) return;
-
-    const lines: string[] = [
-        "// Mac Standard Library Declarations",
-        "// Auto-generated — do not edit",
-        "",
-    ];
-
-    // Group signatures by source
-    const nativeSigs = result.signatures.filter(s => s.source === "native" && s.visibility !== "internal");
-    const preludeClasses = result.classes.filter(c => c.source === "prelude");
-    const preludeVars = result.symbols.filter(s => s.source === "prelude" && s.kind === "variable" && s.visibility !== "internal");
-
-    // Native functions
-    lines.push("// ── Built-in Functions ──────────────────────────────");
-    lines.push("");
-    const emitted = new Set<string>();
-    for (const sig of nativeSigs) {
-        if (sig.name.startsWith("_") || emitted.has(sig.name)) continue;
-        emitted.add(sig.name);
-
-        // Collect all overloads
-        const overloads = nativeSigs.filter(s => s.name === sig.name);
-        for (const ov of overloads) {
-            const params = ov.params.join(", ");
-            const ret = ov.returnType && ov.returnType !== "unknown" ? ` -> ${ov.returnType}` : "";
-            declLineMap.set(`native:${sig.name}`, lines.length);
-            lines.push(`fun ${sig.name}(${params})${ret};`);
-        }
-        if (sig.description) lines.push(`// ${sig.description}`);
-        lines.push("");
-    }
-
-    // Prelude constants
-    if (preludeVars.length > 0) {
-        lines.push("// ── Constants ──────────────────────────────────────");
-        lines.push("");
-        for (const v of preludeVars) {
-            if (v.name.startsWith("_")) continue;
-            const type = v.type && v.type !== "unknown" ? `: ${v.type}` : "";
-            declLineMap.set(`prelude:${v.name}`, lines.length);
-            lines.push(`var ${v.name}${type};`);
-            if (v.description) lines.push(`// ${v.description}`);
-        }
-        lines.push("");
-    }
-
-    // Prelude classes
-    for (const cls of preludeClasses) {
-        lines.push(`// ── ${cls.name} ──────────────────────────────────────`);
-        lines.push("");
-        declLineMap.set(`prelude:${cls.name}`, lines.length);
-        const ext = cls.superclass ? ` < ${cls.superclass}` : "";
-        lines.push(`class ${cls.name}${ext} {`);
-        if (cls.description) lines.push(`    // ${cls.description}`);
-
-        for (const m of cls.members) {
-            if (m.name.startsWith("_")) continue;
-            const key = `prelude:${cls.name}.${m.name}`;
-            declLineMap.set(key, lines.length);
-
-            if (m.kind === "constructor") {
-                const params = m.params.join(", ");
-                lines.push(`    init(${params});`);
-            } else if (m.kind === "method") {
-                const params = m.params.join(", ");
-                const ret = m.returnType && m.returnType !== "unknown" ? ` -> ${m.returnType}` : "";
-                lines.push(`    ${m.name}(${params})${ret};`);
-            } else if (m.kind === "field") {
-                const type = m.type && m.type !== "unknown" ? `: ${m.type}` : "";
-                lines.push(`    ${m.name}${type};`);
-            }
-            if (m.description) lines.push(`    // ${m.description}`);
-        }
-        lines.push("}");
-        lines.push("");
-    }
-
-    const content = lines.join("\n");
-    fs.writeFileSync(declPath, content);
-    declUri = `file://${declPath}`;
-}
-
-generateDeclarations();
+const preludeUri = preludePath ? `file://${preludePath}` : null;
 
 function runAnalysis(text: string): AnalysisResult | null {
     const tmpFile = path.join(os.tmpdir(), `mac-lsp-${Date.now()}.mac`);
@@ -351,12 +260,12 @@ connection.onDefinition((params: DefinitionParams): Location | null => {
 
     const prop = findAt(result.properties.filter((item) => item.source === "user"), params.position);
     if (prop) {
-        return locationForDefinition(params.textDocument.uri, prop.defSource, prop.defLine, prop.defCol, prop.defEndCol, prop.name, prop.ownerType);
+        return locationForDefinition(params.textDocument.uri, prop.defSource, prop.defLine, prop.defCol, prop.defEndCol);
     }
 
     const ref = findAt(result.references.filter((item) => item.source === "user"), params.position);
     if (!ref) return null;
-    return locationForDefinition(params.textDocument.uri, ref.defSource, ref.defLine, ref.defCol, ref.defEndCol, ref.defName, ref.defOwnerType);
+    return locationForDefinition(params.textDocument.uri, ref.defSource, ref.defLine, ref.defCol, ref.defEndCol);
 });
 
 connection.onHover((params: HoverParams): Hover | null => {
@@ -631,28 +540,10 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     return items;
 });
 
-function locationForDefinition(docUri: string, source: string, line: number, col: number, endCol: number, defName?: string, defOwnerType?: string): Location | null {
-    // User code — jump within the file
-    if (source === "user" && line > 0) {
-        return Location.create(docUri, toRange(line, col, endCol));
-    }
-
-    // Native or prelude — jump to declaration file
-    if (declUri && (source === "native" || source === "prelude")) {
-        // Try "source:OwnerType.name" first (for methods), then "source:name"
-        const keys = [];
-        if (defOwnerType) keys.push(`${source}:${defOwnerType}.${defName}`);
-        if (defName) keys.push(`${source}:${defName}`);
-
-        for (const key of keys) {
-            const declLine = declLineMap.get(key);
-            if (declLine !== undefined) {
-                return Location.create(declUri, Range.create(declLine, 0, declLine, (defName ?? "").length));
-            }
-        }
-    }
-
-    return null;
+function locationForDefinition(docUri: string, source: string, line: number, col: number, endCol: number): Location | null {
+    const targetUri = source === "prelude" ? preludeUri : source === "user" ? docUri : null;
+    if (!targetUri || line <= 0) return null;
+    return Location.create(targetUri, toRange(line, col, endCol));
 }
 
 function refreshAnalysis(doc: TextDocument): void {
