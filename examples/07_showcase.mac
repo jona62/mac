@@ -10,7 +10,7 @@ effect clean = sharpen >> contrast(1.1);
 
 // ── Hero Meme ───────────────────────────────────────────
 
-@two_panel {
+@two_panel 800x800 {
     top: "Me: it works on my machine"
     bottom: "Prod: lol no"
 } |> glitch => "hero.png";

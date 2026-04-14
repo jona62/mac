@@ -10,6 +10,15 @@
     bottom: "My team: just use Photoshop"
 } => "first_meme.png";
 
+// Specify dimensions with WxH after the template name
+@two_panel 800x600 {
+    top: "High res meme"
+    bottom: "800 by 600"
+} => "hires_meme.png";
+
+// One-liner with size
+@blank 400x400 "Compact" => "compact.png";
+
 // Templates: two_panel, three_panel, bottom_text, blank
 // Positions: top, bottom, center
 // Save: => auto-detects format from extension

@@ -1,12 +1,12 @@
 // 04 — Animation
 // Build GIFs and timelines with block syntax.
 
-// Simple countdown GIF
+// Simple countdown GIF — sized for social media
 gif loop {
-    @blank "3" : 500ms
-    @blank "2" : 500ms
-    @blank "1" : 500ms
-    @blank "GO!" : 1s
+    @blank 480x480 "3" : 500ms
+    @blank 480x480 "2" : 500ms
+    @blank 480x480 "1" : 500ms
+    @blank 480x480 "GO!" : 1s
 } => "countdown.gif";
 
 // Multi-frame story
