@@ -324,6 +324,8 @@ namespace callable {
         int height;
     };
 
+    static meme::TextStyle extractStyle(const std::shared_ptr<instance::MacInstance>& inst);
+
     static MemePixelData getMemePixels(const value::MacValue& val) {
         // Handle MacMap (rendered effect result)
         if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(val)) {
@@ -390,9 +392,73 @@ namespace callable {
         int w = static_cast<int>(std::get<double>(inst->get(wTok)));
         int h = static_cast<int>(std::get<double>(inst->get(hTok)));
 
+        auto style = extractStyle(inst);
         int outW, outH;
-        auto pixels = meme::MemeRenderer::render(templatePath, topText, bottomText, w, h, outW, outH);
+        auto pixels = meme::MemeRenderer::render(templatePath, topText, bottomText, w, h, outW, outH, style);
         return {pixels, outW, outH};
+    }
+
+    // Extract TextStyle from a Meme instance's _style field (MacMap)
+    static meme::TextStyle extractStyle(const std::shared_ptr<instance::MacInstance>& inst) {
+        meme::TextStyle style;
+        token::Token styleTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("_style")), 0);
+        value::MacValue styleVal;
+        try { styleVal = inst->get(styleTok); } catch (...) { return style; }
+
+        if (!std::holds_alternative<std::shared_ptr<collection::MacMap>>(styleVal)) return style;
+        auto map = std::get<std::shared_ptr<collection::MacMap>>(styleVal);
+
+        auto getStr = [&](const std::string& key) -> std::string {
+            if (!map->has(key)) return "";
+            auto v = map->get(key);
+            return std::holds_alternative<std::string>(v) ? std::get<std::string>(v) : "";
+        };
+        auto getNum = [&](const std::string& key, double def) -> double {
+            if (!map->has(key)) return def;
+            auto v = map->get(key);
+            return std::holds_alternative<double>(v) ? std::get<double>(v) : def;
+        };
+
+        // Parse hex color "#RRGGBB" or "#RRGGBBAA"
+        auto parseHex = [](const std::string& hex, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) {
+            if (hex.size() < 7 || hex[0] != '#') return;
+            unsigned int val = 0;
+            for (size_t i = 1; i < hex.size() && i < 9; i++) {
+                val <<= 4;
+                char c = hex[i];
+                if (c >= '0' && c <= '9') val |= (c - '0');
+                else if (c >= 'a' && c <= 'f') val |= (c - 'a' + 10);
+                else if (c >= 'A' && c <= 'F') val |= (c - 'A' + 10);
+            }
+            if (hex.size() >= 9) { // #RRGGBBAA
+                r = (val >> 24) & 0xFF; g = (val >> 16) & 0xFF;
+                b = (val >> 8) & 0xFF; a = val & 0xFF;
+            } else { // #RRGGBB
+                r = (val >> 16) & 0xFF; g = (val >> 8) & 0xFF; b = val & 0xFF; a = 255;
+            }
+        };
+
+        auto color = getStr("color");
+        if (!color.empty()) parseHex(color, style.textR, style.textG, style.textB, style.textA);
+
+        auto outlineColor = getStr("outlineColor");
+        if (!outlineColor.empty()) {
+            unsigned char a = 255;
+            parseHex(outlineColor, style.outlineR, style.outlineG, style.outlineB, a);
+        }
+
+        style.outlineWidth = static_cast<int>(getNum("outline", 3));
+
+        auto shadowColor = getStr("shadowColor");
+        if (!shadowColor.empty()) {
+            parseHex(shadowColor, style.shadowR, style.shadowG, style.shadowB, style.shadowA);
+        }
+        int shadow = static_cast<int>(getNum("shadow", 0));
+        if (shadow > 0) { style.shadowOffsetX = shadow; style.shadowOffsetY = shadow; }
+
+        style.fontSizeOverride = static_cast<float>(getNum("fontSize", 0));
+
+        return style;
     }
 
     // Helper: save pixels to a temp file and return the path
@@ -1478,6 +1544,7 @@ namespace callable {
         m->imagePath = templatePath;
         m->width = w;
         m->height = h;
+        m->style = extractStyle(inst);
         return m;
     }
 

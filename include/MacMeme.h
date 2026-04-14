@@ -10,6 +10,16 @@
 
 namespace meme {
 
+    // Text rendering style — used by MemeRenderer and MacMeme
+    struct TextStyle {
+        unsigned char textR = 255, textG = 255, textB = 255, textA = 255;
+        unsigned char outlineR = 0, outlineG = 0, outlineB = 0;
+        int outlineWidth = 3;
+        int shadowOffsetX = 0, shadowOffsetY = 0;
+        unsigned char shadowR = 0, shadowG = 0, shadowB = 0, shadowA = 128;
+        float fontSizeOverride = 0;
+    };
+
     // Forward declare MemeRenderer -- included only in method bodies below
     class MemeRenderer;
 
@@ -21,6 +31,7 @@ namespace meme {
         std::string imagePath;  // resolved path to template image
         int width = 0;          // 0 = use template's native size
         int height = 0;
+        TextStyle style;        // text rendering style
 
         MacMeme(const std::string& tmpl, const std::string& top, const std::string& bottom)
             : templateName(tmpl), topText(top), bottomText(bottom) {}
@@ -101,11 +112,12 @@ namespace meme {
 #include "MemeRenderer.h"
 
 inline std::vector<unsigned char> meme::MacMeme::render() const {
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height);
+    int w, h;
+    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height, w, h, style);
 }
 
 inline std::vector<unsigned char> meme::MacMeme::render(int& outW, int& outH) const {
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height, outW, outH);
+    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height, outW, outH, style);
 }
 
 inline bool meme::MacMeme::save(const std::string& outputPath) const {

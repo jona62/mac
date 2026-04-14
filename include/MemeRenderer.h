@@ -17,14 +17,7 @@
 
 namespace meme {
 
-    struct TextStyle {
-        unsigned char textR = 255, textG = 255, textB = 255, textA = 255; // white
-        unsigned char outlineR = 0, outlineG = 0, outlineB = 0;          // black
-        int outlineWidth = 3;
-        int shadowOffsetX = 0, shadowOffsetY = 0;
-        unsigned char shadowR = 0, shadowG = 0, shadowB = 0, shadowA = 128;
-        float fontSizeOverride = 0; // 0 = auto
-    };
+    // TextStyle is defined in MacMeme.h to avoid circular dependency
 
     class MemeRenderer {
     public:
