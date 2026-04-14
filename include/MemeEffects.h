@@ -281,6 +281,105 @@ namespace effects {
         }
     }
 
+    // --- Tint (color overlay) ---
+    inline void tint(unsigned char* pixels, int w, int h,
+                     unsigned char tr, unsigned char tg, unsigned char tb, float alpha) {
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            pixels[i + 0] = clampByte(pixels[i + 0] * (1.0f - alpha) + tr * alpha);
+            pixels[i + 1] = clampByte(pixels[i + 1] * (1.0f - alpha) + tg * alpha);
+            pixels[i + 2] = clampByte(pixels[i + 2] * (1.0f - alpha) + tb * alpha);
+        }
+    }
+
+    // --- Hue Shift ---
+    inline void hueShift(unsigned char* pixels, int w, int h, float degrees) {
+        float rad = degrees * 3.14159265f / 180.0f;
+        float cosA = std::cos(rad), sinA = std::sin(rad);
+        // Rotation matrix for hue in RGB space
+        float m00 = 0.213f + cosA * 0.787f - sinA * 0.213f;
+        float m01 = 0.715f - cosA * 0.715f - sinA * 0.715f;
+        float m02 = 0.072f - cosA * 0.072f + sinA * 0.928f;
+        float m10 = 0.213f - cosA * 0.213f + sinA * 0.143f;
+        float m11 = 0.715f + cosA * 0.285f + sinA * 0.140f;
+        float m12 = 0.072f - cosA * 0.072f - sinA * 0.283f;
+        float m20 = 0.213f - cosA * 0.213f - sinA * 0.787f;
+        float m21 = 0.715f - cosA * 0.715f + sinA * 0.715f;
+        float m22 = 0.072f + cosA * 0.928f + sinA * 0.072f;
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            float r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+            pixels[i + 0] = clampByte(r * m00 + g * m01 + b * m02);
+            pixels[i + 1] = clampByte(r * m10 + g * m11 + b * m12);
+            pixels[i + 2] = clampByte(r * m20 + g * m21 + b * m22);
+        }
+    }
+
+    // --- Glow (bloom) ---
+    inline void glow(unsigned char* pixels, int w, int h, int radius) {
+        // Copy original, blur the copy, screen blend
+        std::vector<unsigned char> blurred(pixels, pixels + w * h * 4);
+        blur(blurred.data(), w, h, radius);
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            for (int c = 0; c < 3; c++) {
+                float base = pixels[i + c] / 255.0f;
+                float bloom = blurred[i + c] / 255.0f;
+                // Screen blend: 1 - (1-a)(1-b)
+                float result = 1.0f - (1.0f - base) * (1.0f - bloom);
+                pixels[i + c] = clampByte(result * 255.0f);
+            }
+        }
+    }
+
+    // --- Posterize ---
+    inline void posterize(unsigned char* pixels, int w, int h, int levels) {
+        if (levels < 2) levels = 2;
+        float factor = 255.0f / (levels - 1);
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            for (int c = 0; c < 3; c++) {
+                int quantized = static_cast<int>(std::round(pixels[i + c] / factor));
+                pixels[i + c] = clampByte(quantized * factor);
+            }
+        }
+    }
+
+    // --- Chromatic Aberration ---
+    inline void chromatic(unsigned char* pixels, int w, int h, int offset) {
+        std::vector<unsigned char> copy(pixels, pixels + w * h * 4);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int di = (y * w + x) * 4;
+                // Shift red channel left, blue channel right
+                int rxSrc = std::clamp(x - offset, 0, w - 1);
+                int bxSrc = std::clamp(x + offset, 0, w - 1);
+                pixels[di + 0] = copy[(y * w + rxSrc) * 4 + 0]; // red shifted
+                pixels[di + 1] = copy[di + 1];                    // green stays
+                pixels[di + 2] = copy[(y * w + bxSrc) * 4 + 2]; // blue shifted
+            }
+        }
+    }
+
+    // --- Threshold (binarize) ---
+    inline void threshold(unsigned char* pixels, int w, int h, int level) {
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            int luma = (pixels[i] * 299 + pixels[i + 1] * 587 + pixels[i + 2] * 114) / 1000;
+            unsigned char val = luma >= level ? 255 : 0;
+            pixels[i + 0] = pixels[i + 1] = pixels[i + 2] = val;
+        }
+    }
+
+    // --- Grayscale ---
+    inline void grayscale(unsigned char* pixels, int w, int h) {
+        int n = w * h * 4;
+        for (int i = 0; i < n; i += 4) {
+            int luma = (pixels[i] * 299 + pixels[i + 1] * 587 + pixels[i + 2] * 114) / 1000;
+            pixels[i + 0] = pixels[i + 1] = pixels[i + 2] = static_cast<unsigned char>(luma);
+        }
+    }
+
 } // namespace effects
 
 #endif // MEME_EFFECTS_H

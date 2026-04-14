@@ -666,11 +666,25 @@ namespace callable {
                 effects::brightness(pd.pixels.data(), pd.width, pd.height, static_cast<float>(param));
             } else if (effectName == "jpeg") {
                 effects::jpegQuality(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
+            } else if (effectName == "hueShift") {
+                effects::hueShift(pd.pixels.data(), pd.width, pd.height, static_cast<float>(param));
+            } else if (effectName == "glow") {
+                effects::glow(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
+            } else if (effectName == "posterize") {
+                effects::posterize(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
+            } else if (effectName == "chromatic") {
+                effects::chromatic(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
+            } else if (effectName == "threshold") {
+                effects::threshold(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
+            } else if (effectName == "tint") {
+                // param encodes hex color as double (parsed from string in TintEffectCreator)
+                unsigned int hex = static_cast<unsigned int>(param);
+                effects::tint(pd.pixels.data(), pd.width, pd.height,
+                    (hex >> 16) & 0xFF, (hex >> 8) & 0xFF, hex & 0xFF, 0.5f);
             }
 
             auto tempPath = saveTempImage(pd.pixels, pd.width, pd.height);
 
-            // Create a new rendered meme map with the result info
             auto result = std::make_shared<collection::MacMap>();
             result->set("_rendered", value::MacValue(tempPath));
             result->set("_width", value::MacValue(static_cast<double>(pd.width)));
@@ -778,6 +792,8 @@ namespace callable {
                 effects::sharpen(pd.pixels.data(), pd.width, pd.height);
             } else if (effectName == "vignette") {
                 effects::vignette(pd.pixels.data(), pd.width, pd.height);
+            } else if (effectName == "grayscale") {
+                effects::grayscale(pd.pixels.data(), pd.width, pd.height);
             }
 
             auto tempPath = saveTempImage(pd.pixels, pd.width, pd.height);
