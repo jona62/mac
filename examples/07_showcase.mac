@@ -1,28 +1,60 @@
 // 07 — Showcase
-// Everything together: v2 syntax, functional pipelines, effects,
-// animation, and data-driven meme generation.
+// Everything together: styles, effects, v2 syntax, functional
+// pipelines, animation, and data-driven meme generation.
+
+// ── Styles ──────────────────────────────────────────────
+
+style neon {
+    color: "#00FF41"
+    outline: 4
+    outlineColor: "#003300"
+    shadow: 3
+    shadowColor: "#00FF4180"
+}
+
+style cinematic {
+    color: "#FFFFFF"
+    outline: 2
+    outlineColor: "#111111"
+    shadow: 4
+    shadowColor: "#00000088"
+}
+
+style alert {
+    color: "#FF4444"
+    outline: 5
+    outlineColor: "#440000"
+}
 
 // ── Effect Presets ──────────────────────────────────────
 
 effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
 effect vintage = sepia >> brightness(0.9);
 effect clean = sharpen >> contrast(1.1);
+effect cyberpunk = hueShift(180) >> contrast(1.5) >> chromatic(3) >> glow(4);
 
-// ── Hero Meme ───────────────────────────────────────────
+// ── Hero Memes with Styles ──────────────────────────────
 
-@two_panel 800x800 {
+@dark 800x800 neon {
+    top: "HACK THE PLANET"
+    bottom: "sudo rm -rf /"
+} |> glitch => "hero_neon.png";
+
+@two_panel cinematic {
     top: "Me: it works on my machine"
     bottom: "Prod: lol no"
-} |> glitch => "hero.png";
+} |> vintage => "hero_cinematic.png";
+
+@blank alert "PRODUCTION IS DOWN" => "alert.png";
 
 // ── Countdown ───────────────────────────────────────────
 
 gif loop {
-    @blank "Ready?" : 800ms
-    @blank "3" : 500ms
-    @blank "2" : 500ms
-    @blank "1" : 500ms
-    @blank "GO!" : 1s
+    @dark 480x480 neon "Ready?" : 800ms
+    @dark 480x480 neon "3" : 500ms
+    @dark 480x480 neon "2" : 500ms
+    @dark 480x480 neon "1" : 500ms
+    @dark 480x480 neon "GO!" : 1s
 } => "countdown.gif";
 
 // ── Developer Week Arc ──────────────────────────────────
@@ -40,44 +72,41 @@ var day_memes = days |> map(d -> @two_panel {
     bottom: d[1]
 });
 
-// Fold into a GIF with uniform timing
 var week = day_memes |> reduce(
     (g, m) -> g.frame(m, Duration(700)), Gif());
 week.save("dev_week.gif");
 
-// ── Cinematic Timeline ──────────────────────────────────
+// ── Cinematic Timeline with Easing ──────────────────────
 
 timeline loop {
-    @two_panel {
+    @two_panel cinematic {
         top: "Act 1: The Setup"
         bottom: "git init"
     } : 3s
-    --- crossfade 200ms ---
-    @two_panel {
+    --- crossfade 300ms ease ---
+    @two_panel cinematic {
         top: "Act 2: The Conflict"
         bottom: "merge conflict in package.json"
     } : 3s
-    --- slideLeft 200ms ---
-    @two_panel {
+    --- fadeBlack 400ms ---
+    @two_panel cinematic {
         top: "Act 3: The Resolution"
         bottom: "git push --force"
     } : 3s
-    --- crossfade 200ms ---
-    @blank "fin." : 2s
+    --- crossfade 300ms easeOut ---
+    @dark neon "fin." : 2s
 } => "three_acts.gif";
 
-// ── Effects Comparison ──────────────────────────────────
+// ── Effects + Styles Grid ───────────────────────────────
 
 grid 2x2 {
     @blank "Clean" |> clean
     @blank "Vintage" |> vintage
     @blank "Glitch" |> glitch
-    @blank "Deepfry" |> deepfry
+    @blank "Cyberpunk" |> cyberpunk
 } |> pad(5) |> border(2) => "effects_grid.png";
 
 // ── Data-Driven Pipeline ────────────────────────────────
-// Generate memes from data, apply escalating effects,
-// fold into a cinematic timeline.
 
 var quotes = [
     ["Debugging", "print('here')"],
@@ -96,4 +125,4 @@ var tl = memes |> reduce((tl, m) -> tl
     .transition(crossfade, Duration(200)), Timeline());
 tl.loop(0).render("dev_lifecycle.gif");
 
-print "Showcase complete! Check output/";
+print "Showcase complete! Check ~/mac/output/";
