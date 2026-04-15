@@ -787,7 +787,7 @@ select {
 .segmented__btn:hover { background: var(--surface-hover); }
 .segmented__btn.is-active { background: var(--accent); color: #fff; }
 
-.empty-state { text-align: center; padding: 20px; color: var(--ink-faint); font-size: 0.78rem; }
+.empty-state { text-align: center; padding: 12px 8px; color: var(--ink-faint); font-size: 0.72rem; grid-column: 1 / -1; }
 
 /* ── Buttons ──────────────────────────────────────── */
 
