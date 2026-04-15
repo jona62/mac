@@ -160,6 +160,9 @@ function renderInspector() {
   $("slotShadowRange").value = slot.style.shadow;
   $("slotShadowInput").value = slot.style.shadow;
   $("slotShadowColorHex").value = normalizeHex(slot.style.shadowColor, "#00000080", true);
+  const bg = slot.style.background || "";
+  $("slotBgColor").value = bg && bg.startsWith("#") ? bg.slice(0, 7) : "#000000";
+  $("slotBgColorHex").value = bg || "";
   $("slotFontSizeMode").value = slot.style.fontSizeMode;
   $("slotFontSizePx").value = slot.style.fontSizePx;
   $("slotFontSizePxField").hidden = slot.style.fontSizeMode !== "custom";

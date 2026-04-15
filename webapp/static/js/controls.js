@@ -56,6 +56,14 @@ function bindStaticControls() {
   $("slotOutlineColor").addEventListener("input", (e) => updateHexField("outlineColor", e.target.value, false));
   $("slotOutlineColorHex").addEventListener("change", (e) => updateHexField("outlineColor", e.target.value, false));
   $("slotShadowColorHex").addEventListener("change", (e) => updateHexField("shadowColor", e.target.value, true));
+  $("slotBgColor").addEventListener("input", (e) => updateHexField("background", e.target.value, false));
+  $("slotBgColorHex").addEventListener("change", (e) => {
+    const s = selectedSlot(); if (!s) return;
+    const val = e.target.value.trim();
+    if (val === "" || val.toLowerCase() === "none") { s.style.background = ""; }
+    else { s.style.background = normalizeHex(val, s.style.background || "", true); }
+    commitChange({ schedule: false }); renderInspector(); schedulePreview();
+  });
 
   $("slotFontSizeMode").addEventListener("change", (e) => {
     const s = selectedSlot(); if (!s) return;
@@ -233,15 +241,26 @@ function onTransitionPipClick(pip, sceneIndex) {
   pop.style.left = `${rect.left + rect.width / 2 - 90}px`;
   document.body.appendChild(pop);
 
-  // Update state without re-rendering the strip (which would destroy the popover)
+  const durField = pop.querySelector(".tp-dur").closest(".field");
+  const easeField = pop.querySelector(".tp-ease").closest(".field");
+  const toggleFields = () => {
+    const isCut = pop.querySelector(".tp-type").value === "cut";
+    durField.hidden = isCut;
+    easeField.hidden = isCut;
+  };
+  toggleFields();
+
   const updateState = () => {
+    const type = pop.querySelector(".tp-type").value;
     scene.transition = {
-      type: pop.querySelector(".tp-type").value,
+      type,
       durationMs: clamp(pop.querySelector(".tp-dur").value, 50, 1000),
       easing: pop.querySelector(".tp-ease").value,
     };
     const label = pip.querySelector(".transition-pip__label");
-    if (label) label.textContent = scene.transition.type === "cut" ? "cut" : scene.transition.type;
+    if (label) label.textContent = type === "cut" ? "cut" : type;
+    pip.classList.toggle("transition-pip--cut", type === "cut");
+    toggleFields();
   };
   pop.addEventListener("change", updateState);
   pop.addEventListener("input", updateState);

@@ -376,6 +376,7 @@ def normalize_style(raw_style: object) -> dict[str, object]:
         "shadow": clamp_int(style_payload.get("shadow"), SHADOW_LIMITS["min"], SHADOW_LIMITS["max"], int(base_style["shadow"])),
         "shadowColor": normalize_hex_color(style_payload.get("shadowColor"), str(base_style["shadowColor"]), allow_alpha=True),
         "fontSize": normalize_font_size(style_payload, base_style),
+        "background": normalize_hex_color(style_payload.get("background"), "", allow_alpha=True) if style_payload.get("background") else "",
     }
 
     return {
@@ -386,6 +387,7 @@ def normalize_style(raw_style: object) -> dict[str, object]:
         "shadow": resolved["shadow"],
         "shadowColor": resolved["shadowColor"],
         "fontSize": resolved["fontSize"],
+        "background": resolved["background"],
         "resolved": resolved,
     }
 
@@ -538,6 +540,9 @@ def render_style_props(style: dict[str, object], full: bool = False) -> list[str
             lines.append(f"    fontSize: {font_size}")
         else:
             lines.append(f'    fontSize: {mac_string_literal(str(font_size))}')
+    bg = resolved.get("background", "")
+    if bg:
+        lines.append(f'    background: {mac_string_literal(str(bg))}')
 
     return lines
 

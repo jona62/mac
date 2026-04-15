@@ -23,7 +23,7 @@ const EASING_TYPES = [
 function defaultStyleFields() {
   return {
     preset: "", color: "#FFFFFF", outline: 3, outlineColor: "#000000",
-    shadow: 0, shadowColor: "#00000080", fontSizeMode: "sm", fontSizePx: 64,
+    shadow: 0, shadowColor: "#00000080", fontSizeMode: "sm", fontSizePx: 64, background: "",
   };
 }
 
@@ -221,6 +221,7 @@ function buildPayload(extra = {}) {
           outline: slot.style.outline, outlineColor: slot.style.outlineColor,
           shadow: slot.style.shadow, shadowColor: slot.style.shadowColor,
           fontSizeMode: slot.style.fontSizeMode, fontSizePx: slot.style.fontSizePx,
+          background: slot.style.background || "",
         },
       })),
     })),

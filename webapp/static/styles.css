@@ -518,6 +518,7 @@ body {
 
 .transition-pip:hover { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
 .transition-pip__label { pointer-events: none; }
+.transition-pip--cut { opacity: 0.35; border-style: dotted; }
 .transition-pip__loop-icon { font-size: 0.7rem; pointer-events: none; }
 .transition-pip--loop { border-style: dotted; }
 
