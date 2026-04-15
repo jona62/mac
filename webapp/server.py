@@ -644,6 +644,16 @@ def _animation_block(scenes: list[dict], save_target: str) -> list[str]:
             ease_part = f" {t_ease}" if t_ease != "linear" else ""
             lines.append(f"    --- {t_type} {t_dur}ms{ease_part} ---")
         lines.append(f"    scene_{i + 1} : {scene['durationMs']}ms")
+    # Loop-back transition: reuse the first scene's transition type for seamless loop
+    if has_transitions and len(scenes) > 1:
+        # Find the most common transition to use for the loop-back
+        first_trans = next((s.get("transition") for s in scenes[1:] if s.get("transition") and s["transition"].get("type") not in (None, "cut")), None)
+        if first_trans:
+            t_type = first_trans["type"]
+            t_dur = int(first_trans.get("durationMs", 150))
+            t_ease = first_trans.get("easing", "linear")
+            ease_part = f" {t_ease}" if t_ease != "linear" else ""
+            lines.append(f"    --- {t_type} {t_dur}ms{ease_part} ---")
     lines.append(f"}} => {save_target};")
     return lines
 
