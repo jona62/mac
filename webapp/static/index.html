@@ -3,114 +3,268 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mac GIF Studio</title>
+  <title>Mac Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="studio">
-    <header class="masthead">
-      <div class="masthead__brand">
-        <h1 class="masthead__title">GIF<br/><span>Studio</span></h1>
-        <p class="masthead__sub">Meme as Code</p>
+  <div class="editor">
+
+    <!-- ─── Top Bar ──────────────────────────────────── -->
+    <header class="topbar">
+      <div class="topbar__left">
+        <span class="topbar__brand">Mac Studio</span>
+        <span class="topbar__sep"></span>
+        <div class="topbar__stats">
+          <span class="stat-pill"><strong id="statCanvas">720&times;720</strong> canvas</span>
+          <span class="stat-pill"><strong id="statScenes">1</strong> scenes</span>
+          <span class="stat-pill"><strong id="statRuntime">0.7s</strong> runtime</span>
+        </div>
       </div>
-      <div class="masthead__stats">
-        <div class="stat"><span class="stat__val" id="statCanvas">640&times;640</span><span class="stat__label">Canvas</span></div>
-        <div class="stat"><span class="stat__val" id="statFrames">3</span><span class="stat__label">Frames</span></div>
-        <div class="stat"><span class="stat__val" id="statDuration">1.2s</span><span class="stat__label">Runtime</span></div>
+      <div class="topbar__right">
+        <button class="btn btn--ghost btn--sm" id="refreshPreviewBtn" type="button">Refresh</button>
+        <button class="btn btn--accent btn--sm" id="exportBtn" type="button">Export</button>
       </div>
     </header>
 
-    <main class="workspace">
-      <!-- Left: Controls -->
-      <section class="controls">
-        <!-- Templates -->
-        <div class="panel">
-          <h2 class="panel__title">Templates</h2>
-          <div class="tmpl-tabs" id="tmplTabs">
-            <button class="tmpl-tab is-active" data-cat="canvas">Canvas</button>
-            <button class="tmpl-tab" data-cat="meme">Meme Images</button>
-          </div>
-          <div class="template-grid" id="templateGrid"></div>
-        </div>
+    <!-- ─── Workspace (3-panel) ──────────────────────── -->
+    <div class="workspace">
 
-        <!-- Presets -->
-        <div class="panel">
-          <h2 class="panel__title">Quick Start</h2>
-          <div class="presets" id="presetStrip"></div>
+      <!-- Left Sidebar: Assets & Presets -->
+      <aside class="sidebar sidebar--left" id="sidebarLeft">
+        <div class="sidebar__head">
+          <button class="sidebar-tab is-active" data-tab="assets">Assets</button>
+          <button class="sidebar-tab" data-tab="presets">Presets</button>
         </div>
+        <div class="sidebar__scroll">
+          <!-- Assets tab -->
+          <div class="sidebar__pane" data-pane="assets">
+            <section class="sb-section">
+              <h3 class="sb-section__title">Templates</h3>
+              <div class="library-grid" id="canvasTemplateGrid"></div>
+            </section>
+            <section class="sb-section">
+              <h3 class="sb-section__title">Meme Library</h3>
+              <div class="library-grid" id="memeTemplateGrid"></div>
+            </section>
+            <section class="sb-section">
+              <h3 class="sb-section__title">Layouts</h3>
+              <div class="layout-grid" id="layoutGrid"></div>
+            </section>
+          </div>
+          <!-- Presets tab -->
+          <div class="sidebar__pane" data-pane="presets" hidden>
+            <section class="sb-section">
+              <h3 class="sb-section__title">Preset Documents</h3>
+              <p class="sb-section__sub">One-click scene configurations</p>
+              <div class="preset-grid" id="presetGrid"></div>
+            </section>
+          </div>
+        </div>
+      </aside>
 
-        <!-- Canvas -->
-        <div class="panel">
-          <h2 class="panel__title">Canvas <span class="badge" id="sizeBadge">640&times;640</span></h2>
-          <div class="range-row">
-            <label>Width</label>
-            <input type="range" id="widthRange" min="240" max="1200" step="10" value="640" />
-            <input type="number" id="widthNum" min="240" max="1200" step="10" value="640" />
+      <!-- Center: Canvas Stage -->
+      <main class="canvas-area">
+        <div class="canvas-area__stage" id="stageFrame">
+          <div class="stage-placeholder" id="stagePlaceholder">
+            <p class="stage-placeholder__eyebrow">Preview</p>
+            <p class="stage-placeholder__title">Edit a scene and the stage will refresh automatically.</p>
           </div>
-          <div class="range-row">
-            <label>Height</label>
-            <input type="range" id="heightRange" min="240" max="1200" step="10" value="640" />
-            <input type="number" id="heightNum" min="240" max="1200" step="10" value="640" />
+          <img id="stageImage" alt="Studio preview" hidden />
+        </div>
+        <div class="canvas-area__footer">
+          <div class="canvas-footer__status">
+            <p class="status" id="statusLine">Loading studio&hellip;</p>
+            <p class="status status--secondary" id="statusMeta"></p>
+          </div>
+          <div class="canvas-footer__actions">
+            <span class="stage-label" id="stageLabel"></span>
+            <a class="btn btn--outline btn--sm" id="downloadLink" href="#" download hidden>Download</a>
           </div>
         </div>
+      </main>
 
-        <!-- Effect -->
-        <div class="panel">
-          <h2 class="panel__title">Effect</h2>
-          <select id="effectSelect" class="select"></select>
+      <!-- Right Sidebar: Inspector -->
+      <aside class="sidebar sidebar--right">
+        <div class="sidebar__head">
+          <span class="sidebar-tab is-active">Inspector</span>
         </div>
+        <div class="sidebar__scroll">
 
-        <!-- Style -->
-        <div class="panel">
-          <h2 class="panel__title">Text Style</h2>
-          <div class="range-row">
-            <label>Color</label>
-            <input type="color" id="textColor" value="#ffffff" class="color-input" />
-            <input type="text" id="textColorHex" value="#FFFFFF" class="hex-input" placeholder="#FFFFFF" />
-          </div>
-          <div class="range-row">
-            <label>Outline</label>
-            <input type="range" id="outlineRange" min="0" max="10" step="1" value="3" />
-            <span class="range-val" id="outlineVal">3px</span>
-          </div>
-        </div>
+          <!-- Canvas -->
+          <section class="sb-section">
+            <div class="sb-section__head">
+              <h3 class="sb-section__title">Canvas</h3>
+              <span class="sb-badge" id="canvasBadge">720&times;720</span>
+            </div>
+            <div class="control-group">
+              <label class="field">
+                <span class="field__label">Width</span>
+                <div class="range-pair">
+                  <input type="range" id="canvasWidthRange" min="240" max="1200" step="10" />
+                  <input type="number" id="canvasWidthInput" min="240" max="1200" step="10" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Height</span>
+                <div class="range-pair">
+                  <input type="range" id="canvasHeightRange" min="240" max="1200" step="10" />
+                  <input type="number" id="canvasHeightInput" min="240" max="1200" step="10" />
+                </div>
+              </label>
+            </div>
+          </section>
 
-        <!-- Frames -->
-        <div class="panel panel--frames">
-          <div class="panel__head">
-            <h2 class="panel__title">Frames</h2>
-            <button class="btn btn--accent" id="addFrameBtn">+ Frame</button>
-          </div>
-          <div id="frameList" class="frame-list"></div>
-        </div>
-      </section>
+          <!-- Scene -->
+          <section class="sb-section">
+            <div class="sb-section__head">
+              <h3 class="sb-section__title">Scene</h3>
+              <span class="sb-badge" id="sceneMeta">Scene 1</span>
+            </div>
+            <div class="control-group">
+              <label class="field">
+                <span class="field__label">Layout</span>
+                <div class="readonly-chip" id="selectedLayoutLabel">Single</div>
+              </label>
+              <label class="field">
+                <span class="field__label">Duration</span>
+                <div class="range-pair">
+                  <input type="range" id="sceneDurationRange" min="80" max="2500" step="10" />
+                  <input type="number" id="sceneDurationInput" min="80" max="2500" step="10" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Padding</span>
+                <div class="range-pair">
+                  <input type="range" id="scenePaddingRange" min="0" max="60" step="1" />
+                  <input type="number" id="scenePaddingInput" min="0" max="60" step="1" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Border</span>
+                <div class="range-pair">
+                  <input type="range" id="sceneBorderRange" min="0" max="24" step="1" />
+                  <input type="number" id="sceneBorderInput" min="0" max="24" step="1" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Scene Effect</span>
+                <select id="sceneEffectSelect"></select>
+              </label>
+            </div>
+          </section>
 
-      <!-- Right: Output -->
-      <section class="output">
-        <div class="panel">
-          <div class="panel__head">
-            <h2 class="panel__title">Preview</h2>
-            <button class="btn btn--dark" id="renderBtn">Render GIF</button>
-          </div>
-          <div class="preview-stage" id="previewStage">
-            <p class="preview-placeholder" id="placeholder">Configure frames and hit Render</p>
-            <img id="gifPreview" alt="Generated GIF" hidden />
-          </div>
-          <div class="preview-meta">
-            <p class="status" id="statusLine">Ready</p>
-            <a class="btn btn--outline" id="downloadLink" href="#" download="mac-meme.gif" hidden>Download</a>
-          </div>
-        </div>
+          <!-- Slot Inspector -->
+          <section class="sb-section">
+            <div class="sb-section__head">
+              <h3 class="sb-section__title">Slot Inspector</h3>
+              <span class="sb-badge" id="slotMeta">Slot 1</span>
+            </div>
 
-        <div class="panel">
-          <h2 class="panel__title">Mac Script <span class="badge">v2</span></h2>
-          <pre class="code-preview" id="scriptPreview"></pre>
+            <div class="slot-tabs" id="slotTabs"></div>
+            <p class="help-text" id="slotHint">Pick a slot, then click a template or meme image to assign it.</p>
+
+            <div class="control-group">
+              <div class="field">
+                <span class="field__label">Template</span>
+                <div class="readonly-chip" id="slotTemplateLabel">Blank</div>
+              </div>
+              <label class="field">
+                <span class="field__label">Top Text</span>
+                <textarea id="slotTopText" rows="2" placeholder="Headline"></textarea>
+              </label>
+              <label class="field">
+                <span class="field__label">Center Text</span>
+                <textarea id="slotCenterText" rows="2" placeholder="Center"></textarea>
+              </label>
+              <label class="field">
+                <span class="field__label">Bottom Text</span>
+                <textarea id="slotBottomText" rows="2" placeholder="Footer"></textarea>
+              </label>
+            </div>
+
+            <div class="control-group control-group--style">
+              <label class="field">
+                <span class="field__label">Style Preset</span>
+                <select id="slotStylePreset"></select>
+              </label>
+              <label class="field">
+                <span class="field__label">Text Color</span>
+                <div class="color-pair">
+                  <input type="color" id="slotTextColor" />
+                  <input type="text" id="slotTextColorHex" maxlength="7" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Outline</span>
+                <div class="range-pair">
+                  <input type="range" id="slotOutlineRange" min="0" max="10" step="1" />
+                  <input type="number" id="slotOutlineInput" min="0" max="10" step="1" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Outline Color</span>
+                <div class="color-pair">
+                  <input type="color" id="slotOutlineColor" />
+                  <input type="text" id="slotOutlineColorHex" maxlength="7" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Shadow</span>
+                <div class="range-pair">
+                  <input type="range" id="slotShadowRange" min="0" max="10" step="1" />
+                  <input type="number" id="slotShadowInput" min="0" max="10" step="1" />
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">Shadow Color</span>
+                <input type="text" id="slotShadowColorHex" maxlength="9" placeholder="#00000080" />
+              </label>
+              <label class="field">
+                <span class="field__label">Font Size</span>
+                <select id="slotFontSizeMode"></select>
+              </label>
+              <label class="field" id="slotFontSizePxField">
+                <span class="field__label">Custom Size (px)</span>
+                <input type="number" id="slotFontSizePx" min="8" max="240" step="1" />
+              </label>
+            </div>
+          </section>
+
+          <!-- Export -->
+          <section class="sb-section">
+            <div class="sb-section__head">
+              <h3 class="sb-section__title">Export</h3>
+              <span class="sb-badge" id="exportMeta">Document</span>
+            </div>
+            <div class="control-group">
+              <div class="segmented" id="formatToggle">
+                <button class="segmented__btn" type="button" data-format="png">PNG Still</button>
+                <button class="segmented__btn" type="button" data-format="gif">GIF Loop</button>
+              </div>
+              <p class="help-text" id="formatHelp">Single-scene documents export as PNG or GIF.</p>
+            </div>
+          </section>
+
         </div>
-      </section>
-    </main>
+      </aside>
+
+    </div>
+
+    <!-- ─── Bottom Dock ──────────────────────────────── -->
+    <footer class="bottom-dock">
+      <div class="dock__strip">
+        <div class="scene-strip" id="sceneStrip"></div>
+        <button class="btn btn--accent btn--sm" id="addSceneBtn" type="button">+ Scene</button>
+      </div>
+      <details class="dock__script">
+        <summary class="dock__script-toggle">Mac Script <span class="badge">v2</span></summary>
+        <pre class="code-preview" id="scriptPreview"></pre>
+      </details>
+    </footer>
+
   </div>
   <script src="/app.js"></script>
 </body>
