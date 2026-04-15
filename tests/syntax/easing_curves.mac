@@ -1,0 +1,16 @@
+// All easing curves in timeline transitions
+var tl = timeline loop {
+    @blank "Linear" : 300ms
+    --- crossfade 100ms ---
+    @blank "Ease" : 300ms
+    --- crossfade 100ms ease ---
+    @blank "EaseIn" : 300ms
+    --- crossfade 100ms easeIn ---
+    @blank "EaseOut" : 300ms
+    --- crossfade 100ms easeOut ---
+    @blank "EaseInOut" : 300ms
+    --- crossfade 100ms easeInOut ---
+    @blank "Done" : 300ms
+};
+print type(tl);                 // expect: instance
+print "easing done";            // expect: easing done

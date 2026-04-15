@@ -1,0 +1,13 @@
+// gif and timeline blocks WITHOUT loop keyword
+var g = gif {
+    @blank "One" : 300ms
+    @blank "Two" : 300ms
+};
+print type(g);                  // expect: instance
+
+var tl = timeline {
+    @blank "A" : 500ms
+    --- crossfade 150ms ---
+    @blank "B" : 500ms
+};
+print type(tl);                 // expect: instance

@@ -1,0 +1,4 @@
+// clock() returns a number (seconds since epoch)
+var t = clock();
+print type(t);                  // expect: number
+print t > 0;                    // expect: true

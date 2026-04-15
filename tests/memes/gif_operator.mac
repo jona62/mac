@@ -1,0 +1,10 @@
+// Gif + Frame operator overload
+var t = Template("blank");
+var m1 = Meme(t).text(Top, "Frame 1");
+var m2 = Meme(t).text(Top, "Frame 2");
+var d = Duration(300);
+
+var g = Gif();
+g = g + Frame(m1, d);
+g = g + Frame(m2, d);
+print g.frameCount;             // expect: 2

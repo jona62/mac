@@ -1,0 +1,3 @@
+// Undefined variable error
+print foo;
+// expect error: Undefined variable 'foo'
