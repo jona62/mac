@@ -689,6 +689,17 @@ def build_script_bundle(document: dict[str, object], output_path: Path, preview_
     }
 
 
+def cleanup_mac_temp_files() -> None:
+    """Remove /tmp/mac_effects_* dirs left by mac subprocess calls."""
+    import glob
+    for d in glob.glob("/tmp/mac_effects_*"):
+        try:
+            import shutil
+            shutil.rmtree(d, ignore_errors=True)
+        except Exception:
+            pass
+
+
 def cleanup_generated_dir() -> None:
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
     now = time.time()
@@ -803,6 +814,8 @@ def run_raw_script(script: str) -> dict[str, object]:
             check=False,
         )
 
+    cleanup_mac_temp_files()
+
     if result.returncode != 0 or not output_path.exists():
         stderr = (result.stderr or result.stdout or "Unknown error").strip()
         raise RuntimeError(stderr or "Raw script execution failed.")
@@ -848,6 +861,8 @@ def build_render_response(payload: dict[str, object]) -> tuple[dict[str, object]
             timeout=20,
             check=False,
         )
+
+    cleanup_mac_temp_files()
 
     if result.returncode != 0 or not output_path.exists():
         stderr = (result.stderr or result.stdout or "Unknown error").strip()
