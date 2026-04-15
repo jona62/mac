@@ -775,6 +775,57 @@ def safe_child_path(base: Path, requested_path: str) -> Path | None:
     return candidate
 
 
+def run_raw_script(script: str) -> dict[str, object]:
+    """Execute a raw Mac script and return the generated artifact."""
+    # Determine output format from the script's save expression
+    output_format = "gif" if ".gif" in script else "png"
+    output_name = f"raw-{uuid.uuid4().hex[:12]}.{output_format}"
+    output_path = GENERATED_DIR / output_name
+
+    # Rewrite => "..." save targets to point to our generated dir
+    import re as _re
+    patched = _re.sub(
+        r'=>\s*"[^"]*"',
+        f'=> "{output_path}"',
+        script,
+    )
+
+    with tempfile.TemporaryDirectory(prefix="mac-raw-") as temp_dir:
+        script_path = Path(temp_dir) / "raw.mac"
+        script_path.write_text(patched, encoding="utf-8")
+
+        result = subprocess.run(
+            [str(MAC_BINARY), str(script_path)],
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+
+    if result.returncode != 0 or not output_path.exists():
+        stderr = (result.stderr or result.stdout or "Unknown error").strip()
+        raise RuntimeError(stderr or "Raw script execution failed.")
+
+    file_size = output_path.stat().st_size if output_path.exists() else 0
+
+    return {
+        "ok": True,
+        "previewUrl": f"/generated/{output_name}",
+        "downloadUrl": f"/generated/{output_name}",
+        "script": script,
+        "summary": {
+            "format": output_format,
+            "sceneCount": 1,
+            "frameCount": 1,
+            "durationMs": 0,
+            "width": 0,
+            "height": 0,
+            "fileSizeBytes": file_size,
+        },
+    }
+
+
 def build_render_response(payload: dict[str, object]) -> tuple[dict[str, object], Path]:
     document = normalize_document(payload)
     preview_scene_index = document["previewSceneIndex"]
@@ -930,7 +981,11 @@ class GifStudioHandler(BaseHTTPRequestHandler):
         try:
             payload = read_json_body(self)
             cleanup_generated_dir()
-            response, _ = build_render_response(payload)
+            raw_script = payload.get("rawScript")
+            if raw_script and isinstance(raw_script, str) and raw_script.strip():
+                response = run_raw_script(raw_script)
+            else:
+                response, _ = build_render_response(payload)
             json_response(self, response)
         except ValueError as exc:
             json_response(self, {"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
