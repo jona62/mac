@@ -79,6 +79,17 @@ body {
   color: var(--ink);
 }
 
+.topbar__gh {
+  color: var(--ink-muted);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.topbar__gh:hover { color: var(--ink); }
+
 .topbar__sep {
   width: 1px;
   height: 20px;
@@ -753,7 +764,7 @@ select {
   .sidebar--left.is-open, .sidebar--right.is-open { display: flex; }
 
   .mobile-toggle { display: inline-flex; }
-  .topbar__stats { display: none; }
+  .topbar__stats, .topbar__sep, .topbar__gh { display: none; }
   .topbar__brand { font-size: 0.9rem; }
 
   .canvas-area__stage {
