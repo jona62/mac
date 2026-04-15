@@ -811,10 +811,16 @@ async function requestPreview() {
     return;
   }
 
-  const payload = buildPayload({ previewSceneIndex: state.selectedSceneIndex });
+  // Multi-scene: render full GIF animation. Single scene: render selected scene as static preview.
+  const isMultiScene = state.scenes.length > 1;
+  const payload = buildPayload(isMultiScene ? {} : { previewSceneIndex: state.selectedSceneIndex });
   const requestId = ++state.previewSeq;
   state.isPreviewing = true;
-  setStatus("Refreshing preview…", "Rendering the selected scene through Mac.", "normal");
+  setStatus(
+    "Refreshing preview…",
+    isMultiScene ? `Rendering ${state.scenes.length}-scene GIF animation.` : "Rendering the selected scene.",
+    "normal"
+  );
   renderStatus();
 
   try {
@@ -830,7 +836,9 @@ async function requestPreview() {
     state.script = data.script || state.script;
     state.stageMode = "preview";
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-    state.stageLabel = `Selected scene preview · Scene ${state.selectedSceneIndex + 1}`;
+    state.stageLabel = isMultiScene
+      ? `${state.scenes.length}-scene GIF preview`
+      : `Scene ${state.selectedSceneIndex + 1} preview`;
     const summary = data.summary || {};
     setStatus(
       "Scene preview ready.",
