@@ -557,6 +557,63 @@ body {
 .advanced-fx__add { display: flex; gap: 6px; align-items: center; }
 .advanced-fx__add select { flex: 1; font-size: 0.72rem; }
 
+/* ── Positioned Text Overlay ───────────────────────── */
+
+.canvas-area__stage { position: relative; }
+
+.pos-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.pos-label {
+  position: absolute;
+  pointer-events: auto;
+  cursor: grab;
+  padding: 4px 10px;
+  background: rgba(196, 75, 43, 0.85);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  border-radius: 4px;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: box-shadow 0.15s;
+}
+
+.pos-label:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+.pos-label.is-dragging { cursor: grabbing; box-shadow: 0 6px 20px rgba(0,0,0,0.6); z-index: 10; }
+
+/* ── Positioned Text Inspector Panel ──────────────── */
+
+.pos-text-panel { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+.pos-text-panel__toggle {
+  font-size: 0.7rem; font-weight: 600; color: var(--ink-muted);
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 4px 0;
+}
+.pos-text-panel__toggle::-webkit-details-marker { display: none; }
+.pos-text-panel__toggle::before { content: '\25B6'; font-size: 0.5rem; transition: transform 0.2s; }
+.pos-text-panel[open] .pos-text-panel__toggle::before { transform: rotate(90deg); }
+
+.pos-text-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+
+.pos-text-item {
+  display: grid; grid-template-columns: 1fr 50px 50px auto; gap: 4px; align-items: center;
+  padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface); font-size: 0.72rem;
+}
+.pos-text-item input[type="text"] { font-size: 0.72rem; padding: 4px 6px; }
+.pos-text-item input[type="number"] { font-size: 0.72rem; padding: 4px 4px; width: 100%; }
+.pos-text-item__del {
+  border: none; background: none; color: var(--ink-faint); cursor: pointer; font-size: 0.8rem; padding: 0 4px;
+}
+.pos-text-item__del:hover { color: var(--accent); }
+
 .transition-pip--cut { opacity: 0.35; border-style: dotted; }
 .transition-pip__loop-icon { font-size: 0.7rem; pointer-events: none; }
 .transition-pip--loop { border-style: dotted; }

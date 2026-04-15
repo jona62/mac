@@ -55,6 +55,7 @@ function createSlot(templateId = "blank", text = {}, presetId = "cinematic") {
   return {
     templateId,
     text: { top: text.top || "", center: text.center || "", bottom: text.bottom || "" },
+    positionedTexts: [],
     style: createStyle(presetId),
   };
 }
@@ -216,6 +217,7 @@ function buildPayload(extra = {}) {
       slots: scene.slots.map((slot) => ({
         templateId: slot.templateId,
         text: clone(slot.text),
+        positionedTexts: (slot.positionedTexts || []).map((pt) => ({ content: pt.content, x: Math.round(pt.x), y: Math.round(pt.y) })),
         style: {
           preset: slot.style.preset || "", color: slot.style.color,
           outline: slot.style.outline, outlineColor: slot.style.outlineColor,

@@ -27,6 +27,43 @@ function renderEffectChain() {
   }
 }
 
+function renderPosOverlay() {
+  const overlay = $("posOverlay");
+  const img = $("stageImage");
+  if (!overlay || !img || img.hidden) { if (overlay) overlay.innerHTML = ""; return; }
+  const slot = selectedSlot();
+  const pts = slot ? (slot.positionedTexts || []) : [];
+  if (!pts.length) { overlay.innerHTML = ""; return; }
+
+  const imgRect = img.getBoundingClientRect();
+  const stageRect = overlay.parentElement.getBoundingClientRect();
+  const offX = imgRect.left - stageRect.left;
+  const offY = imgRect.top - stageRect.top;
+  const scaleX = imgRect.width / state.canvas.width;
+  const scaleY = imgRect.height / state.canvas.height;
+
+  overlay.innerHTML = pts.map((pt, i) => {
+    const left = offX + pt.x * scaleX;
+    const top = offY + pt.y * scaleY;
+    return `<div class="pos-label" data-pos-index="${i}" style="left:${left}px;top:${top}px">${esc(pt.content || "Text")}</div>`;
+  }).join("");
+}
+
+function renderPosTextList() {
+  const list = $("posTextList");
+  if (!list) return;
+  const slot = selectedSlot();
+  const pts = slot ? (slot.positionedTexts || []) : [];
+  list.innerHTML = pts.map((pt, i) =>
+    `<div class="pos-text-item">
+      <input type="text" value="${escAttr(pt.content)}" data-pos-field="content" data-pos-i="${i}" placeholder="Text" />
+      <input type="number" value="${Math.round(pt.x)}" data-pos-field="x" data-pos-i="${i}" step="10" />
+      <input type="number" value="${Math.round(pt.y)}" data-pos-field="y" data-pos-i="${i}" step="10" />
+      <button class="pos-text-item__del" data-pos-del="${i}" type="button">&times;</button>
+    </div>`
+  ).join("");
+}
+
 function renderAll() {
   ensureOutputCompatibility(false);
   renderStats();
@@ -37,9 +74,11 @@ function renderAll() {
   renderSlotTabs();
   renderInspector();
   renderEffectChain();
+  renderPosTextList();
   renderStage();
   renderScript();
   renderStatus();
+  requestAnimationFrame(renderPosOverlay);
 }
 
 function renderStatus() {

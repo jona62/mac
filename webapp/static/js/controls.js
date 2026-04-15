@@ -121,6 +121,63 @@ function bindStaticControls() {
     }
   });
 
+  // Positioned text controls
+  $("addPosTextBtn").addEventListener("click", () => {
+    const slot = selectedSlot(); if (!slot) return;
+    if (!slot.positionedTexts) slot.positionedTexts = [];
+    slot.positionedTexts.push({ content: "Text", x: state.canvas.width / 2, y: state.canvas.height / 2 });
+    commitChange();
+  });
+  $("posTextList").addEventListener("input", (e) => {
+    const input = e.target.closest("[data-pos-i]"); if (!input) return;
+    const slot = selectedSlot(); if (!slot) return;
+    const i = Number(input.dataset.posI);
+    const pt = (slot.positionedTexts || [])[i]; if (!pt) return;
+    const field = input.dataset.posField;
+    if (field === "content") pt.content = input.value;
+    else if (field === "x") pt.x = Number(input.value);
+    else if (field === "y") pt.y = Number(input.value);
+    renderPosOverlay();
+    schedulePreview();
+  });
+  $("posTextList").addEventListener("click", (e) => {
+    const del = e.target.closest("[data-pos-del]"); if (!del) return;
+    const slot = selectedSlot(); if (!slot) return;
+    slot.positionedTexts.splice(Number(del.dataset.posDel), 1);
+    commitChange();
+  });
+
+  // Drag positioned text labels on canvas overlay
+  $("posOverlay").addEventListener("pointerdown", (e) => {
+    const label = e.target.closest(".pos-label"); if (!label) return;
+    const i = Number(label.dataset.posIndex);
+    const slot = selectedSlot(); if (!slot) return;
+    const pt = (slot.positionedTexts || [])[i]; if (!pt) return;
+
+    label.classList.add("is-dragging");
+    label.setPointerCapture(e.pointerId);
+
+    const img = $("stageImage");
+    const imgRect = img.getBoundingClientRect();
+    const scaleX = state.canvas.width / imgRect.width;
+    const scaleY = state.canvas.height / imgRect.height;
+
+    const onMove = (ev) => {
+      pt.x = clamp((ev.clientX - imgRect.left) * scaleX, 0, state.canvas.width);
+      pt.y = clamp((ev.clientY - imgRect.top) * scaleY, 0, state.canvas.height);
+      renderPosOverlay();
+      renderPosTextList();
+    };
+    const onUp = () => {
+      label.classList.remove("is-dragging");
+      label.removeEventListener("pointermove", onMove);
+      label.removeEventListener("pointerup", onUp);
+      schedulePreview();
+    };
+    label.addEventListener("pointermove", onMove);
+    label.addEventListener("pointerup", onUp);
+  });
+
   $("refreshPreviewBtn").addEventListener("click", () => schedulePreview(20, true));
   $("exportBtn").addEventListener("click", exportDocument);
 

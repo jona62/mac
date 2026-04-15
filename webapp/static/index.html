@@ -121,6 +121,7 @@
             <p class="stage-placeholder__title">Edit a scene and the stage will refresh automatically.</p>
           </div>
           <img id="stageImage" alt="Studio preview" hidden />
+          <div class="pos-overlay" id="posOverlay"></div>
         </div>
         <div class="canvas-area__footer">
           <div class="canvas-footer__status">
@@ -222,6 +223,11 @@
                   <input type="number" id="slotFontSizePx" min="8" max="240" step="1" />
                 </label>
               </div>
+              <details class="pos-text-panel">
+                <summary class="pos-text-panel__toggle">Positioned Texts</summary>
+                <div class="pos-text-list" id="posTextList"></div>
+                <button class="btn btn--accent btn--sm" id="addPosTextBtn" type="button">+ Add Text</button>
+              </details>
             </section>
           </div>
 

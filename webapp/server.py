@@ -424,6 +424,17 @@ def normalize_slot(raw_slot: object) -> dict[str, object]:
     text_payload = raw_slot.get("text")
     text_payload = text_payload if isinstance(text_payload, dict) else {}
 
+    pos_texts = []
+    raw_pos = raw_slot.get("positionedTexts")
+    if isinstance(raw_pos, list):
+        for item in raw_pos:
+            if isinstance(item, dict) and item.get("content"):
+                pos_texts.append({
+                    "content": normalize_caption(item["content"]),
+                    "x": int(item.get("x", 0)),
+                    "y": int(item.get("y", 0)),
+                })
+
     return {
         "templateId": template_id,
         "text": {
@@ -431,6 +442,7 @@ def normalize_slot(raw_slot: object) -> dict[str, object]:
             "center": normalize_caption(text_payload.get("center")),
             "bottom": normalize_caption(text_payload.get("bottom")),
         },
+        "positionedTexts": pos_texts,
         "style": normalize_style(raw_slot.get("style")),
     }
 
@@ -637,6 +649,11 @@ def build_slot_expr(slot: dict[str, object], scene_index: int, slot_index: int, 
         tmpl_ref = f'@"{upload_path or tid}"' if upload_path else f"@{tid}"
     else:
         tmpl_ref = f"@{tid}"
+
+    # Add positioned text entries
+    for pt in slot.get("positionedTexts", []):
+        if pt.get("content"):
+            entries.append(f"    text: {mac_string_literal(pt['content'])} x: {pt['x']} y: {pt['y']}")
 
     if not entries:
         return f"{tmpl_ref} {slot_width}x{slot_height}{style_suffix} {{}}"
