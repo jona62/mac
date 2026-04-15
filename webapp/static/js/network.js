@@ -59,12 +59,11 @@ function schedulePreview(delay = 320, immediateMessage = false) {
 async function requestPreview() {
   if (state.backendCompatibility !== "studio") { applyLegacyBackendWarning(); renderAll(); return; }
 
-  const isMultiScene = state.scenes.length > 1;
-  const payload = buildPayload(isMultiScene ? {} : { previewSceneIndex: state.selectedSceneIndex });
+  const payload = buildPayload({ previewSceneIndex: state.selectedSceneIndex });
   const requestId = ++state.previewSeq;
   state.isPreviewing = true;
   setStatus("Refreshing preview…",
-    isMultiScene ? `Rendering ${state.scenes.length}-scene GIF animation.` : "Rendering the selected scene.", "normal");
+    "Rendering the selected scene.", "normal");
   renderStatus();
 
   try {
@@ -79,9 +78,7 @@ async function requestPreview() {
     state.script = data.script || state.script;
     state.stageMode = "preview";
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-    state.stageLabel = isMultiScene
-      ? `${state.scenes.length}-scene GIF preview`
-      : `Scene ${state.selectedSceneIndex + 1} preview`;
+    state.stageLabel = `Scene ${state.selectedSceneIndex + 1} preview`;
     const summary = data.summary || {};
     setStatus("Scene preview ready.",
       `${layoutName(selectedScene().layout.kind) || "Scene"} · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} preview`, "normal");

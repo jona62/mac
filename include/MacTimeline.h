@@ -7,6 +7,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "GifEncoder.h"
+#include "MemeLayout.h"
+#include "RenderSurface.h"
 
 namespace meme {
 
@@ -14,9 +17,7 @@ namespace meme {
     public:
         struct Keyframe {
             int timeMs;
-            std::vector<unsigned char> pixels;
-            int width;
-            int height;
+            std::shared_ptr<RenderSurface> surface;
         };
 
         struct Transition {
@@ -35,8 +36,8 @@ namespace meme {
         std::vector<int> holds;                // hold durations after each keyframe (ms)
         int loopCount = 0;  // 0 = infinite
 
-        void addKeyframe(std::vector<unsigned char> pixels, int width, int height) {
-            keyframes.push_back({static_cast<int>(keyframes.size()), std::move(pixels), width, height});
+        void addKeyframe(const std::shared_ptr<RenderSurface>& surface) {
+            keyframes.push_back({static_cast<int>(keyframes.size()), surface});
         }
 
         void setTransition(int durationMs, const std::string& type,
@@ -65,27 +66,50 @@ namespace meme {
             int delayCs;
         };
 
+        bool save(const std::string& path) const {
+            if (keyframes.empty()) return false;
+
+            int targetW = keyframes[0].surface->width;
+            int targetH = keyframes[0].surface->height;
+            auto resized = resizedKeyframes(targetW, targetH);
+
+            GifEncoder enc(path, targetW, targetH);
+            emitFrames(resized, targetW, targetH, [&](const std::vector<unsigned char>& pixels, int delayCs) {
+                enc.addFrame(pixels.data(), delayCs);
+            });
+            enc.finish();
+            return true;
+        }
+
         std::vector<OutputFrame> renderFrames() const {
             std::vector<OutputFrame> output;
             if (keyframes.empty()) return output;
 
-            int targetW = keyframes[0].width;
-            int targetH = keyframes[0].height;
+            int targetW = keyframes[0].surface->width;
+            int targetH = keyframes[0].surface->height;
+            auto resized = resizedKeyframes(targetW, targetH);
+            emitFrames(resized, targetW, targetH, [&](const std::vector<unsigned char>& pixels, int delayCs) {
+                output.push_back({pixels, targetW, targetH, delayCs});
+            });
 
-            // Pre-resize all keyframes once (avoid repeated resize per transition frame)
-            std::vector<std::vector<unsigned char>> resized(keyframes.size());
-            for (size_t i = 0; i < keyframes.size(); i++) {
-                resized[i] = resizeToTarget(keyframes[i].pixels, keyframes[i].width,
-                                             keyframes[i].height, targetW, targetH);
-            }
+            return output;
+        }
 
+        std::string toString() const {
+            return "<timeline " + std::to_string(keyframes.size()) + " keyframes>";
+        }
+
+    private:
+        template <typename Emit>
+        void emitFrames(const std::vector<std::vector<unsigned char>>& resized,
+                        int targetW,
+                        int targetH,
+                        Emit emit) const {
             for (size_t i = 0; i < keyframes.size(); i++) {
-                // Add hold frame for this keyframe
                 int holdMs = (i < holds.size()) ? holds[i] : 0;
                 if (holdMs <= 0) holdMs = 2000;
-                output.push_back({resized[i], targetW, targetH, holdMs / 10});
+                emit(resized[i], std::max(1, holdMs / 10));
 
-                // Add transition to next keyframe if available
                 if (i + 1 < keyframes.size() && i < transitions.size()) {
                     auto& trans = transitions[i];
                     int transMs = trans.durationMs > 0 ? trans.durationMs : 150;
@@ -95,13 +119,13 @@ namespace meme {
 
                     for (int f = 1; f < frameCount; f++) {
                         float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
-                        output.push_back({renderTransitionFrame(resized[i], resized[i + 1],
-                            targetW, targetH, t, trans.type), targetW, targetH, frameDelayCs});
+                        emit(renderTransitionFrame(resized[i], resized[i + 1],
+                                                   targetW, targetH, t, trans.type),
+                             frameDelayCs);
                     }
                 }
             }
 
-            // Loop-back transition: last frame → first frame
             if (loopCount != 1 && keyframes.size() > 1) {
                 size_t lastIdx = keyframes.size() - 1;
                 if (lastIdx < transitions.size() && transitions[lastIdx].durationMs > 0) {
@@ -113,38 +137,30 @@ namespace meme {
 
                     for (int f = 1; f < frameCount; f++) {
                         float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
-                        output.push_back({renderTransitionFrame(resized[lastIdx], resized[0],
-                            targetW, targetH, t, trans.type), targetW, targetH, frameDelayCs});
+                        emit(renderTransitionFrame(resized[lastIdx], resized[0],
+                                                   targetW, targetH, t, trans.type),
+                             frameDelayCs);
                     }
                 }
             }
-
-            return output;
         }
 
-        std::string toString() const {
-            return "<timeline " + std::to_string(keyframes.size()) + " keyframes>";
+        std::vector<std::vector<unsigned char>> resizedKeyframes(int targetW, int targetH) const {
+            std::vector<std::vector<unsigned char>> resized(keyframes.size());
+            for (size_t i = 0; i < keyframes.size(); i++) {
+                resized[i] = resizeToTarget(keyframes[i].surface->pixels,
+                                            keyframes[i].surface->width,
+                                            keyframes[i].surface->height,
+                                            targetW, targetH);
+            }
+            return resized;
         }
 
-    private:
         static std::vector<unsigned char> resizeToTarget(
                 const std::vector<unsigned char>& src, int srcW, int srcH,
                 int dstW, int dstH) {
             if (srcW == dstW && srcH == dstH) return src;
-            std::vector<unsigned char> dst(dstW * dstH * 4);
-            for (int y = 0; y < dstH; y++) {
-                int sy = y * srcH / dstH;
-                for (int x = 0; x < dstW; x++) {
-                    int sx = x * srcW / dstW;
-                    int si = (sy * srcW + sx) * 4;
-                    int di = (y * dstW + x) * 4;
-                    dst[di + 0] = src[si + 0];
-                    dst[di + 1] = src[si + 1];
-                    dst[di + 2] = src[si + 2];
-                    dst[di + 3] = src[si + 3];
-                }
-            }
-            return dst;
+            return layout::resizePixels(src.data(), srcW, srcH, dstW, dstH);
         }
 
         // Easing functions

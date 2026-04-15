@@ -18,6 +18,7 @@
 #include "MacMap.h"
 #include "MacMeme.h"
 #include "MacGif.h"
+#include "RenderSurface.h"
 #include "NativeRegistry.h"
 #include "Environment.h"
 #include "RuntimeError.h"
@@ -647,23 +648,13 @@ namespace interpreter {
 
         MacValue visitGifBlockExpr(expr::GifBlockExpr<MacValue>* expr) override {
             // Build GIF directly using C++ MacGif to handle both
-            // Meme instances AND rendered maps (from effects)
+            // Meme instances and rendered maps without temp files.
             auto rawGif = std::make_shared<meme::MacGif>();
 
             for (auto& frame : expr->frames) {
                 auto meme = evaluate(frame.meme);
                 int durationMs = static_cast<int>(frame.durationMs);
-
-                // getMemePixels handles MacInstance (Meme), MacMap (rendered), etc.
-                auto pd = callable::getMemePixels(meme);
-                auto macMeme = std::make_shared<meme::MacMeme>("", "", "");
-                macMeme->imagePath = "";
-                // Save pixels to temp file so MacGif can load them
-                auto tempPath = callable::saveTempImage(pd.pixels, pd.width, pd.height);
-                macMeme->imagePath = tempPath;
-                macMeme->width = pd.width;
-                macMeme->height = pd.height;
-                rawGif->addFrame(macMeme, durationMs);
+                rawGif->addFrame(callable::getRenderSurface(meme), durationMs);
             }
 
             // Wrap in a prelude Gif instance so => and .save() work consistently
@@ -685,15 +676,14 @@ namespace interpreter {
 
         MacValue visitTimelineBlockExpr(expr::TimelineBlockExpr<MacValue>* expr) override {
             // Build timeline directly using C++ MacTimeline to handle
-            // both Meme instances AND rendered maps (from effects)
+            // both Meme instances and rendered maps without temp files.
             auto rawTl = std::make_shared<meme::MacTimeline>();
 
             for (auto& entry : expr->entries) {
                 auto meme = evaluate(entry.frame.meme);
                 int holdMs = static_cast<int>(entry.frame.durationMs);
 
-                auto pd = callable::getMemePixels(meme);
-                rawTl->addKeyframe(std::move(pd.pixels), pd.width, pd.height);
+                rawTl->addKeyframe(callable::getRenderSurface(meme));
                 rawTl->addHold(holdMs);
 
                 if (entry.transition) {
@@ -805,6 +795,9 @@ namespace interpreter {
                 }
                 ss << "}";
                 return ss.str();
+            }
+            if (std::holds_alternative<shared_ptr<meme::RenderSurface>>(value)) {
+                return std::get<shared_ptr<meme::RenderSurface>>(value)->toString();
             }
             if (std::holds_alternative<shared_ptr<meme::MacMeme>>(value)) {
                 return std::get<shared_ptr<meme::MacMeme>>(value)->toString();

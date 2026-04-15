@@ -25,6 +25,8 @@
 
 namespace callable {
 
+    static std::shared_ptr<meme::RenderSurface> getRenderSurface(const value::MacValue& val);
+
     // All user output goes to output/ directory
     static std::string getOutputDir() {
         const char* home = std::getenv("HOME");
@@ -119,6 +121,7 @@ namespace callable {
             if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(val)) return std::string("instance");
             if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(val)) return std::string("array");
             if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(val)) return std::string("map");
+            if (std::holds_alternative<std::shared_ptr<meme::RenderSurface>>(val)) return std::string("surface");
             if (std::holds_alternative<std::shared_ptr<meme::MacMeme>>(val)) return std::string("meme");
             if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) return std::string("gif");
             if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) return std::string("timeline");
@@ -301,6 +304,13 @@ namespace callable {
             auto gif = std::make_shared<meme::MacGif>();
             for (auto& frameVal : framesArr->elements) {
                 auto frameMap = std::get<std::shared_ptr<collection::MacMap>>(frameVal);
+                int dur = static_cast<int>(std::get<double>(frameMap->get("duration")));
+
+                if (frameMap->has("meme")) {
+                    gif->addFrame(getRenderSurface(frameMap->get("meme")), dur);
+                    continue;
+                }
+
                 auto path = std::get<std::string>(frameMap->get("path"));
                 auto top = std::get<std::string>(frameMap->get("top"));
                 auto bottom = std::get<std::string>(frameMap->get("bottom"));
@@ -309,12 +319,10 @@ namespace callable {
                     : std::string("");
                 int w = static_cast<int>(std::get<double>(frameMap->get("width")));
                 int h = static_cast<int>(std::get<double>(frameMap->get("height")));
-                int dur = static_cast<int>(std::get<double>(frameMap->get("duration")));
-                auto m = std::make_shared<meme::MacMeme>("", top, bottom, center);
-                m->imagePath = path;
-                m->width = w;
-                m->height = h;
-                gif->addFrame(m, dur);
+                gif->addFrame(
+                    meme::MemeRenderer::renderSurface(path, top, bottom, center, w, h),
+                    dur
+                );
             }
             return gif->save(outputPath);
         }
@@ -340,8 +348,7 @@ namespace callable {
     // =======================================================================
 
     // Helper: extract meme rendering data from a MacInstance (Meme class)
-    // Returns the rendered pixel data + dimensions. If renderedPath is set (temp path),
-    // loads from that. Otherwise renders from template + text.
+    // Returns the rendered pixel data + dimensions.
     struct MemePixelData {
         std::vector<unsigned char> pixels;
         int width;
@@ -349,100 +356,32 @@ namespace callable {
     };
 
     static meme::TextStyle extractStyle(const std::shared_ptr<instance::MacInstance>& inst);
+    static std::shared_ptr<meme::RenderSurface> getRenderSurface(const value::MacValue& val);
+
+    static std::shared_ptr<meme::RenderSurface> loadSurfaceFromPath(const std::string& path) {
+        int w = 0, h = 0, c = 0;
+        unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
+        if (!data) throw std::runtime_error("Cannot load rendered image: " + path);
+        std::vector<unsigned char> pixels(data, data + w * h * 4);
+        stbi_image_free(data);
+        return std::make_shared<meme::RenderSurface>(std::move(pixels), w, h);
+    }
+
+    static std::shared_ptr<collection::MacMap> makeRenderedMap(const std::shared_ptr<meme::RenderSurface>& surface) {
+        auto map = std::make_shared<collection::MacMap>();
+        map->set("_surface", value::MacValue(surface));
+        map->set("_width", value::MacValue(static_cast<double>(surface->width)));
+        map->set("_height", value::MacValue(static_cast<double>(surface->height)));
+        return map;
+    }
+
+    static std::shared_ptr<collection::MacMap> makeRenderedMap(std::vector<unsigned char> pixels, int width, int height) {
+        return makeRenderedMap(std::make_shared<meme::RenderSurface>(std::move(pixels), width, height));
+    }
 
     static MemePixelData getMemePixels(const value::MacValue& val) {
-        // Handle MacMap (rendered effect result)
-        if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(val)) {
-            auto map = std::get<std::shared_ptr<collection::MacMap>>(val);
-            if (map->has("_rendered")) {
-                auto path = std::get<std::string>(map->get("_rendered"));
-                int w, h, c;
-                unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
-                if (!data) throw std::runtime_error("Cannot load rendered image: " + path);
-                MemePixelData result;
-                result.pixels.assign(data, data + w * h * 4);
-                result.width = w;
-                result.height = h;
-                stbi_image_free(data);
-                return result;
-            }
-            throw std::runtime_error("Map does not contain rendered image data.");
-        }
-
-        // Detect sequence types (Gif/Timeline) and give helpful error messages
-        if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) {
-            throw std::runtime_error(
-                "Cannot use Gif as a frame — Gif is a sequence type. "
-                "Wrap the containing block in a 'gif' instead.");
-        }
-        if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) {
-            throw std::runtime_error(
-                "Cannot use Timeline as a frame — Timeline is a sequence type. "
-                "Wrap the containing block in a 'timeline' instead.");
-        }
-
-        if (!std::holds_alternative<std::shared_ptr<instance::MacInstance>>(val)) {
-            throw std::runtime_error("Expected a Meme instance.");
-        }
-        auto inst = std::get<std::shared_ptr<instance::MacInstance>>(val);
-
-        // Detect prelude-wrapped sequence types (Gif/Timeline class instances)
-        auto className = inst->getClass()->name;
-        if (className == "Gif" || className == "Timeline") {
-            throw std::runtime_error(
-                "Cannot use " + className + " as a frame — " + className +
-                " is a sequence type. Wrap the containing block in a '" +
-                (className == "Gif" ? "gif" : "timeline") + "' instead.");
-        }
-
-        // Check for renderedPath field (temp file path)
-        token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("renderedPath")), 0);
-        value::MacValue renderedVal;
-        try {
-            renderedVal = inst->get(renderedTok);
-        } catch (...) {
-            renderedVal = std::monostate{};
-        }
-
-        if (std::holds_alternative<std::string>(renderedVal)) {
-            auto path = std::get<std::string>(renderedVal);
-            int w, h, c;
-            unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
-            if (!data) {
-                throw std::runtime_error("Cannot load rendered image: " + path);
-            }
-            MemePixelData result;
-            result.pixels.assign(data, data + w * h * 4);
-            result.width = w;
-            result.height = h;
-            stbi_image_free(data);
-            return result;
-        }
-
-        // Render from template
-        token::Token tplTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("template")), 0);
-        auto tplVal = inst->get(tplTok);
-        auto tplInst = std::get<std::shared_ptr<instance::MacInstance>>(tplVal);
-
-        token::Token pathTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("path")), 0);
-        auto templatePath = std::get<std::string>(tplInst->get(pathTok));
-
-        token::Token topTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("topText")), 0);
-        token::Token centerTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("centerText")), 0);
-        token::Token botTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("bottomText")), 0);
-        token::Token wTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("width")), 0);
-        token::Token hTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("height")), 0);
-
-        auto topText = std::get<std::string>(inst->get(topTok));
-        auto centerText = std::get<std::string>(inst->get(centerTok));
-        auto bottomText = std::get<std::string>(inst->get(botTok));
-        int w = static_cast<int>(std::get<double>(inst->get(wTok)));
-        int h = static_cast<int>(std::get<double>(inst->get(hTok)));
-
-        auto style = extractStyle(inst);
-        int outW, outH;
-        auto pixels = meme::MemeRenderer::render(templatePath, topText, bottomText, centerText, w, h, outW, outH, style);
-        return {pixels, outW, outH};
+        auto surface = getRenderSurface(val);
+        return {surface->pixels, surface->width, surface->height};
     }
 
     // Extract TextStyle from a Meme instance's _style field (MacMap)
@@ -515,6 +454,98 @@ namespace callable {
         if (!bgColor.empty()) parseHex(bgColor, style.bgR, style.bgG, style.bgB, style.bgA);
 
         return style;
+    }
+
+    static std::shared_ptr<meme::RenderSurface> getRenderSurface(const value::MacValue& val) {
+        if (std::holds_alternative<std::shared_ptr<meme::RenderSurface>>(val)) {
+            return std::get<std::shared_ptr<meme::RenderSurface>>(val);
+        }
+
+        if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(val)) {
+            auto map = std::get<std::shared_ptr<collection::MacMap>>(val);
+            if (map->has("_surface")) {
+                return std::get<std::shared_ptr<meme::RenderSurface>>(map->get("_surface"));
+            }
+            if (map->has("_rendered")) {
+                return loadSurfaceFromPath(std::get<std::string>(map->get("_rendered")));
+            }
+            throw std::runtime_error("Map does not contain rendered image data.");
+        }
+
+        if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) {
+            throw std::runtime_error(
+                "Cannot use Gif as a frame — Gif is a sequence type. "
+                "Wrap the containing block in a 'gif' instead.");
+        }
+        if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) {
+            throw std::runtime_error(
+                "Cannot use Timeline as a frame — Timeline is a sequence type. "
+                "Wrap the containing block in a 'timeline' instead.");
+        }
+
+        if (std::holds_alternative<std::shared_ptr<meme::MacMeme>>(val)) {
+            auto memeValue = std::get<std::shared_ptr<meme::MacMeme>>(val);
+            return meme::MemeRenderer::renderSurface(
+                memeValue->imagePath,
+                memeValue->topText,
+                memeValue->bottomText,
+                memeValue->centerText,
+                memeValue->width,
+                memeValue->height,
+                memeValue->style
+            );
+        }
+
+        if (!std::holds_alternative<std::shared_ptr<instance::MacInstance>>(val)) {
+            throw std::runtime_error("Expected a Meme instance.");
+        }
+        auto inst = std::get<std::shared_ptr<instance::MacInstance>>(val);
+
+        auto className = inst->getClass()->name;
+        if (className == "Gif" || className == "Timeline") {
+            throw std::runtime_error(
+                "Cannot use " + className + " as a frame — " + className +
+                " is a sequence type. Wrap the containing block in a '" +
+                (className == "Gif" ? "gif" : "timeline") + "' instead.");
+        }
+
+        token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("renderedPath")), 0);
+        value::MacValue renderedVal;
+        try {
+            renderedVal = inst->get(renderedTok);
+        } catch (...) {
+            renderedVal = std::monostate{};
+        }
+
+        if (std::holds_alternative<std::shared_ptr<meme::RenderSurface>>(renderedVal)) {
+            return std::get<std::shared_ptr<meme::RenderSurface>>(renderedVal);
+        }
+        if (std::holds_alternative<std::string>(renderedVal)) {
+            return loadSurfaceFromPath(std::get<std::string>(renderedVal));
+        }
+
+        token::Token tplTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("template")), 0);
+        auto tplVal = inst->get(tplTok);
+        auto tplInst = std::get<std::shared_ptr<instance::MacInstance>>(tplVal);
+
+        token::Token pathTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("path")), 0);
+        auto templatePath = std::get<std::string>(tplInst->get(pathTok));
+
+        token::Token topTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("topText")), 0);
+        token::Token centerTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("centerText")), 0);
+        token::Token botTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("bottomText")), 0);
+        token::Token wTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("width")), 0);
+        token::Token hTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("height")), 0);
+
+        auto topText = std::get<std::string>(inst->get(topTok));
+        auto centerText = std::get<std::string>(inst->get(centerTok));
+        auto bottomText = std::get<std::string>(inst->get(botTok));
+        int w = static_cast<int>(std::get<double>(inst->get(wTok)));
+        int h = static_cast<int>(std::get<double>(inst->get(hTok)));
+
+        return meme::MemeRenderer::renderSurface(
+            templatePath, topText, bottomText, centerText, w, h, extractStyle(inst)
+        );
     }
 
     // Helper: save pixels to a temp file and return the path
@@ -750,22 +781,18 @@ namespace callable {
     public:
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
-            auto tempPath = std::get<std::string>(args[0]);
             auto outputPath = toOutputPath(std::get<std::string>(args[1]));
-            int w, h, c;
-            unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
-            if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
-            std::vector<unsigned char> pixels(data, data + w * h * 4);
-            stbi_image_free(data);
-            bool ok = meme::MemeRenderer::saveImage(pixels, w, h, outputPath);
-            return ok;
+            auto surface = std::holds_alternative<std::string>(args[0])
+                ? loadSurfaceFromPath(std::get<std::string>(args[0]))
+                : getRenderSurface(args[0]);
+            return meme::MemeRenderer::saveImage(surface->pixels, surface->width, surface->height, outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
     };
 
     // =======================================================================
-    // Partial Effect — a callable Meme -> Meme (well, Meme -> string temp path)
+    // Partial Effect — a callable Meme -> rendered map
     // Created by parameterized effect creators (blur, pixelate, etc.)
     // =======================================================================
 
@@ -812,13 +839,7 @@ namespace callable {
                     (hex >> 16) & 0xFF, (hex >> 8) & 0xFF, hex & 0xFF, 0.5f);
             }
 
-            auto tempPath = saveTempImage(pd.pixels, pd.width, pd.height);
-
-            auto result = std::make_shared<collection::MacMap>();
-            result->set("_rendered", value::MacValue(tempPath));
-            result->set("_width", value::MacValue(static_cast<double>(pd.width)));
-            result->set("_height", value::MacValue(static_cast<double>(pd.height)));
-            return value::MacValue(result);
+            return value::MacValue(makeRenderedMap(std::move(pd.pixels), pd.width, pd.height));
         }
         int arity() override { return 1; }
         std::string toString() override { return "<" + effectName + " effect>"; }
@@ -883,13 +904,7 @@ namespace callable {
                     effects::jpegQuality(pd.pixels.data(), pd.width, pd.height, static_cast<int>(param));
                 }
 
-                auto tempPath = saveTempImage(pd.pixels, pd.width, pd.height);
-
-                auto result = std::make_shared<collection::MacMap>();
-                result->set("_rendered", value::MacValue(tempPath));
-                result->set("_width", value::MacValue(static_cast<double>(pd.width)));
-                result->set("_height", value::MacValue(static_cast<double>(pd.height)));
-                return value::MacValue(result);
+                return value::MacValue(makeRenderedMap(std::move(pd.pixels), pd.width, pd.height));
             }
 
             throw std::runtime_error(effectName + "() expects 1 or 2 arguments.");
@@ -925,13 +940,7 @@ namespace callable {
                 effects::grayscale(pd.pixels.data(), pd.width, pd.height);
             }
 
-            auto tempPath = saveTempImage(pd.pixels, pd.width, pd.height);
-
-            auto result = std::make_shared<collection::MacMap>();
-            result->set("_rendered", value::MacValue(tempPath));
-            result->set("_width", value::MacValue(static_cast<double>(pd.width)));
-            result->set("_height", value::MacValue(static_cast<double>(pd.height)));
-            return value::MacValue(result);
+            return value::MacValue(makeRenderedMap(std::move(pd.pixels), pd.width, pd.height));
         }
         int arity() override { return 1; }
         std::string toString() override { return "<" + effectName + ">"; }
@@ -953,12 +962,7 @@ namespace callable {
             auto result = layout::composeBeside(pd1.pixels.data(), pd1.width, pd1.height,
                                                 pd2.pixels.data(), pd2.width, pd2.height,
                                                 outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 2; }
         std::string toString() override { return "<beside>"; }
@@ -975,12 +979,7 @@ namespace callable {
             auto result = layout::composeStack(pd1.pixels.data(), pd1.width, pd1.height,
                                                pd2.pixels.data(), pd2.width, pd2.height,
                                                outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 2; }
         std::string toString() override { return "<stack>"; }
@@ -1006,12 +1005,7 @@ namespace callable {
 
             int outW, outH;
             auto result = layout::composeGrid(imgPtrs, cols, outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 2; }
         std::string toString() override { return "<grid>"; }
@@ -1026,12 +1020,7 @@ namespace callable {
             int padPx = static_cast<int>(std::get<double>(args[1]));
             int outW, outH;
             auto result = layout::addPadding(pd.pixels.data(), pd.width, pd.height, padPx, outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 2; }
         std::string toString() override { return "<pad>"; }
@@ -1046,12 +1035,7 @@ namespace callable {
             int borderPx = static_cast<int>(std::get<double>(args[1]));
             int outW, outH;
             auto result = layout::addBorder(pd.pixels.data(), pd.width, pd.height, borderPx, outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 2; }
         std::string toString() override { return "<border>"; }
@@ -1078,8 +1062,7 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
             auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            auto pd = getMemePixels(args[1]);
-            tl->addKeyframe(std::move(pd.pixels), pd.width, pd.height);
+            tl->addKeyframe(getRenderSurface(args[1]));
             return value::MacValue(tl);
         }
         int arity() override { return 2; }
@@ -1140,17 +1123,7 @@ namespace callable {
                              std::vector<value::MacValue> args) override {
             auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
             auto outputPath = toOutputPath(std::get<std::string>(args[1]));
-            auto frames = tl->renderFrames();
-            if (frames.empty()) return false;
-
-            int w = frames[0].width;
-            int h = frames[0].height;
-            meme::GifEncoder enc(outputPath, w, h);
-            for (auto& frame : frames) {
-                enc.addFrame(frame.pixels.data(), frame.delayCs);
-            }
-            enc.finish();
-            return true;
+            return tl->save(outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
@@ -1626,9 +1599,7 @@ namespace callable {
 
             auto gif = std::make_shared<meme::MacGif>();
             for (auto& memeVal : memesArr->elements) {
-                auto inst = std::get<std::shared_ptr<instance::MacInstance>>(memeVal);
-                auto memeData = getMemeFromInstance(inst);
-                gif->addFrame(memeData, ms);
+                gif->addFrame(getRenderSurface(memeVal), ms);
             }
             return value::MacValue(gif);
         }
@@ -1657,12 +1628,7 @@ namespace callable {
 
             int outW, outH;
             auto result = layout::composeGrid(imgPtrs, cols, outW, outH);
-            auto tempPath = saveTempImage(result, outW, outH);
-            auto map = std::make_shared<collection::MacMap>();
-            map->set("_rendered", value::MacValue(tempPath));
-            map->set("_width", value::MacValue(static_cast<double>(outW)));
-            map->set("_height", value::MacValue(static_cast<double>(outH)));
-            return value::MacValue(map);
+            return value::MacValue(makeRenderedMap(std::move(result), outW, outH));
         }
         int arity() override { return 3; }
         std::string toString() override { return "<native fn>"; }
@@ -1680,19 +1646,10 @@ namespace callable {
             auto& target = args[0];
             auto outputPath = toOutputPath(std::get<std::string>(args[1]));
 
-            // Timeline → render frames and save as GIF
+            // Timeline → stream directly to GIF encoder
             if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(target)) {
                 auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(target);
-                auto frames = tl->renderFrames();
-                if (frames.empty()) return false;
-                int w = frames[0].width;
-                int h = frames[0].height;
-                meme::GifEncoder enc(outputPath, w, h);
-                for (auto& frame : frames) {
-                    enc.addFrame(frame.pixels.data(), frame.delayCs);
-                }
-                enc.finish();
-                return true;
+                return tl->save(outputPath);
             }
 
             // Gif → save as animated GIF
@@ -1701,19 +1658,12 @@ namespace callable {
                 return gif->save(outputPath);
             }
 
-            // Rendered map (from effects/layout pipeline) → copy temp image to output
+            // Rendered map (from effects/layout pipeline) → save in-memory surface
             if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(target)) {
-                auto map = std::get<std::shared_ptr<collection::MacMap>>(target);
-                if (map->has("_rendered")) {
-                    auto tempPath = std::get<std::string>(map->get("_rendered"));
-                    int w, h, c;
-                    unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
-                    if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
-                    std::vector<unsigned char> pixels(data, data + w * h * 4);
-                    stbi_image_free(data);
-                    return meme::MemeRenderer::saveImage(pixels, w, h, outputPath);
-                }
-                throw std::runtime_error("save() map does not contain rendered image data.");
+                auto surface = getRenderSurface(target);
+                return meme::MemeRenderer::saveImage(
+                    surface->pixels, surface->width, surface->height, outputPath
+                );
             }
 
             // Mac class instance → dispatch by class type
@@ -1736,19 +1686,19 @@ namespace callable {
                 value::MacValue renderedVal;
                 try { renderedVal = inst->get(renderedTok); } catch (...) { renderedVal = std::monostate{}; }
 
-                if (std::holds_alternative<std::string>(renderedVal)) {
-                    auto tempPath = std::get<std::string>(renderedVal);
-                    int w, h, c;
-                    unsigned char* data = stbi_load(tempPath.c_str(), &w, &h, &c, 4);
-                    if (!data) throw std::runtime_error("Cannot load rendered image: " + tempPath);
-                    std::vector<unsigned char> pixels(data, data + w * h * 4);
-                    stbi_image_free(data);
-                    return meme::MemeRenderer::saveImage(pixels, w, h, outputPath);
+                if (!std::holds_alternative<std::monostate>(renderedVal)) {
+                    auto surface = std::holds_alternative<std::string>(renderedVal)
+                        ? loadSurfaceFromPath(std::get<std::string>(renderedVal))
+                        : getRenderSurface(renderedVal);
+                    return meme::MemeRenderer::saveImage(
+                        surface->pixels, surface->width, surface->height, outputPath
+                    );
                 }
 
-                // Render from template
-                auto memeData = getMemeFromInstance(inst);
-                return memeData->save(outputPath);
+                auto surface = getRenderSurface(target);
+                return meme::MemeRenderer::saveImage(
+                    surface->pixels, surface->width, surface->height, outputPath
+                );
             }
 
             throw std::runtime_error("save() expects a Meme, Gif, Timeline, or rendered result.");

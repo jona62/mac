@@ -3,15 +3,22 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
+#include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Do NOT define STB_*_IMPLEMENTATION here -- already in src/stb_impl.cpp
+#include "RenderSurface.h"
 #include "stb/stb_image.h"
 #include "stb/stb_image_write.h"
 #include "stb/stb_truetype.h"
@@ -22,6 +29,28 @@ namespace meme {
 
     class MemeRenderer {
     public:
+        static std::shared_ptr<RenderSurface> renderSurface(const std::string& imagePath,
+                                                            const std::string& topText,
+                                                            const std::string& bottomText,
+                                                            const std::string& centerText,
+                                                            int targetWidth,
+                                                            int targetHeight,
+                                                            const TextStyle& style = TextStyle{}) {
+            std::string key = renderCacheKey(imagePath, topText, bottomText, centerText,
+                                             targetWidth, targetHeight, style);
+            auto& cache = renderCache();
+            auto it = cache.find(key);
+            if (it != cache.end()) return it->second;
+
+            int outWidth = 0;
+            int outHeight = 0;
+            auto pixels = renderInternal(imagePath, topText, bottomText, centerText,
+                                         targetWidth, targetHeight, outWidth, outHeight, style);
+            auto surface = std::make_shared<RenderSurface>(std::move(pixels), outWidth, outHeight);
+            cache.emplace(std::move(key), surface);
+            return surface;
+        }
+
         // Render meme to RGBA pixel buffer.
         // Sets outWidth / outHeight through reference params (via the overload below).
         static std::vector<unsigned char> render(const std::string& imagePath,
@@ -29,8 +58,8 @@ namespace meme {
                                                   const std::string& bottomText,
                                                   int targetWidth = 0,
                                                   int targetHeight = 0) {
-            int w, h;
-            return renderInternal(imagePath, topText, bottomText, "", targetWidth, targetHeight, w, h);
+            auto surface = renderSurface(imagePath, topText, bottomText, "", targetWidth, targetHeight);
+            return surface->pixels;
         }
 
         // Overload that also returns actual width / height
@@ -42,7 +71,10 @@ namespace meme {
                                                   int& outWidth,
                                                   int& outHeight,
                                                   const TextStyle& style = TextStyle{}) {
-            return renderInternal(imagePath, topText, bottomText, "", targetWidth, targetHeight, outWidth, outHeight, style);
+            auto surface = renderSurface(imagePath, topText, bottomText, "", targetWidth, targetHeight, style);
+            outWidth = surface->width;
+            outHeight = surface->height;
+            return surface->pixels;
         }
 
         static std::vector<unsigned char> render(const std::string& imagePath,
@@ -51,8 +83,8 @@ namespace meme {
                                                   const std::string& centerText,
                                                   int targetWidth = 0,
                                                   int targetHeight = 0) {
-            int w, h;
-            return renderInternal(imagePath, topText, bottomText, centerText, targetWidth, targetHeight, w, h);
+            auto surface = renderSurface(imagePath, topText, bottomText, centerText, targetWidth, targetHeight);
+            return surface->pixels;
         }
 
         static std::vector<unsigned char> render(const std::string& imagePath,
@@ -64,7 +96,10 @@ namespace meme {
                                                   int& outWidth,
                                                   int& outHeight,
                                                   const TextStyle& style = TextStyle{}) {
-            return renderInternal(imagePath, topText, bottomText, centerText, targetWidth, targetHeight, outWidth, outHeight, style);
+            auto surface = renderSurface(imagePath, topText, bottomText, centerText, targetWidth, targetHeight, style);
+            outWidth = surface->width;
+            outHeight = surface->height;
+            return surface->pixels;
         }
 
         // Save rendered RGBA pixels to a PNG or JPG file (detected by extension).
@@ -92,9 +127,31 @@ namespace meme {
     private:
         // ---- caches ----
         struct CachedImage { std::vector<unsigned char> pixels; int w, h; };
+        struct CachedGlyph {
+            std::vector<unsigned char> bitmap;
+            int w = 0;
+            int h = 0;
+            int xoff = 0;
+            int yoff = 0;
+            float advance = 0.0f;
+        };
+        struct TextLayoutCache {
+            std::unordered_map<std::string, float> widths;
+            std::unordered_map<std::string, std::vector<std::string>> wraps;
+        };
 
         static std::unordered_map<std::string, CachedImage>& imageCache() {
             static std::unordered_map<std::string, CachedImage> cache;
+            return cache;
+        }
+
+        static std::unordered_map<std::string, std::shared_ptr<RenderSurface>>& renderCache() {
+            static std::unordered_map<std::string, std::shared_ptr<RenderSurface>> cache;
+            return cache;
+        }
+
+        static std::unordered_map<std::uint64_t, CachedGlyph>& glyphCache() {
+            static std::unordered_map<std::uint64_t, CachedGlyph> cache;
             return cache;
         }
 
@@ -124,6 +181,59 @@ namespace meme {
                     stbtt_GetFontOffsetForIndex(cache.data.data(), 0));
             }
             return cache;
+        }
+
+        static int scaleKey(float scale) {
+            return std::max(1, static_cast<int>(std::lround(scale * 10000.0f)));
+        }
+
+        static std::string renderCacheKey(const std::string& imagePath,
+                                          const std::string& topText,
+                                          const std::string& bottomText,
+                                          const std::string& centerText,
+                                          int targetWidth,
+                                          int targetHeight,
+                                          const TextStyle& style) {
+            std::ostringstream out;
+            out << imagePath << '\n'
+                << topText << '\n'
+                << centerText << '\n'
+                << bottomText << '\n'
+                << targetWidth << 'x' << targetHeight << '\n'
+                << static_cast<int>(style.textR) << ',' << static_cast<int>(style.textG) << ','
+                << static_cast<int>(style.textB) << ',' << static_cast<int>(style.textA) << '\n'
+                << static_cast<int>(style.outlineR) << ',' << static_cast<int>(style.outlineG) << ','
+                << static_cast<int>(style.outlineB) << ',' << style.outlineWidth << '\n'
+                << style.shadowOffsetX << ',' << style.shadowOffsetY << ','
+                << static_cast<int>(style.shadowR) << ',' << static_cast<int>(style.shadowG) << ','
+                << static_cast<int>(style.shadowB) << ',' << static_cast<int>(style.shadowA) << '\n'
+                << style.fontSizeOverride << '\n'
+                << static_cast<int>(style.bgR) << ',' << static_cast<int>(style.bgG) << ','
+                << static_cast<int>(style.bgB) << ',' << static_cast<int>(style.bgA);
+            return out.str();
+        }
+
+        static const CachedGlyph& glyphFor(stbtt_fontinfo& fontInfo, int codepoint, float scale) {
+            std::uint64_t key = (static_cast<std::uint64_t>(scaleKey(scale)) << 32)
+                | static_cast<std::uint32_t>(codepoint);
+            auto& cache = glyphCache();
+            auto it = cache.find(key);
+            if (it != cache.end()) return it->second;
+
+            CachedGlyph glyph;
+            int advanceWidth = 0;
+            int leftSideBearing = 0;
+            stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advanceWidth, &leftSideBearing);
+            glyph.advance = advanceWidth * scale;
+
+            unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontInfo, scale, scale, codepoint,
+                                                             &glyph.w, &glyph.h, &glyph.xoff, &glyph.yoff);
+            if (bitmap) {
+                glyph.bitmap.assign(bitmap, bitmap + glyph.w * glyph.h);
+                stbtt_FreeBitmap(bitmap, nullptr);
+            }
+
+            return cache.emplace(key, std::move(glyph)).first->second;
         }
 
         // ---- internal render ----
@@ -196,23 +306,27 @@ namespace meme {
             auto& font = fontCache();
             const auto& fontData = font.data;
             stbtt_fontinfo fontInfo = font.info;
+            TextLayoutCache textLayoutCache;
 
             // Draw top text (upper half) — anchored to top edge
             if (!topText.empty()) {
                 int regionY = 0;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH, activeStyle, -1);
+                drawMemeText(pixels, w, h, fontInfo, fontData, topText,
+                             regionY, regionH, activeStyle, textLayoutCache, -1);
             }
 
             if (!centerText.empty()) {
-                drawMemeText(pixels, w, h, fontInfo, fontData, centerText, 0, h, activeStyle, 0);
+                drawMemeText(pixels, w, h, fontInfo, fontData, centerText,
+                             0, h, activeStyle, textLayoutCache, 0);
             }
 
             // Draw bottom text (lower half) — anchored to bottom edge
             if (!bottomText.empty()) {
                 int regionY = h / 2;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText, regionY, regionH, activeStyle, 1);
+                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText,
+                             regionY, regionH, activeStyle, textLayoutCache, 1);
             }
 
             outWidth = w;
@@ -223,7 +337,13 @@ namespace meme {
         // Word-wrap text to fit within maxWidth
         static std::vector<std::string> wrapText(stbtt_fontinfo& fontInfo,
                                                   const std::string& text,
-                                                  float scale, float maxWidth) {
+                                                  float scale, float maxWidth,
+                                                  TextLayoutCache& cache) {
+            std::string cacheKey = std::to_string(scaleKey(scale)) + "|" +
+                std::to_string(static_cast<int>(std::lround(maxWidth))) + "|" + text;
+            auto cached = cache.wraps.find(cacheKey);
+            if (cached != cache.wraps.end()) return cached->second;
+
             std::vector<std::string> lines;
             std::vector<std::string> words;
             // Split on spaces
@@ -241,7 +361,7 @@ namespace meme {
             std::string line = words[0];
             for (size_t i = 1; i < words.size(); ++i) {
                 std::string candidate = line + " " + words[i];
-                if (measureText(fontInfo, candidate, scale) <= maxWidth) {
+                if (measureText(fontInfo, candidate, scale, cache) <= maxWidth) {
                     line = candidate;
                 } else {
                     lines.push_back(line);
@@ -249,6 +369,7 @@ namespace meme {
                 }
             }
             lines.push_back(line);
+            cache.wraps.emplace(std::move(cacheKey), lines);
             return lines;
         }
 
@@ -260,7 +381,8 @@ namespace meme {
                                  const std::vector<unsigned char>& fontData,
                                  const std::string& text,
                                  int regionY, int regionH,
-                                 const TextStyle& activeStyle = TextStyle{},
+                                 const TextStyle& activeStyle,
+                                 TextLayoutCache& textLayoutCache,
                                  int align = 0) {
 
             std::string upper = toUpper(text);
@@ -284,13 +406,16 @@ namespace meme {
             // Auto-size: shrink until all wrapped lines fit width and block fits height
             while (fontSize >= 8.0f) {
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                lines = wrapText(fontInfo, upper, scale, maxWidth);
+                lines = wrapText(fontInfo, upper, scale, maxWidth, textLayoutCache);
                 float lineHeight = fontSize * 1.1f;
                 float blockHeight = lines.size() * lineHeight;
                 bool fits = (blockHeight <= regionH * 0.85f);
                 if (fits) {
                     for (auto& l : lines) {
-                        if (measureText(fontInfo, l, scale) > maxWidth) { fits = false; break; }
+                        if (measureText(fontInfo, l, scale, textLayoutCache) > maxWidth) {
+                            fits = false;
+                            break;
+                        }
                     }
                 }
                 if (fits) break;
@@ -300,7 +425,7 @@ namespace meme {
             if (fontSize < 8.0f) {
                 fontSize = 8.0f;
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                lines = wrapText(fontInfo, upper, scale, maxWidth);
+                lines = wrapText(fontInfo, upper, scale, maxWidth, textLayoutCache);
             }
 
             // Vertical metrics
@@ -324,7 +449,7 @@ namespace meme {
 
             // Draw each line
             for (size_t li = 0; li < lines.size(); ++li) {
-                float lineWidth = measureText(fontInfo, lines[li], scale);
+                float lineWidth = measureText(fontInfo, lines[li], scale, textLayoutCache);
                 int startX = static_cast<int>((imgW - lineWidth) / 2.0f);
                 int startY = static_cast<int>(blockStartY + li * lineHeight + ascentPx);
 
@@ -359,17 +484,25 @@ namespace meme {
         }
 
         // Measure total width of a string in pixels
-        static float measureText(stbtt_fontinfo& fontInfo, const std::string& text, float scale) {
+        static float measureText(stbtt_fontinfo& fontInfo,
+                                 const std::string& text,
+                                 float scale,
+                                 TextLayoutCache& cache) {
+            std::string cacheKey = std::to_string(scaleKey(scale)) + "|" + text;
+            auto cached = cache.widths.find(cacheKey);
+            if (cached != cache.widths.end()) return cached->second;
+
             float width = 0;
             for (size_t i = 0; i < text.size(); ++i) {
-                int advW, lsb;
-                stbtt_GetCodepointHMetrics(&fontInfo, text[i], &advW, &lsb);
-                width += advW * scale;
+                const auto& glyph = glyphFor(fontInfo, static_cast<unsigned char>(text[i]), scale);
+                width += glyph.advance;
                 if (i + 1 < text.size()) {
-                    int kern = stbtt_GetCodepointKernAdvance(&fontInfo, text[i], text[i + 1]);
+                    int kern = stbtt_GetCodepointKernAdvance(
+                        &fontInfo, static_cast<unsigned char>(text[i]), static_cast<unsigned char>(text[i + 1]));
                     width += kern * scale;
                 }
             }
+            cache.widths.emplace(std::move(cacheKey), width);
             return width;
         }
 
@@ -383,18 +516,16 @@ namespace meme {
                                  unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
             float xPos = static_cast<float>(x0);
             for (size_t i = 0; i < text.size(); ++i) {
-                int cw, ch, xoff, yoff;
-                unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontInfo, scale, scale,
-                                                                  text[i], &cw, &ch, &xoff, &yoff);
-                if (bitmap) {
-                    int cx = static_cast<int>(xPos) + xoff;
-                    int cy = y0 + yoff;
-                    for (int py = 0; py < ch; ++py) {
-                        for (int px = 0; px < cw; ++px) {
+                const auto& glyph = glyphFor(fontInfo, static_cast<unsigned char>(text[i]), scale);
+                if (!glyph.bitmap.empty()) {
+                    int cx = static_cast<int>(xPos) + glyph.xoff;
+                    int cy = y0 + glyph.yoff;
+                    for (int py = 0; py < glyph.h; ++py) {
+                        for (int px = 0; px < glyph.w; ++px) {
                             int dx = cx + px;
                             int dy = cy + py;
                             if (dx < 0 || dx >= imgW || dy < 0 || dy >= imgH) continue;
-                            unsigned char alpha = bitmap[py * cw + px];
+                            unsigned char alpha = glyph.bitmap[py * glyph.w + px];
                             if (alpha == 0) continue;
                             int idx = (dy * imgW + dx) * 4;
                             // Alpha-blend
@@ -412,14 +543,12 @@ namespace meme {
                             }
                         }
                     }
-                    stbtt_FreeBitmap(bitmap, nullptr);
                 }
 
-                int advW, lsb;
-                stbtt_GetCodepointHMetrics(&fontInfo, text[i], &advW, &lsb);
-                xPos += advW * scale;
+                xPos += glyph.advance;
                 if (i + 1 < text.size()) {
-                    int kern = stbtt_GetCodepointKernAdvance(&fontInfo, text[i], text[i + 1]);
+                    int kern = stbtt_GetCodepointKernAdvance(
+                        &fontInfo, static_cast<unsigned char>(text[i]), static_cast<unsigned char>(text[i + 1]));
                     xPos += kern * scale;
                 }
             }

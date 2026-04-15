@@ -2,6 +2,7 @@
 #define GIF_ENCODER_H
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -168,8 +169,11 @@ namespace meme {
 
         struct LzwDict {
             static const int MAX_CODE = 4096;
+            static const int TABLE_SIZE = 16384;
             int prefixes[MAX_CODE];
             unsigned char suffixes[MAX_CODE];
+            std::array<int, TABLE_SIZE> slots;
+            std::array<std::uint32_t, TABLE_SIZE> keys;
             int size;
 
             void reset(int clearCode) {
@@ -183,19 +187,35 @@ namespace meme {
                 suffixes[clearCode] = 0;
                 prefixes[clearCode + 1] = -2;
                 suffixes[clearCode + 1] = 0;
+                slots.fill(-1);
+            }
+
+            static std::uint32_t makeKey(int prefix, unsigned char suffix) {
+                return (static_cast<std::uint32_t>(prefix + 1) << 8) | suffix;
             }
 
             int find(int prefix, unsigned char suffix) const {
-                for (int i = (prefix == -1 ? 0 : prefix + 1); i < size; ++i) {
-                    if (prefixes[i] == prefix && suffixes[i] == suffix) return i;
+                std::uint32_t key = makeKey(prefix, suffix);
+                std::size_t index = (key * 2654435761u) & (TABLE_SIZE - 1);
+                while (slots[index] != -1) {
+                    if (keys[index] == key) return slots[index];
+                    index = (index + 1) & (TABLE_SIZE - 1);
                 }
                 return -1;
             }
 
             bool add(int prefix, unsigned char suffix) {
                 if (size >= MAX_CODE) return false;
-                prefixes[size] = prefix;
+                int code = size;
+                prefixes[code] = prefix;
                 suffixes[size] = suffix;
+                std::uint32_t key = makeKey(prefix, suffix);
+                std::size_t index = (key * 2654435761u) & (TABLE_SIZE - 1);
+                while (slots[index] != -1) {
+                    index = (index + 1) & (TABLE_SIZE - 1);
+                }
+                keys[index] = key;
+                slots[index] = code;
                 size++;
                 return true;
             }

@@ -156,6 +156,29 @@ class StudioServerTests(unittest.TestCase):
         self.assertIn('} => "studio-output.gif";', bundle["documentScript"])
         self.assertIn('scene_2 => "/tmp/preview.png";', bundle["runScript"])
 
+    def test_preview_scene_index_is_clamped_for_multi_scene_documents(self) -> None:
+        document = server.normalize_document(
+            {
+                "canvas": {"width": 720, "height": 720},
+                "output": {"format": "gif"},
+                "previewSceneIndex": 999,
+                "scenes": [
+                    {
+                        "durationMs": 320,
+                        "layout": {"kind": "single", "effect": "none"},
+                        "slots": [{"templateId": "blank", "text": {"center": "ONE"}, "style": {}}],
+                    },
+                    {
+                        "durationMs": 440,
+                        "layout": {"kind": "single", "effect": "none"},
+                        "slots": [{"templateId": "blank", "text": {"center": "TWO"}, "style": {}}],
+                    },
+                ],
+            }
+        )
+
+        self.assertEqual(document["previewSceneIndex"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

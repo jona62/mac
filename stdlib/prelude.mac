@@ -149,12 +149,7 @@ class Gif {
     // Returns this — chainable.
     frame(memeObj, duration) {
         push(this._frames, {
-            path: memeObj.template.path,
-            top: memeObj.topText,
-            center: memeObj.centerText,
-            bottom: memeObj.bottomText,
-            width: memeObj.width,
-            height: memeObj.height,
+            meme: memeObj,
             duration: duration.ms
         });
         this.frameCount = len(this._frames);
