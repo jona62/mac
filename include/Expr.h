@@ -336,14 +336,15 @@ namespace expr {
     class GifBlockExpr : public Expr<T> {
     public:
         struct Frame { shared_ptr<Expr<T>> meme; double durationMs; };
-        GifBlockExpr(Token keyword, bool loop, std::vector<Frame> frames)
-            : keyword(keyword), loop(loop), frames(std::move(frames)) {}
+        GifBlockExpr(Token keyword, bool loop, std::vector<Frame> frames, Token loopToken = Token())
+            : keyword(keyword), loop(loop), frames(std::move(frames)), loopToken(loopToken) {}
         T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitGifBlockExpr(this);
         }
         Token keyword;
         bool loop;
         std::vector<Frame> frames;
+        Token loopToken;
     };
 
     // timeline [loop] { @tmpl "text" : 2s --- crossfade 150ms --- ... }
@@ -353,14 +354,15 @@ namespace expr {
         struct TFrame { shared_ptr<Expr<T>> meme; double durationMs; };
         struct Transition { std::string type; double durationMs; std::string easing; };
         struct Entry { TFrame frame; std::shared_ptr<Transition> transition; }; // transition to NEXT frame
-        TimelineBlockExpr(Token keyword, bool loop, std::vector<Entry> entries)
-            : keyword(keyword), loop(loop), entries(std::move(entries)) {}
+        TimelineBlockExpr(Token keyword, bool loop, std::vector<Entry> entries, Token loopToken = Token())
+            : keyword(keyword), loop(loop), entries(std::move(entries)), loopToken(loopToken) {}
         T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitTimelineBlockExpr(this);
         }
         Token keyword;
         bool loop;
         std::vector<Entry> entries;
+        Token loopToken;
     };
 
     // grid NxM { entries }

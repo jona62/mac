@@ -231,7 +231,7 @@ function runAnalysis(text: string): AnalysisResult | null {
     }
 }
 
-const TOKEN_TYPES = ["variable", "parameter", "function", "method", "class", "property", "keyword"];
+const TOKEN_TYPES = ["variable", "parameter", "function", "method", "class", "property", "keyword", "string", "number", "operator"];
 const TOKEN_MODIFIERS: string[] = [];
 const tokenLegend: SemanticTokensLegend = { tokenTypes: TOKEN_TYPES, tokenModifiers: TOKEN_MODIFIERS };
 

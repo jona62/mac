@@ -108,6 +108,11 @@ namespace analyzer {
             analyzeStmt(p->body.get());
             endScope();
         } else if (auto* p = dynamic_cast<stmt::EffectStmt<MV>*>(s)) {
+            // Semantic token for 'effect' keyword
+            if (p->keyword.line > 0 && currentSource == "user") {
+                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                result.semanticTokens.push_back({p->keyword.line, kc, 6, "keyword", currentSource});
+            }
             std::string type = "Meme -> Meme";
             std::string desc;
             if (p->value) {
@@ -118,6 +123,11 @@ namespace analyzer {
             define(p->name, "variable", type, desc);
             if (p->value) analyzeExpr(p->value.get());
         } else if (auto* p = dynamic_cast<stmt::StyleStmt<MV>*>(s)) {
+            // Semantic token for 'style' keyword
+            if (p->keyword.line > 0 && currentSource == "user") {
+                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                result.semanticTokens.push_back({p->keyword.line, kc, 5, "keyword", currentSource});
+            }
             // Build description from style properties
             std::string desc;
             for (auto& [key, val] : p->properties) {
@@ -312,11 +322,13 @@ namespace analyzer {
             int tec = tc + static_cast<int>(tname.size());
 
             if (p->templateName.type == token::TokenType::STRING) {
-                // String template: @"path/to/image.png" — emit as string token
+                // String template: @"path/to/image.png" — emit as string token + hover
                 if (p->templateName.line > 0 && currentSource == "user") {
-                    // tc is column of opening quote, +2 for both quotes
                     result.semanticTokens.push_back({p->templateName.line, tc,
                         static_cast<int>(tname.size()) + 2, "string", currentSource});
+                    result.symbols.push_back({tname, "variable", "Meme",
+                        "Custom image template from file path", currentSource,
+                        "public", "", p->templateName.line, tc, tec});
                 }
             } else {
                 // Identifier template: @two_panel — emit reference + class token
@@ -378,11 +390,15 @@ namespace analyzer {
                 int kc = p->keyword.column > 0 ? p->keyword.column : 1;
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
-                // Hover symbol for the gif keyword
                 std::string desc = p->loop ? "Looping GIF block" : "GIF block";
                 desc += " — " + std::to_string(p->frames.size()) + " frames";
                 result.symbols.push_back({kw, "keyword", "Gif", desc, currentSource,
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
+                // Semantic token for 'loop' keyword
+                if (p->loop && p->loopToken.line > 0) {
+                    int lc = p->loopToken.column > 0 ? p->loopToken.column : 1;
+                    result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
+                }
             }
             for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
         }
@@ -396,6 +412,11 @@ namespace analyzer {
                 desc += " — " + std::to_string(p->entries.size()) + " keyframes";
                 result.symbols.push_back({kw, "keyword", "Timeline", desc, currentSource,
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
+                // Semantic token for 'loop' keyword
+                if (p->loop && p->loopToken.line > 0) {
+                    int lc = p->loopToken.column > 0 ? p->loopToken.column : 1;
+                    result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
+                }
             }
             for (auto& entry : p->entries) {
                 analyzeExpr(entry.frame.meme.get());

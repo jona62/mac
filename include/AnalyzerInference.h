@@ -116,6 +116,14 @@ namespace analyzer {
             return "unknown";
         }
 
+        if (auto* p = dynamic_cast<expr::Unary<MV>*>(e)) {
+            auto op = tokName(p->operatorToken);
+            if (op == "!") return "bool";
+            if (op == "-") return "number";
+        }
+
+        if (dynamic_cast<expr::Logical<MV>*>(e)) return "bool";
+
         if (auto* p = dynamic_cast<expr::Binary<MV>*>(e)) {
             auto op = tokName(p->operatorToken);
             if (op == "==" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=") return "bool";

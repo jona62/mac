@@ -710,6 +710,7 @@ double Parser::parseDuration() {
 // style name { key: value, ... }
 template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::styleDeclaration() {
+    Token keyword = previous(); // the 'style' keyword
     consume(TokenType::IDENTIFIER, "Expected style name.");
     Token name = previous();
     consume(TokenType::LEFT_BRACE, "Expected '{' after style name.");
@@ -722,18 +723,19 @@ shared_ptr<stmt::Stmt<T>> Parser::styleDeclaration() {
         props.push_back({key, value});
     }
     consume(TokenType::RIGHT_BRACE, "Expected '}' after style block.");
-    return make_shared<stmt::StyleStmt<T>>(name, std::move(props));
+    return make_shared<stmt::StyleStmt<T>>(keyword, name, std::move(props));
 }
 
 // effect name = compose_expr;
 template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::effectDeclaration() {
+    Token keyword = previous(); // the 'effect' keyword
     consume(TokenType::IDENTIFIER, "Expected effect name.");
     Token name = previous();
     consume(TokenType::EQUAL, "Expected '=' after effect name.");
     auto value = compose<T>();
     consume(TokenType::SEMICOLON, "Expected ';' after effect declaration.");
-    return make_shared<stmt::EffectStmt<T>>(name, value);
+    return make_shared<stmt::EffectStmt<T>>(keyword, name, value);
 }
 
 // @templateName [WxH] { top: "...", bottom: "..." } or @templateName "one-liner"
@@ -827,11 +829,12 @@ template <typename T>
 shared_ptr<Expr<T>> Parser::gifBlock() {
     Token keyword = previous();
     bool loop = false;
+    Token loopToken;
 
     // Check for 'loop' keyword (contextual)
     if (peek().type == TokenType::IDENTIFIER) {
         auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && *s == "loop") { advance(); loop = true; }
+        if (s && *s == "loop") { advance(); loop = true; loopToken = previous(); }
     }
 
     consume(TokenType::LEFT_BRACE, "Expected '{' after gif.");
@@ -845,7 +848,7 @@ shared_ptr<Expr<T>> Parser::gifBlock() {
     }
     consume(TokenType::RIGHT_BRACE, "Expected '}' after gif block.");
 
-    return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(frames));
+    return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(frames), loopToken);
 }
 
 // timeline [loop] { @tmpl { ... } : 2s --- crossfade 150ms --- ... }
@@ -853,10 +856,11 @@ template <typename T>
 shared_ptr<Expr<T>> Parser::timelineBlock() {
     Token keyword = previous();
     bool loop = false;
+    Token loopToken;
 
     if (peek().type == TokenType::IDENTIFIER) {
         auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && *s == "loop") { advance(); loop = true; }
+        if (s && *s == "loop") { advance(); loop = true; loopToken = previous(); }
     }
 
     consume(TokenType::LEFT_BRACE, "Expected '{' after timeline.");
@@ -897,7 +901,7 @@ shared_ptr<Expr<T>> Parser::timelineBlock() {
     }
     consume(TokenType::RIGHT_BRACE, "Expected '}' after timeline block.");
 
-    return make_shared<expr::TimelineBlockExpr<T>>(keyword, loop, std::move(entries));
+    return make_shared<expr::TimelineBlockExpr<T>>(keyword, loop, std::move(entries), loopToken);
 }
 
 // grid NxM { entries }

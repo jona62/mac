@@ -190,12 +190,13 @@ namespace stmt {
     template <typename T>
     class StyleStmt : public Stmt<T> {
     public:
-        StyleStmt(token::Token name,
+        StyleStmt(token::Token keyword, token::Token name,
                   std::vector<std::pair<token::Token, std::shared_ptr<expr::Expr<T>>>> properties)
-            : name(name), properties(std::move(properties)) {}
+            : keyword(keyword), name(name), properties(std::move(properties)) {}
         void accept(shared_ptr<StmtVisitor<T>> visitor) override {
             visitor->visitStyleStmt(this);
         }
+        token::Token keyword;
         token::Token name;
         std::vector<std::pair<token::Token, std::shared_ptr<expr::Expr<T>>>> properties;
     };
@@ -204,11 +205,12 @@ namespace stmt {
     template <typename T>
     class EffectStmt : public Stmt<T> {
     public:
-        EffectStmt(token::Token name, std::shared_ptr<expr::Expr<T>> value)
-            : name(name), value(value) {}
+        EffectStmt(token::Token keyword, token::Token name, std::shared_ptr<expr::Expr<T>> value)
+            : keyword(keyword), name(name), value(value) {}
         void accept(shared_ptr<StmtVisitor<T>> visitor) override {
             visitor->visitEffectStmt(this);
         }
+        token::Token keyword;
         token::Token name;
         std::shared_ptr<expr::Expr<T>> value;
     };
