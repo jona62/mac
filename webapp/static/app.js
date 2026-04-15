@@ -308,7 +308,7 @@ function defaultStyleFields() {
     outlineColor: "#000000",
     shadow: 0,
     shadowColor: "#00000080",
-    fontSizeMode: "auto",
+    fontSizeMode: "sm",
     fontSizePx: 64,
   };
 }
