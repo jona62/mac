@@ -15,6 +15,7 @@
     <!-- ─── Top Bar ──────────────────────────────────── -->
     <header class="topbar">
       <div class="topbar__left">
+        <button class="btn btn--ghost btn--sm mobile-toggle" id="mobileAssetsBtn" type="button">Assets</button>
         <span class="topbar__brand">Mac Studio</span>
         <span class="topbar__sep"></span>
         <div class="topbar__stats">
@@ -25,6 +26,7 @@
       </div>
       <div class="topbar__right">
         <button class="btn btn--ghost btn--sm" id="refreshPreviewBtn" type="button">Refresh</button>
+        <button class="btn btn--ghost btn--sm mobile-toggle" id="mobileInspectorBtn" type="button">Inspector</button>
         <button class="btn btn--accent btn--sm" id="exportBtn" type="button">Export &amp; Download</button>
         <a class="btn btn--dark btn--sm" id="downloadLink" href="#" download="mac-studio-export" hidden>Download Again</a>
       </div>
@@ -250,6 +252,8 @@
       </aside>
 
     </div>
+
+    <div class="mobile-backdrop" id="mobileBackdrop"></div>
 
     <!-- ─── Bottom Dock ──────────────────────────────── -->
     <footer class="bottom-dock">

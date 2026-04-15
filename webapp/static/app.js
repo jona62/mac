@@ -623,6 +623,24 @@ function bindStaticControls() {
     $("scriptFullscreenBtn").textContent = isFS ? "Exit Fullscreen" : "Expand";
   });
 
+  // Mobile sidebar toggles
+  function closeMobilePanels() {
+    $("sidebarLeft").classList.remove("is-open");
+    document.querySelector(".sidebar--right").classList.remove("is-open");
+    $("mobileBackdrop").classList.remove("is-open");
+  }
+  $("mobileAssetsBtn").addEventListener("click", () => {
+    const open = $("sidebarLeft").classList.toggle("is-open");
+    document.querySelector(".sidebar--right").classList.remove("is-open");
+    $("mobileBackdrop").classList.toggle("is-open", open);
+  });
+  $("mobileInspectorBtn").addEventListener("click", () => {
+    const open = document.querySelector(".sidebar--right").classList.toggle("is-open");
+    $("sidebarLeft").classList.remove("is-open");
+    $("mobileBackdrop").classList.toggle("is-open", open);
+  });
+  $("mobileBackdrop").addEventListener("click", closeMobilePanels);
+
   // Esc exits fullscreen
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
