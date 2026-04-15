@@ -110,7 +110,7 @@ namespace analyzer {
         } else if (auto* p = dynamic_cast<stmt::EffectStmt<MV>*>(s)) {
             // Semantic token for 'effect' keyword
             if (p->keyword.line > 0 && currentSource == "user") {
-                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc, 6, "keyword", currentSource});
             }
             std::string type = "Meme -> Meme";
@@ -125,7 +125,7 @@ namespace analyzer {
         } else if (auto* p = dynamic_cast<stmt::StyleStmt<MV>*>(s)) {
             // Semantic token for 'style' keyword
             if (p->keyword.line > 0 && currentSource == "user") {
-                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc, 5, "keyword", currentSource});
             }
             // Build description from style properties
@@ -176,7 +176,7 @@ namespace analyzer {
             auto propName = tokName(p->name);
             auto objType = inferType(p->object.get());
             if (const auto* member = resolveMember(objType, propName)) {
-                int c = p->name.column > 0 ? p->name.column : 1;
+                int c = safeCol(p->name);
                 result.properties.push_back({
                     p->name.line,
                     c,
@@ -216,7 +216,7 @@ namespace analyzer {
                 upsertMember(currentClassName, p->name, "field", fieldType, "", {}, "", visibility);
 
                 if (!exists) {
-                    int c = p->name.column > 0 ? p->name.column : 1;
+                    int c = safeCol(p->name);
                     result.symbols.push_back({
                         fieldName,
                         "field",
@@ -246,7 +246,7 @@ namespace analyzer {
             if (currentClassName.empty() || currentSuperclassName.empty()) {
                 addDiagnostic(p->keyword, "Can't use 'super' without a superclass.", "error");
             } else if (const auto* member = resolveMember(currentSuperclassName, tokName(p->method))) {
-                int c = p->method.column > 0 ? p->method.column : 1;
+                int c = safeCol(p->method);
                 result.properties.push_back({
                     p->method.line,
                     c,
@@ -318,7 +318,7 @@ namespace analyzer {
         // --- Mac v2 syntax nodes ---
         else if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
             auto tname = tokName(p->templateName);
-            int tc = p->templateName.column > 0 ? p->templateName.column : 1;
+            int tc = safeCol(p->templateName);
             int tec = tc + static_cast<int>(tname.size());
 
             if (p->templateName.type == token::TokenType::STRING) {
@@ -365,7 +365,7 @@ namespace analyzer {
                     if (!constName.empty()) {
                         auto* posDef = resolve(constName);
                         if (posDef) {
-                            int kc = entry.key.column > 0 ? entry.key.column : 1;
+                            int kc = safeCol(entry.key);
                             result.references.push_back({entry.key.line, kc,
                                 kc + static_cast<int>(keyName.size()),
                                 posDef->line, posDef->col, posDef->endCol,
@@ -387,7 +387,7 @@ namespace analyzer {
         else if (auto* p = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
-                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
                 std::string desc = p->loop ? "Looping GIF block" : "GIF block";
@@ -396,7 +396,7 @@ namespace analyzer {
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
                 // Semantic token for 'loop' keyword
                 if (p->loop && p->loopToken.line > 0) {
-                    int lc = p->loopToken.column > 0 ? p->loopToken.column : 1;
+                    int lc = safeCol(p->loopToken);
                     result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
                 }
             }
@@ -408,7 +408,7 @@ namespace analyzer {
         else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
-                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
                 std::string desc = p->loop ? "Looping timeline" : "Timeline";
@@ -417,7 +417,7 @@ namespace analyzer {
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
                 // Semantic token for 'loop' keyword
                 if (p->loop && p->loopToken.line > 0) {
-                    int lc = p->loopToken.column > 0 ? p->loopToken.column : 1;
+                    int lc = safeCol(p->loopToken);
                     result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
                 }
             }
@@ -429,7 +429,7 @@ namespace analyzer {
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
-                int kc = p->keyword.column > 0 ? p->keyword.column : 1;
+                int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
                 std::string desc = std::to_string(p->cols) + "x" + std::to_string(p->rows) +
@@ -452,15 +452,15 @@ namespace analyzer {
             int line = 0, col = 1, endCol = 2;
             if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) {
                 line = v->name.line;
-                col = v->name.column > 0 ? v->name.column : 1;
+                col = safeCol(v->name);
                 endCol = col + static_cast<int>(tokName(v->name).size());
             } else if (auto* g = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
                 line = g->keyword.line;
-                col = g->keyword.column > 0 ? g->keyword.column : 1;
+                col = safeCol(g->keyword);
                 endCol = col + static_cast<int>(tokName(g->keyword).size());
             } else if (auto* t = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
                 line = t->keyword.line;
-                col = t->keyword.column > 0 ? t->keyword.column : 1;
+                col = safeCol(t->keyword);
                 endCol = col + static_cast<int>(tokName(t->keyword).size());
             }
             if (line > 0) {

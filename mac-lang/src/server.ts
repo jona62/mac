@@ -231,6 +231,45 @@ function runAnalysis(text: string): AnalysisResult | null {
     }
 }
 
+// ── Helpers ────────────────────────────────────────────────────
+
+function userOnly<T extends { source: string }>(items: T[]): T[] {
+    return items.filter((item) => item.source === "user");
+}
+
+const CONTEXT_LOOKBACK = 4000;
+
+/** Track ()[]{}  nesting depth while scanning characters. */
+class NestingDepth {
+    paren = 0;
+    bracket = 0;
+    brace = 0;
+
+    /** Update depth for a forward-scan character. */
+    openChar(c: string): void {
+        if (c === "(") this.paren++;
+        else if (c === ")") this.paren = Math.max(0, this.paren - 1);
+        else if (c === "[") this.bracket++;
+        else if (c === "]") this.bracket = Math.max(0, this.bracket - 1);
+        else if (c === "{") this.brace++;
+        else if (c === "}") this.brace = Math.max(0, this.brace - 1);
+    }
+
+    /** Update depth for a reverse-scan character (parens/brackets are swapped). */
+    closeChar(c: string): void {
+        if (c === ")") this.paren++;
+        else if (c === "(") this.paren = Math.max(0, this.paren - 1);
+        else if (c === "]") this.bracket++;
+        else if (c === "[") this.bracket = Math.max(0, this.bracket - 1);
+        else if (c === "}") this.brace++;
+        else if (c === "{") this.brace = Math.max(0, this.brace - 1);
+    }
+
+    isBalanced(): boolean {
+        return this.paren === 0 && this.bracket === 0 && this.brace === 0;
+    }
+}
+
 const TOKEN_TYPES = ["variable", "parameter", "function", "method", "class", "property", "keyword", "string", "number", "operator"];
 const TOKEN_MODIFIERS: string[] = [];
 const tokenLegend: SemanticTokensLegend = { tokenTypes: TOKEN_TYPES, tokenModifiers: TOKEN_MODIFIERS };
@@ -267,12 +306,12 @@ connection.onDefinition((params: DefinitionParams): Location | null => {
     const result = analysisCache.get(params.textDocument.uri);
     if (!result) return null;
 
-    const prop = findAt(result.properties.filter((item) => item.source === "user"), params.position);
+    const prop = findAt(userOnly(result.properties), params.position);
     if (prop) {
         return locationForDefinition(params.textDocument.uri, prop.defSource, prop.defLine, prop.defCol, prop.defEndCol);
     }
 
-    const ref = findAt(result.references.filter((item) => item.source === "user"), params.position);
+    const ref = findAt(userOnly(result.references), params.position);
     if (!ref) return null;
     return locationForDefinition(params.textDocument.uri, ref.defSource, ref.defLine, ref.defCol, ref.defEndCol);
 });
@@ -281,12 +320,12 @@ connection.onHover((params: HoverParams): Hover | null => {
     const result = analysisCache.get(params.textDocument.uri);
     if (!result) return null;
 
-    const prop = findAt(result.properties.filter((item) => item.source === "user"), params.position);
+    const prop = findAt(userOnly(result.properties), params.position);
     if (prop && isVisibleToUser(prop.defSource, prop.visibility)) {
         return { contents: { kind: "markdown", value: formatPropertyHover(result, prop) } };
     }
 
-    const ref = findAt(result.references.filter((item) => item.source === "user"), params.position);
+    const ref = findAt(userOnly(result.references), params.position);
     if (ref) {
         const def = findDefinitionSymbol(result, ref.defName, ref.defLine, ref.defSource, ref.defOwnerType);
         if (def && isVisibleToUser(def.source, def.visibility)) {
@@ -294,7 +333,7 @@ connection.onHover((params: HoverParams): Hover | null => {
         }
     }
 
-    const sym = findAt(result.symbols.filter((item) => item.source === "user"), params.position);
+    const sym = findAt(userOnly(result.symbols), params.position);
     if (!sym) return null;
     return { contents: { kind: "markdown", value: formatSymbolHover(result, sym) } };
 });
@@ -356,10 +395,9 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
     const symbols: DocumentSymbol[] = [];
     const classNames = new Set<string>();
 
-    for (const cls of result.classes.filter((item) => item.source === "user")) {
+    for (const cls of userOnly(result.classes)) {
         classNames.add(cls.name);
-        const children = cls.members
-            .filter((member) => member.source === "user")
+        const children = userOnly(cls.members)
             .map((member) => ({
                 name: member.name,
                 kind: member.kind === "field" ? SymbolKind.Property : SymbolKind.Method,
@@ -398,8 +436,7 @@ connection.onDocumentSymbol((params: DocumentSymbolParams): DocumentSymbol[] => 
 connection.onFoldingRanges((params: FoldingRangeParams): FoldingRange[] => {
     const result = analysisCache.get(params.textDocument.uri);
     if (!result) return [];
-    return result.foldingRanges
-        .filter((range) => range.source === "user")
+    return userOnly(result.foldingRanges)
         .map((range) => ({
             startLine: range.startLine - 1,
             endLine: range.endLine - 1,
@@ -411,7 +448,7 @@ connection.onReferences((params: ReferenceParams): Location[] => {
     const result = analysisCache.get(params.textDocument.uri);
     if (!result) return [];
 
-    const prop = findAt(result.properties.filter((item) => item.source === "user"), params.position);
+    const prop = findAt(userOnly(result.properties), params.position);
     if (prop) {
         return result.properties
             .filter((item) =>
@@ -424,14 +461,14 @@ connection.onReferences((params: ReferenceParams): Location[] => {
             .map((item) => Location.create(params.textDocument.uri, toRange(item.line, item.col, item.endCol)));
     }
 
-    const ref = findAt(result.references.filter((item) => item.source === "user"), params.position);
+    const ref = findAt(userOnly(result.references), params.position);
     const def = ref ? {
         name: ref.defName,
         line: ref.defLine,
         source: ref.defSource,
         ownerType: ref.defOwnerType,
     } : (() => {
-        const sym = findAt(result.symbols.filter((item) => item.source === "user"), params.position);
+        const sym = findAt(userOnly(result.symbols), params.position);
         if (!sym) return null;
         return { name: sym.name, line: sym.line, source: sym.source, ownerType: sym.ownerType };
     })();
@@ -452,8 +489,7 @@ connection.languages.semanticTokens.on((params: SemanticTokensParams): SemanticT
     if (!result) return { data: [] };
 
     const builder = new SemanticTokensBuilder();
-    const sorted = [...result.semanticTokens]
-        .filter((token) => token.source === "user")
+    const sorted = userOnly([...result.semanticTokens])
         .sort((a, b) => a.line - b.line || a.col - b.col);
 
     for (const token of sorted) {
@@ -610,8 +646,7 @@ function refreshAnalysis(doc: TextDocument): void {
     }
 
     analysisCache.set(doc.uri, result);
-    const diagnostics = result.diagnostics
-        .filter((diag) => diag.source === "user")
+    const diagnostics = userOnly(result.diagnostics)
         .map((diag) => ({
             severity: diag.severity === "error" ? LspDiagnosticSeverity.Error : LspDiagnosticSeverity.Warning,
             range: toRange(diag.line, diag.col, diag.endCol),
@@ -789,24 +824,16 @@ function resolveExpressionType(expr: string, result: AnalysisResult): string | n
 function splitChain(expr: string): string[] {
     const parts: string[] = [];
     let current = "";
-    let parenDepth = 0;
-    let bracketDepth = 0;
-    let braceDepth = 0;
+    const depth = new NestingDepth();
 
     for (const char of expr) {
-        if (char === "." && parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
+        if (char === "." && depth.isBalanced()) {
             if (current.trim()) parts.push(current.trim());
             current = "";
             continue;
         }
-
         current += char;
-        if (char === "(") parenDepth++;
-        else if (char === ")") parenDepth = Math.max(0, parenDepth - 1);
-        else if (char === "[") bracketDepth++;
-        else if (char === "]") bracketDepth = Math.max(0, bracketDepth - 1);
-        else if (char === "{") braceDepth++;
-        else if (char === "}") braceDepth = Math.max(0, braceDepth - 1);
+        depth.openChar(char);
     }
 
     if (current.trim()) parts.push(current.trim());
@@ -825,18 +852,11 @@ function parseInvocation(segment: string): { name: string; argCount: number } | 
 function countArguments(argText: string): number {
     if (!argText.trim()) return 0;
     let count = 1;
-    let parenDepth = 0;
-    let bracketDepth = 0;
-    let braceDepth = 0;
+    const depth = new NestingDepth();
 
     for (const char of argText) {
-        if (char === "(") parenDepth++;
-        else if (char === ")") parenDepth = Math.max(0, parenDepth - 1);
-        else if (char === "[") bracketDepth++;
-        else if (char === "]") bracketDepth = Math.max(0, bracketDepth - 1);
-        else if (char === "{") braceDepth++;
-        else if (char === "}") braceDepth = Math.max(0, braceDepth - 1);
-        else if (char === "," && parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) count++;
+        depth.openChar(char);
+        if (char === "," && depth.isBalanced()) count++;
     }
 
     return count;
@@ -844,26 +864,18 @@ function countArguments(argText: string): number {
 
 function getCallContext(doc: TextDocument, position: Position): CallContext | null {
     const offset = doc.offsetAt(position);
-    const text = doc.getText().slice(Math.max(0, offset - 4000), offset);
+    const text = doc.getText().slice(Math.max(0, offset - CONTEXT_LOOKBACK), offset);
 
-    let parenDepth = 0;
-    let bracketDepth = 0;
-    let braceDepth = 0;
+    const depth = new NestingDepth();
     let openIndex = -1;
 
     for (let index = text.length - 1; index >= 0; index--) {
         const char = text[index];
-        if (char === ")") parenDepth++;
-        else if (char === "(") {
-            if (parenDepth === 0 && bracketDepth === 0 && braceDepth === 0) {
-                openIndex = index;
-                break;
-            }
-            parenDepth = Math.max(0, parenDepth - 1);
-        } else if (char === "]") bracketDepth++;
-        else if (char === "[") bracketDepth = Math.max(0, bracketDepth - 1);
-        else if (char === "}") braceDepth++;
-        else if (char === "{") braceDepth = Math.max(0, braceDepth - 1);
+        if (char === "(" && depth.isBalanced()) {
+            openIndex = index;
+            break;
+        }
+        depth.closeChar(char);
     }
 
     if (openIndex < 0) return null;

@@ -11,132 +11,217 @@ namespace analyzer {
 
     using MV = value::MacValue;
 
+    // ── JSON helpers ──────────────────────────────────────────────
+
+    inline std::string J(const std::string& s) {
+        std::string o = "\"";
+        for (char c : s) {
+            if (c == '"') o += "\\\"";
+            else if (c == '\\') o += "\\\\";
+            else if (c == '\n') o += "\\n";
+            else if (c == '\r') o += "\\r";
+            else if (c == '\t') o += "\\t";
+            else o += c;
+        }
+        return o + "\"";
+    }
+
+    inline std::string jsonParams(const std::vector<std::string>& params) {
+        std::ostringstream o;
+        o << "[";
+        for (size_t i = 0; i < params.size(); i++) {
+            if (i) o << ",";
+            o << J(params[i]);
+        }
+        o << "]";
+        return o.str();
+    }
+
+    template <typename T>
+    inline std::string jsonArray(const std::vector<T>& items) {
+        std::ostringstream o;
+        o << "[";
+        for (size_t i = 0; i < items.size(); i++) {
+            if (i) o << ",";
+            o << items[i].toJson();
+        }
+        o << "]";
+        return o.str();
+    }
+
+    // ── Structs ───────────────────────────────────────────────────
+
     struct SymbolDef {
-        std::string name;
-        std::string kind;
-        std::string type;
-        std::string description;
-        std::string source;
-        std::string visibility;
-        std::string ownerType;
-        int line;
-        int col;
-        int endCol;
+        std::string name, kind, type, description, source, visibility, ownerType;
+        int line, col, endCol;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"name\":" << J(name) << ",\"kind\":" << J(kind)
+              << ",\"type\":" << J(type) << ",\"description\":" << J(description)
+              << ",\"source\":" << J(source) << ",\"visibility\":" << J(visibility)
+              << ",\"ownerType\":" << J(ownerType) << ",\"line\":" << line
+              << ",\"col\":" << col << ",\"endCol\":" << endCol << "}";
+            return o.str();
+        }
     };
 
     struct Reference {
-        int line;
-        int col;
-        int endCol;
-        int defLine;
-        int defCol;
-        int defEndCol;
-        std::string defName;
-        std::string source;
-        std::string defSource;
-        std::string defVisibility;
-        std::string defOwnerType;
+        int line, col, endCol, defLine, defCol, defEndCol;
+        std::string defName, source, defSource, defVisibility, defOwnerType;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"defLine\":" << defLine << ",\"defCol\":" << defCol
+              << ",\"defEndCol\":" << defEndCol << ",\"defName\":" << J(defName)
+              << ",\"source\":" << J(source) << ",\"defSource\":" << J(defSource)
+              << ",\"defVisibility\":" << J(defVisibility)
+              << ",\"defOwnerType\":" << J(defOwnerType) << "}";
+            return o.str();
+        }
     };
 
     struct Diagnostic {
-        int line;
-        int col;
-        int endCol;
-        std::string message;
-        std::string severity;
-        std::string source;
+        int line, col, endCol;
+        std::string message, severity, source;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"message\":" << J(message) << ",\"severity\":" << J(severity)
+              << ",\"source\":" << J(source) << "}";
+            return o.str();
+        }
     };
 
     struct PropertyRef {
-        int line;
-        int col;
-        int endCol;
-        int defLine;
-        int defCol;
-        int defEndCol;
-        std::string name;
-        std::string ownerType;
-        std::string kind;
-        std::string type;
-        std::string description;
-        std::string source;
-        std::string defSource;
-        std::string visibility;
+        int line, col, endCol, defLine, defCol, defEndCol;
+        std::string name, ownerType, kind, type, description, source, defSource, visibility;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"defLine\":" << defLine << ",\"defCol\":" << defCol
+              << ",\"defEndCol\":" << defEndCol << ",\"name\":" << J(name)
+              << ",\"ownerType\":" << J(ownerType) << ",\"kind\":" << J(kind)
+              << ",\"type\":" << J(type) << ",\"description\":" << J(description)
+              << ",\"source\":" << J(source) << ",\"defSource\":" << J(defSource)
+              << ",\"visibility\":" << J(visibility) << "}";
+            return o.str();
+        }
     };
 
     struct FoldRange {
-        int startLine;
-        int endLine;
+        int startLine, endLine;
         std::string source;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"startLine\":" << startLine << ",\"endLine\":" << endLine
+              << ",\"source\":" << J(source) << "}";
+            return o.str();
+        }
     };
 
     struct SemanticToken {
-        int line;
-        int col;
-        int length;
-        std::string tokenType;
-        std::string source;
+        int line, col, length;
+        std::string tokenType, source;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"col\":" << col << ",\"length\":" << length
+              << ",\"tokenType\":" << J(tokenType) << ",\"source\":" << J(source) << "}";
+            return o.str();
+        }
     };
 
     struct ParamHint {
-        int line;
-        int col;
-        std::string name;
-        std::string source;
+        int line, col;
+        std::string name, source;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"col\":" << col
+              << ",\"name\":" << J(name) << ",\"source\":" << J(source) << "}";
+            return o.str();
+        }
     };
 
     struct ChainHint {
-        int line;
-        int endCol;
-        std::string type;
-        std::string source;
+        int line, endCol;
+        std::string type, source;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"line\":" << line << ",\"endCol\":" << endCol
+              << ",\"type\":" << J(type) << ",\"source\":" << J(source) << "}";
+            return o.str();
+        }
     };
 
     struct Signature {
-        std::string name;
-        std::string ownerType;
-        std::string kind;
-        std::string returnType;
-        std::string description;
-        std::string source;
-        std::string visibility;
-        int line;
-        int col;
-        int endCol;
+        std::string name, ownerType, kind, returnType, description, source, visibility;
+        int line, col, endCol;
         std::vector<std::string> params;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"name\":" << J(name) << ",\"ownerType\":" << J(ownerType)
+              << ",\"kind\":" << J(kind) << ",\"returnType\":" << J(returnType)
+              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
+              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
+              << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"params\":" << jsonParams(params) << "}";
+            return o.str();
+        }
     };
 
     struct ClassMember {
-        std::string name;
-        std::string kind;
-        std::string type;
-        std::string returnType;
-        std::string description;
-        std::string source;
-        std::string visibility;
-        int line;
-        int col;
-        int endCol;
+        std::string name, kind, type, returnType, description, source, visibility;
+        int line, col, endCol;
         std::vector<std::string> params;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"name\":" << J(name) << ",\"kind\":" << J(kind)
+              << ",\"type\":" << J(type) << ",\"returnType\":" << J(returnType)
+              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
+              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
+              << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"params\":" << jsonParams(params) << "}";
+            return o.str();
+        }
     };
 
     struct ClassInfo {
-        std::string name;
-        std::string superclass;
-        std::string description;
-        std::string source;
-        std::string visibility;
-        int line;
-        int col;
-        int endCol;
+        std::string name, superclass, description, source, visibility;
+        int line, col, endCol;
         std::vector<ClassMember> members;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"name\":" << J(name) << ",\"superclass\":" << J(superclass)
+              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
+              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
+              << ",\"col\":" << col << ",\"endCol\":" << endCol
+              << ",\"members\":" << jsonArray(members) << "}";
+            return o.str();
+        }
     };
 
     struct TemplateInfo {
-        std::string name;        // e.g. "blank" or "meme.shrek_smirk"
-        std::string category;    // e.g. "" or "meme"
-        std::string description; // e.g. "600x600 blank template" or "Meme image"
+        std::string name, category, description;
+
+        std::string toJson() const {
+            std::ostringstream o;
+            o << "{\"name\":" << J(name) << ",\"category\":" << J(category)
+              << ",\"description\":" << J(description) << "}";
+            return o.str();
+        }
     };
+
+    // ── Analysis result ───────────────────────────────────────────
 
     struct AnalysisResult {
         std::vector<SymbolDef> symbols;
@@ -157,204 +242,20 @@ namespace analyzer {
         Scope* parent = nullptr;
     };
 
-    inline std::string J(const std::string& s) {
-        std::string o = "\"";
-        for (char c : s) {
-            if (c == '"') o += "\\\"";
-            else if (c == '\\') o += "\\\\";
-            else if (c == '\n') o += "\\n";
-            else o += c;
-        }
-        return o + "\"";
-    }
-
-    inline std::string jsonParams(const std::vector<std::string>& params) {
-        std::ostringstream o;
-        o << "[";
-        for (size_t i = 0; i < params.size(); i++) {
-            if (i) o << ",";
-            o << J(params[i]);
-        }
-        o << "]";
-        return o.str();
-    }
-
     inline std::string toJson(const AnalysisResult& r) {
         std::ostringstream o;
-        o << "{\"symbols\":[";
-        for (size_t i = 0; i < r.symbols.size(); i++) {
-            const auto& s = r.symbols[i];
-            if (i) o << ",";
-            o << "{\"name\":" << J(s.name)
-              << ",\"kind\":" << J(s.kind)
-              << ",\"type\":" << J(s.type)
-              << ",\"description\":" << J(s.description)
-              << ",\"source\":" << J(s.source)
-              << ",\"visibility\":" << J(s.visibility)
-              << ",\"ownerType\":" << J(s.ownerType)
-              << ",\"line\":" << s.line
-              << ",\"col\":" << s.col
-              << ",\"endCol\":" << s.endCol
-              << "}";
-        }
-
-        o << "],\"references\":[";
-        for (size_t i = 0; i < r.references.size(); i++) {
-            const auto& v = r.references[i];
-            if (i) o << ",";
-            o << "{\"line\":" << v.line
-              << ",\"col\":" << v.col
-              << ",\"endCol\":" << v.endCol
-              << ",\"defLine\":" << v.defLine
-              << ",\"defCol\":" << v.defCol
-              << ",\"defEndCol\":" << v.defEndCol
-              << ",\"defName\":" << J(v.defName)
-              << ",\"source\":" << J(v.source)
-              << ",\"defSource\":" << J(v.defSource)
-              << ",\"defVisibility\":" << J(v.defVisibility)
-              << ",\"defOwnerType\":" << J(v.defOwnerType)
-              << "}";
-        }
-
-        o << "],\"diagnostics\":[";
-        for (size_t i = 0; i < r.diagnostics.size(); i++) {
-            const auto& d = r.diagnostics[i];
-            if (i) o << ",";
-            o << "{\"line\":" << d.line
-              << ",\"col\":" << d.col
-              << ",\"endCol\":" << d.endCol
-              << ",\"message\":" << J(d.message)
-              << ",\"severity\":" << J(d.severity)
-              << ",\"source\":" << J(d.source)
-              << "}";
-        }
-
-        o << "],\"properties\":[";
-        for (size_t i = 0; i < r.properties.size(); i++) {
-            const auto& p = r.properties[i];
-            if (i) o << ",";
-            o << "{\"line\":" << p.line
-              << ",\"col\":" << p.col
-              << ",\"endCol\":" << p.endCol
-              << ",\"defLine\":" << p.defLine
-              << ",\"defCol\":" << p.defCol
-              << ",\"defEndCol\":" << p.defEndCol
-              << ",\"name\":" << J(p.name)
-              << ",\"ownerType\":" << J(p.ownerType)
-              << ",\"kind\":" << J(p.kind)
-              << ",\"type\":" << J(p.type)
-              << ",\"description\":" << J(p.description)
-              << ",\"source\":" << J(p.source)
-              << ",\"defSource\":" << J(p.defSource)
-              << ",\"visibility\":" << J(p.visibility)
-              << "}";
-        }
-
-        o << "],\"foldingRanges\":[";
-        for (size_t i = 0; i < r.foldingRanges.size(); i++) {
-            const auto& f = r.foldingRanges[i];
-            if (i) o << ",";
-            o << "{\"startLine\":" << f.startLine
-              << ",\"endLine\":" << f.endLine
-              << ",\"source\":" << J(f.source)
-              << "}";
-        }
-
-        o << "],\"semanticTokens\":[";
-        for (size_t i = 0; i < r.semanticTokens.size(); i++) {
-            const auto& t = r.semanticTokens[i];
-            if (i) o << ",";
-            o << "{\"line\":" << t.line
-              << ",\"col\":" << t.col
-              << ",\"length\":" << t.length
-              << ",\"tokenType\":" << J(t.tokenType)
-              << ",\"source\":" << J(t.source)
-              << "}";
-        }
-
-        o << "],\"paramHints\":[";
-        for (size_t i = 0; i < r.paramHints.size(); i++) {
-            const auto& h = r.paramHints[i];
-            if (i) o << ",";
-            o << "{\"line\":" << h.line
-              << ",\"col\":" << h.col
-              << ",\"name\":" << J(h.name)
-              << ",\"source\":" << J(h.source)
-              << "}";
-        }
-
-        o << "],\"chainHints\":[";
-        for (size_t i = 0; i < r.chainHints.size(); i++) {
-            const auto& h = r.chainHints[i];
-            if (i) o << ",";
-            o << "{\"line\":" << h.line
-              << ",\"endCol\":" << h.endCol
-              << ",\"type\":" << J(h.type)
-              << ",\"source\":" << J(h.source)
-              << "}";
-        }
-
-        o << "],\"signatures\":[";
-        for (size_t i = 0; i < r.signatures.size(); i++) {
-            const auto& s = r.signatures[i];
-            if (i) o << ",";
-            o << "{\"name\":" << J(s.name)
-              << ",\"ownerType\":" << J(s.ownerType)
-              << ",\"kind\":" << J(s.kind)
-              << ",\"returnType\":" << J(s.returnType)
-              << ",\"description\":" << J(s.description)
-              << ",\"source\":" << J(s.source)
-              << ",\"visibility\":" << J(s.visibility)
-              << ",\"line\":" << s.line
-              << ",\"col\":" << s.col
-              << ",\"endCol\":" << s.endCol
-              << ",\"params\":" << jsonParams(s.params)
-              << "}";
-        }
-
-        o << "],\"classes\":[";
-        for (size_t i = 0; i < r.classes.size(); i++) {
-            const auto& c = r.classes[i];
-            if (i) o << ",";
-            o << "{\"name\":" << J(c.name)
-              << ",\"superclass\":" << J(c.superclass)
-              << ",\"description\":" << J(c.description)
-              << ",\"source\":" << J(c.source)
-              << ",\"visibility\":" << J(c.visibility)
-              << ",\"line\":" << c.line
-              << ",\"col\":" << c.col
-              << ",\"endCol\":" << c.endCol
-              << ",\"members\":[";
-            for (size_t j = 0; j < c.members.size(); j++) {
-                const auto& m = c.members[j];
-                if (j) o << ",";
-                o << "{\"name\":" << J(m.name)
-                  << ",\"kind\":" << J(m.kind)
-                  << ",\"type\":" << J(m.type)
-                  << ",\"returnType\":" << J(m.returnType)
-                  << ",\"description\":" << J(m.description)
-                  << ",\"source\":" << J(m.source)
-                  << ",\"visibility\":" << J(m.visibility)
-                  << ",\"line\":" << m.line
-                  << ",\"col\":" << m.col
-                  << ",\"endCol\":" << m.endCol
-                  << ",\"params\":" << jsonParams(m.params)
-                  << "}";
-            }
-            o << "]}";
-        }
-
-        o << "],\"templates\":[";
-        for (size_t i = 0; i < r.templates.size(); i++) {
-            const auto& t = r.templates[i];
-            if (i) o << ",";
-            o << "{\"name\":" << J(t.name)
-              << ",\"category\":" << J(t.category)
-              << ",\"description\":" << J(t.description)
-              << "}";
-        }
-
-        o << "]}";
+        o << "{\"symbols\":" << jsonArray(r.symbols)
+          << ",\"references\":" << jsonArray(r.references)
+          << ",\"diagnostics\":" << jsonArray(r.diagnostics)
+          << ",\"properties\":" << jsonArray(r.properties)
+          << ",\"foldingRanges\":" << jsonArray(r.foldingRanges)
+          << ",\"semanticTokens\":" << jsonArray(r.semanticTokens)
+          << ",\"paramHints\":" << jsonArray(r.paramHints)
+          << ",\"chainHints\":" << jsonArray(r.chainHints)
+          << ",\"signatures\":" << jsonArray(r.signatures)
+          << ",\"classes\":" << jsonArray(r.classes)
+          << ",\"templates\":" << jsonArray(r.templates)
+          << "}";
         return o.str();
     }
 

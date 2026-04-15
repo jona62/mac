@@ -72,6 +72,10 @@ namespace analyzer {
             return "";
         }
 
+        static int safeCol(const token::Token& tok) {
+            return tok.column > 0 ? tok.column : 1;
+        }
+
         static bool isInternalName(const std::string& name) {
             return !name.empty() && name[0] == '_';
         }
@@ -104,7 +108,7 @@ namespace analyzer {
                 ? defaultVisibility(name, kind, ownerType)
                 : visibility;
 
-            int c = tok.column > 0 ? tok.column : 1;
+            int c = safeCol(tok);
             SymbolDef sym{
                 name,
                 kind,
@@ -144,7 +148,7 @@ namespace analyzer {
             auto name = tokName(tok);
             if (name.empty()) return;
 
-            int c = tok.column > 0 ? tok.column : 1;
+            int c = safeCol(tok);
             int ec = c + static_cast<int>(name.size());
             auto* def = resolve(name);
 
@@ -187,7 +191,7 @@ namespace analyzer {
         void addDiagnostic(const token::Token& tok, const std::string& message,
                            const std::string& severity = "warning") {
             auto name = tokName(tok);
-            int c = tok.column > 0 ? tok.column : 1;
+            int c = safeCol(tok);
             int ec = c + static_cast<int>(std::max<size_t>(1, name.size()));
             result.diagnostics.push_back({tok.line, c, ec, message, severity, currentSource});
         }
@@ -199,7 +203,7 @@ namespace analyzer {
 
             auto it = classIndices.find(name);
             if (it == classIndices.end()) {
-                int c = nameTok.column > 0 ? nameTok.column : 1;
+                int c = safeCol(nameTok);
                 result.classes.push_back({
                     name,
                     "",
@@ -218,7 +222,7 @@ namespace analyzer {
                 if (!source.empty()) cls.source = source;
                 cls.visibility = visibility;
                 cls.line = nameTok.line;
-                cls.col = nameTok.column > 0 ? nameTok.column : 1;
+                cls.col = safeCol(nameTok);
                 cls.endCol = cls.col + static_cast<int>(name.size());
             }
             return &result.classes[classIndices[name]];
@@ -250,7 +254,7 @@ namespace analyzer {
             auto resolvedVisibility = visibility.empty()
                 ? (isInternalName(memberName) ? "internal" : "public")
                 : visibility;
-            int c = memberTok.column > 0 ? memberTok.column : 1;
+            int c = safeCol(memberTok);
 
             for (auto& member : cls->members) {
                 if (member.name != memberName || member.kind != kind) continue;
@@ -332,7 +336,7 @@ namespace analyzer {
                           const std::string& description = "", const std::string& source = "",
                           const std::string& visibility = "public",
                           const std::string& ownerType = "") {
-            int c = tok.column > 0 ? tok.column : 1;
+            int c = safeCol(tok);
             result.signatures.push_back({
                 name,
                 ownerType,
