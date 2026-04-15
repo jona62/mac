@@ -46,8 +46,7 @@ void createBottomText(const char* path) {
 
 void createBlank(const char* path) {
     int w = 600, h = 600;
-    std::vector<unsigned char> img(w * h * 4);
-    fillRect(img.data(), w, h, 0, 0, w, h, 255, 255, 255);
+    std::vector<unsigned char> img(w * h * 4, 0); // fully transparent
     stbi_write_png(path, w, h, 4, img.data(), w * 4);
 }
 

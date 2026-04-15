@@ -666,7 +666,21 @@ namespace interpreter {
                 rawGif->addFrame(macMeme, durationMs);
             }
 
-            return MacValue(rawGif);
+            // Wrap in a prelude Gif instance so => and .save() work consistently
+            auto gifClass = env->get(token::Token(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("Gif")), 0));
+            auto gifFn = std::get<shared_ptr<callable::MacCallable>>(gifClass);
+            auto gif = gifFn->call(shared_from_this(), {});
+            auto inst = std::get<shared_ptr<instance::MacInstance>>(gif);
+            token::Token gifTok(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("_gif")), 0);
+            inst->set(gifTok, MacValue(rawGif));
+            // Set frameCount to match
+            token::Token fcTok(token::TokenType::IDENTIFIER,
+                token::TokenValue(std::string("frameCount")), 0);
+            inst->set(fcTok, MacValue(static_cast<double>(expr->frames.size())));
+
+            return gif;
         }
 
         MacValue visitTimelineBlockExpr(expr::TimelineBlockExpr<MacValue>* expr) override {

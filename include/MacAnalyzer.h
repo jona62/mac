@@ -371,6 +371,7 @@ namespace analyzer {
         void analyzeExpr(expr::Expr<MV>* e);
 
         void addFoldRange(int startLine, const std::vector<std::shared_ptr<stmt::Stmt<MV>>>& body);
+        void checkFrameType(expr::Expr<MV>* e, const std::string& container);
         void collectParamHints(expr::Call<MV>* call);
         void collectChainHint(expr::Call<MV>* call);
         void addFunctionSignature(stmt::FunctionStmt<MV>* fn, const std::string& kind,

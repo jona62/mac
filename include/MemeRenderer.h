@@ -88,29 +88,37 @@ namespace meme {
             int w = (targetWidth > 0) ? targetWidth : imgW;
             int h = (targetHeight > 0) ? targetHeight : imgH;
 
-            // Build RGBA buffer -- resize to target by simple nearest-neighbor if needed
+            // Build RGBA buffer -- fill with background, then composite template on top
             std::vector<unsigned char> pixels(w * h * 4);
 
-            if (activeStyle.bgA > 0) {
-                // Background replaces the template canvas entirely
-                for (int i = 0; i < w * h; ++i) {
-                    pixels[i * 4 + 0] = activeStyle.bgR;
-                    pixels[i * 4 + 1] = activeStyle.bgG;
-                    pixels[i * 4 + 2] = activeStyle.bgB;
-                    pixels[i * 4 + 3] = activeStyle.bgA;
-                }
-                // Composite non-white template pixels on top (borders, dividers, etc.)
-                for (int y = 0; y < h; ++y) {
-                    int srcY = y * imgH / h;
-                    for (int x = 0; x < w; ++x) {
-                        int srcX = x * imgW / w;
-                        int srcIdx = (srcY * imgW + srcX) * 4;
-                        // Skip fully white opaque pixels (template "canvas" area)
-                        if (imgData[srcIdx+0] == 255 && imgData[srcIdx+1] == 255 &&
-                            imgData[srcIdx+2] == 255 && imgData[srcIdx+3] == 255) continue;
-                        // Skip fully transparent pixels
-                        if (imgData[srcIdx+3] == 0) continue;
-                        int dstIdx = (y * w + x) * 4;
+            // Fill with background color or default white
+            unsigned char bgR = activeStyle.bgA > 0 ? activeStyle.bgR : 255;
+            unsigned char bgG = activeStyle.bgA > 0 ? activeStyle.bgG : 255;
+            unsigned char bgB = activeStyle.bgA > 0 ? activeStyle.bgB : 255;
+            unsigned char bgA = activeStyle.bgA > 0 ? activeStyle.bgA : 255;
+            for (int i = 0; i < w * h; ++i) {
+                pixels[i * 4 + 0] = bgR;
+                pixels[i * 4 + 1] = bgG;
+                pixels[i * 4 + 2] = bgB;
+                pixels[i * 4 + 3] = bgA;
+            }
+
+            // Alpha-composite template image on top of background
+            for (int y = 0; y < h; ++y) {
+                int srcY = y * imgH / h;
+                for (int x = 0; x < w; ++x) {
+                    int srcX = x * imgW / w;
+                    int srcIdx = (srcY * imgW + srcX) * 4;
+                    if (imgData[srcIdx + 3] == 0) continue; // skip transparent pixels
+                    int dstIdx = (y * w + x) * 4;
+                    if (imgData[srcIdx + 3] == 255) {
+                        // Fully opaque — direct copy (fast path)
+                        pixels[dstIdx + 0] = imgData[srcIdx + 0];
+                        pixels[dstIdx + 1] = imgData[srcIdx + 1];
+                        pixels[dstIdx + 2] = imgData[srcIdx + 2];
+                        pixels[dstIdx + 3] = 255;
+                    } else {
+                        // Semi-transparent — alpha blend
                         float srcA = imgData[srcIdx + 3] / 255.0f;
                         float dstA = pixels[dstIdx + 3] / 255.0f;
                         float outA = srcA + dstA * (1.0f - srcA);
@@ -123,19 +131,6 @@ namespace meme {
                                 (imgData[srcIdx+2]*srcA + pixels[dstIdx+2]*dstA*(1.0f-srcA)) / outA);
                             pixels[dstIdx+3] = static_cast<unsigned char>(outA * 255.0f);
                         }
-                    }
-                }
-            } else {
-                for (int y = 0; y < h; ++y) {
-                    int srcY = y * imgH / h;
-                    for (int x = 0; x < w; ++x) {
-                        int srcX = x * imgW / w;
-                        int srcIdx = (srcY * imgW + srcX) * 4;
-                        int dstIdx = (y * w + x) * 4;
-                        pixels[dstIdx + 0] = imgData[srcIdx + 0];
-                        pixels[dstIdx + 1] = imgData[srcIdx + 1];
-                        pixels[dstIdx + 2] = imgData[srcIdx + 2];
-                        pixels[dstIdx + 3] = imgData[srcIdx + 3];
                     }
                 }
             }

@@ -5,7 +5,7 @@ var g = gif loop {
     @blank "1" : 1s
 };
 
-print type(g);                  // expect: gif
+print type(g);                  // expect: instance
 
 save(g, "gif_block.gif");
 print "gif block saved";        // expect: gif block saved

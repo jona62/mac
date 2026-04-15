@@ -24,7 +24,7 @@ var g = gif loop {
     } : 300ms
     @blank "solo" : 300ms
 };
-print type(g);                  // expect: gif
+print type(g);                  // expect: instance
 
 // Grid inside timeline
 var tl = timeline loop {

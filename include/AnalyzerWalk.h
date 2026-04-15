@@ -400,7 +400,10 @@ namespace analyzer {
                     result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
                 }
             }
-            for (auto& frame : p->frames) analyzeExpr(frame.meme.get());
+            for (auto& frame : p->frames) {
+                checkFrameType(frame.meme.get(), "gif");
+                analyzeExpr(frame.meme.get());
+            }
         }
         else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
@@ -419,6 +422,7 @@ namespace analyzer {
                 }
             }
             for (auto& entry : p->entries) {
+                checkFrameType(entry.frame.meme.get(), "timeline");
                 analyzeExpr(entry.frame.meme.get());
             }
         }
@@ -433,7 +437,39 @@ namespace analyzer {
                 result.symbols.push_back({kw, "keyword", "Meme", desc, currentSource,
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
             }
-            for (auto& entry : p->entries) analyzeExpr(entry.get());
+            for (auto& entry : p->entries) {
+                checkFrameType(entry.get(), "grid");
+                analyzeExpr(entry.get());
+            }
+        }
+    }
+
+    // Check if an expression used as a frame entry is a sequence type (Gif/Timeline)
+    inline void MacAnalyzer::checkFrameType(expr::Expr<MV>* e, const std::string& container) {
+        if (!e || currentSource != "user") return;
+        auto type = inferType(e);
+        if (type == "Gif" || type == "Timeline") {
+            int line = 0, col = 1, endCol = 2;
+            if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) {
+                line = v->name.line;
+                col = v->name.column > 0 ? v->name.column : 1;
+                endCol = col + static_cast<int>(tokName(v->name).size());
+            } else if (auto* g = dynamic_cast<expr::GifBlockExpr<MV>*>(e)) {
+                line = g->keyword.line;
+                col = g->keyword.column > 0 ? g->keyword.column : 1;
+                endCol = col + static_cast<int>(tokName(g->keyword).size());
+            } else if (auto* t = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
+                line = t->keyword.line;
+                col = t->keyword.column > 0 ? t->keyword.column : 1;
+                endCol = col + static_cast<int>(tokName(t->keyword).size());
+            }
+            if (line > 0) {
+                result.diagnostics.push_back({line, col, endCol,
+                    type + " is a sequence type and cannot be used as a frame inside '" +
+                    container + "'. Wrap the " + container + " in a '" +
+                    (type == "Gif" ? "gif" : "timeline") + "' block instead.",
+                    "error", currentSource});
+            }
         }
     }
 

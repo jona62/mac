@@ -316,6 +316,19 @@ namespace callable {
         std::string toString() override { return "<native fn>"; }
     };
 
+    // Save a raw MacGif directly (used by prelude Gif.save() when _gif is set)
+    class GifSaveRawFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto gif = std::get<std::shared_ptr<meme::MacGif>>(args[0]);
+            auto outputPath = toOutputPath(std::get<std::string>(args[1]));
+            return gif->save(outputPath);
+        }
+        int arity() override { return 2; }
+        std::string toString() override { return "<native fn>"; }
+    };
+
     // =======================================================================
     // Effect & Layout Helpers
     // =======================================================================

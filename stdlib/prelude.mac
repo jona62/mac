@@ -135,6 +135,7 @@ class Meme {
 // For transitions between frames, use Timeline instead.
 class Gif {
     init() {
+        this._gif = nil;
         this._frames = [];
         this.frameCount = 0;
     }
@@ -156,7 +157,11 @@ class Gif {
 
     // Render all frames and save as an animated GIF.
     save(path) {
-        _gif_save(this._frames, path);
+        if (this._gif != nil) {
+            _gif_save_raw(this._gif, path);
+        } else {
+            _gif_save(this._frames, path);
+        }
     }
 
     // Gif + Frame = Gif (adds the frame)

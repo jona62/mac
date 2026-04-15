@@ -11,4 +11,4 @@ var g = gif {
     @blank "A" : 400ms
     @blank "B" : 1s
 };
-print type(g);                       // expect: gif
+print type(g);                       // expect: instance
