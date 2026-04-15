@@ -72,42 +72,36 @@ namespace meme {
             int targetW = keyframes[0].width;
             int targetH = keyframes[0].height;
 
+            // Pre-resize all keyframes once (avoid repeated resize per transition frame)
+            std::vector<std::vector<unsigned char>> resized(keyframes.size());
+            for (size_t i = 0; i < keyframes.size(); i++) {
+                resized[i] = resizeToTarget(keyframes[i].pixels, keyframes[i].width,
+                                             keyframes[i].height, targetW, targetH);
+            }
+
             for (size_t i = 0; i < keyframes.size(); i++) {
                 // Add hold frame for this keyframe
-                int holdMs = 0;
-                if (i < holds.size()) holdMs = holds[i];
-                if (holdMs <= 0) holdMs = 2000; // default 2s hold for readable text
-
-                // Add the keyframe as a static frame
-                auto resized = resizeToTarget(keyframes[i].pixels, keyframes[i].width,
-                                               keyframes[i].height, targetW, targetH);
-                output.push_back({resized, targetW, targetH, holdMs / 10});
+                int holdMs = (i < holds.size()) ? holds[i] : 0;
+                if (holdMs <= 0) holdMs = 2000;
+                output.push_back({resized[i], targetW, targetH, holdMs / 10});
 
                 // Add transition to next keyframe if available
                 if (i + 1 < keyframes.size() && i < transitions.size()) {
                     auto& trans = transitions[i];
-                    int transMs = trans.durationMs;
-                    if (transMs <= 0) transMs = 150;
+                    int transMs = trans.durationMs > 0 ? trans.durationMs : 150;
                     int fps = 15;
                     int frameCount = std::max(2, transMs * fps / 1000);
-                    int frameDelayCs = transMs / (frameCount * 10);
-                    if (frameDelayCs < 1) frameDelayCs = 1;
-
-                    auto from = resizeToTarget(keyframes[i].pixels, keyframes[i].width,
-                                                keyframes[i].height, targetW, targetH);
-                    auto to = resizeToTarget(keyframes[i + 1].pixels, keyframes[i + 1].width,
-                                              keyframes[i + 1].height, targetW, targetH);
+                    int frameDelayCs = std::max(1, transMs / (frameCount * 10));
 
                     for (int f = 1; f < frameCount; f++) {
-                        float t = static_cast<float>(f) / frameCount;
-                        t = applyEasing(t, trans.easing);
-                        auto frame = renderTransitionFrame(from, to, targetW, targetH, t, trans.type);
-                        output.push_back({frame, targetW, targetH, frameDelayCs});
+                        float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
+                        output.push_back({renderTransitionFrame(resized[i], resized[i + 1],
+                            targetW, targetH, t, trans.type), targetW, targetH, frameDelayCs});
                     }
                 }
             }
 
-            // Loop-back transition: last frame → first frame (for seamless looping)
+            // Loop-back transition: last frame → first frame
             if (loopCount != 1 && keyframes.size() > 1) {
                 size_t lastIdx = keyframes.size() - 1;
                 if (lastIdx < transitions.size() && transitions[lastIdx].durationMs > 0) {
@@ -115,19 +109,12 @@ namespace meme {
                     int transMs = trans.durationMs;
                     int fps = 15;
                     int frameCount = std::max(2, transMs * fps / 1000);
-                    int frameDelayCs = transMs / (frameCount * 10);
-                    if (frameDelayCs < 1) frameDelayCs = 1;
-
-                    auto from = resizeToTarget(keyframes[lastIdx].pixels, keyframes[lastIdx].width,
-                                                keyframes[lastIdx].height, targetW, targetH);
-                    auto to = resizeToTarget(keyframes[0].pixels, keyframes[0].width,
-                                              keyframes[0].height, targetW, targetH);
+                    int frameDelayCs = std::max(1, transMs / (frameCount * 10));
 
                     for (int f = 1; f < frameCount; f++) {
-                        float t = static_cast<float>(f) / frameCount;
-                        t = applyEasing(t, trans.easing);
-                        auto frame = renderTransitionFrame(from, to, targetW, targetH, t, trans.type);
-                        output.push_back({frame, targetW, targetH, frameDelayCs});
+                        float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
+                        output.push_back({renderTransitionFrame(resized[lastIdx], resized[0],
+                            targetW, targetH, t, trans.type), targetW, targetH, frameDelayCs});
                     }
                 }
             }

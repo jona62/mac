@@ -8,6 +8,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Do NOT define STB_*_IMPLEMENTATION here -- already in src/stb_impl.cpp
@@ -89,6 +90,42 @@ namespace meme {
         }
 
     private:
+        // ---- caches ----
+        struct CachedImage { std::vector<unsigned char> pixels; int w, h; };
+
+        static std::unordered_map<std::string, CachedImage>& imageCache() {
+            static std::unordered_map<std::string, CachedImage> cache;
+            return cache;
+        }
+
+        static const CachedImage& loadImageCached(const std::string& path) {
+            auto& cache = imageCache();
+            auto it = cache.find(path);
+            if (it != cache.end()) return it->second;
+            int w, h, c;
+            unsigned char* data = stbi_load(path.c_str(), &w, &h, &c, 4);
+            if (!data) throw std::runtime_error("MemeRenderer: cannot load image '" + path + "'");
+            CachedImage img;
+            img.pixels.assign(data, data + w * h * 4);
+            img.w = w; img.h = h;
+            stbi_image_free(data);
+            return cache.emplace(path, std::move(img)).first->second;
+        }
+
+        struct CachedFont { std::vector<unsigned char> data; stbtt_fontinfo info; };
+
+        static CachedFont& fontCache() {
+            static CachedFont cache;
+            if (cache.data.empty()) {
+                std::string fontPath = getAssetsDir() + "/fonts/meme-font.ttf";
+                cache.data = readFile(fontPath);
+                if (cache.data.empty()) throw std::runtime_error("MemeRenderer: cannot load font");
+                stbtt_InitFont(&cache.info, cache.data.data(),
+                    stbtt_GetFontOffsetForIndex(cache.data.data(), 0));
+            }
+            return cache;
+        }
+
         // ---- internal render ----
         static std::vector<unsigned char> renderInternal(
                 const std::string& imagePath,
@@ -101,12 +138,10 @@ namespace meme {
                 int& outHeight,
                 const TextStyle& activeStyle = TextStyle{}) {
 
-            // Load template image
-            int imgW, imgH, imgC;
-            unsigned char* imgData = stbi_load(imagePath.c_str(), &imgW, &imgH, &imgC, 4);
-            if (!imgData) {
-                throw std::runtime_error("MemeRenderer: cannot load image '" + imagePath + "'");
-            }
+            // Load template image (cached)
+            const auto& cached = loadImageCached(imagePath);
+            int imgW = cached.w, imgH = cached.h;
+            const unsigned char* imgData = cached.pixels.data();
 
             int w = (targetWidth > 0) ? targetWidth : imgW;
             int h = (targetHeight > 0) ? targetHeight : imgH;
@@ -157,20 +192,10 @@ namespace meme {
                     }
                 }
             }
-            stbi_image_free(imgData);
-
-            // Load font
-            std::string fontPath = getAssetsDir() + "/fonts/meme-font.ttf";
-            std::vector<unsigned char> fontData = readFile(fontPath);
-            if (fontData.empty()) {
-                throw std::runtime_error("MemeRenderer: cannot load font '" + fontPath + "'");
-            }
-
-            stbtt_fontinfo fontInfo;
-            if (!stbtt_InitFont(&fontInfo, fontData.data(),
-                                stbtt_GetFontOffsetForIndex(fontData.data(), 0))) {
-                throw std::runtime_error("MemeRenderer: cannot init font");
-            }
+            // Load font (cached — local copy of fontInfo since stbtt may mutate it)
+            auto& font = fontCache();
+            const auto& fontData = font.data;
+            stbtt_fontinfo fontInfo = font.info;
 
             // Draw top text (upper half) — anchored to top edge
             if (!topText.empty()) {
