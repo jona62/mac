@@ -1114,60 +1114,47 @@ function renderStage() {
 
 // ── Syntax highlighting (patterns from mac-lang/syntaxes/mac.tmLanguage.json) ──
 
-const MAC_HIGHLIGHT_RULES = [
-  { pattern: /(\/\/.*$)/gm, cls: "hl-comment" },
-  { pattern: /("(?:[^"\\]|\\.)*")/g, cls: "hl-string" },
-  { pattern: /\b(\d+(?:ms|s))\b/g, cls: "hl-number" },
-  { pattern: /\b(\d+(?:\.\d+)?)\b/g, cls: "hl-number" },
-  { pattern: /(@\w+(?:\.\w+)*)/g, cls: "hl-template" },
-  { pattern: /\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|and|or)\b/g, cls: "hl-keyword" },
-  { pattern: /\b(gif|timeline|grid|loop)\b/g, cls: "hl-keyword" },
-  { pattern: /\b(true|false|nil)\b/g, cls: "hl-constant" },
-  { pattern: /\b(this|super)\b/g, cls: "hl-constant" },
-  { pattern: /\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\b/g, cls: "hl-class" },
-  { pattern: /\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\b/g, cls: "hl-constant" },
-  { pattern: /(=>|->|\|>|>>|---)/g, cls: "hl-operator" },
-  { pattern: /\b([A-Za-z_]\w*)\s*(?=\()/g, cls: "hl-function" },
-];
+const HL_KEYWORDS = new Set("var,fun,effect,style,class,for,while,if,else,return,print,in,break,continue,and,or,gif,timeline,grid,loop".split(","));
+const HL_CONSTANTS = new Set("true,false,nil,this,super,Top,Bottom,Center,PNG,JPG,GIF,crossfade,slideLeft,slideRight,slideUp,slideDown,wipe,deepfry".split(","));
+const HL_CLASSES = new Set("Template,Meme,Gif,Timeline,Frame,Size,Duration,Position,Format".split(","));
 
 function highlightMac(code) {
-  // Escape HTML first
-  let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  // Single-pass tokenizer — avoids nested span issues
+  const TOKEN_RE = /(\/\/.*$)|("(?:[^"\\]|\\.)*")|(\b\d+(?:ms|s)\b)|(\b\d+(?:\.\d+)?\b)|(=>|->|\|>|>>|---)|(@\w+(?:\.\w+)*)|(\b[A-Za-z_]\w*\b)/gm;
 
-  // Tokenize by extracting strings and comments first to avoid highlighting inside them
-  const tokens = [];
-  let tokenized = html.replace(/(\/\/.*$)/gm, (m) => {
-    tokens.push(`<span class="hl-comment">${m}</span>`);
-    return `\x00${tokens.length - 1}\x00`;
-  });
-  tokenized = tokenized.replace(/(&quot;|")((?:[^"\\]|\\.)*)(&quot;|")/g, (m) => {
-    tokens.push(`<span class="hl-string">${m}</span>`);
-    return `\x00${tokens.length - 1}\x00`;
-  });
+  let result = "";
+  let last = 0;
 
-  // Apply remaining rules
-  const rules = [
-    [/\b(\d+(?:ms|s))\b/g, "hl-number"],
-    [/\b(\d+(?:\.\d+)?)\b/g, "hl-number"],
-    [/(@\w+(?:\.\w+)*)/g, "hl-template"],
-    [/\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|and|or)\b/g, "hl-keyword"],
-    [/\b(gif|timeline|grid|loop)\b/g, "hl-keyword"],
-    [/\b(true|false|nil)\b/g, "hl-constant"],
-    [/\b(this|super)\b/g, "hl-constant"],
-    [/\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\b/g, "hl-class"],
-    [/\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\b/g, "hl-constant"],
-    [/(=&gt;|-&gt;|\|&gt;|&gt;&gt;|---)/g, "hl-operator"],
-    [/\b([A-Za-z_]\w*)(?=\s*\()/g, "hl-function"],
-  ];
+  for (const m of code.matchAll(TOKEN_RE)) {
+    // Append text between matches (escaped)
+    if (m.index > last) {
+      result += esc(code.slice(last, m.index));
+    }
+    last = m.index + m[0].length;
 
-  for (const [re, cls] of rules) {
-    tokenized = tokenized.replace(re, `<span class="${cls}">$1</span>`);
+    if (m[1]) { result += `<span class="hl-comment">${esc(m[1])}</span>`; }
+    else if (m[2]) { result += `<span class="hl-string">${esc(m[2])}</span>`; }
+    else if (m[3]) { result += `<span class="hl-number">${esc(m[3])}</span>`; }
+    else if (m[4]) { result += `<span class="hl-number">${esc(m[4])}</span>`; }
+    else if (m[5]) { result += `<span class="hl-operator">${esc(m[5])}</span>`; }
+    else if (m[6]) { result += `<span class="hl-template">${esc(m[6])}</span>`; }
+    else if (m[7]) {
+      const word = m[7];
+      if (HL_KEYWORDS.has(word)) result += `<span class="hl-keyword">${word}</span>`;
+      else if (HL_CONSTANTS.has(word)) result += `<span class="hl-constant">${word}</span>`;
+      else if (HL_CLASSES.has(word)) result += `<span class="hl-class">${word}</span>`;
+      else if (code[m.index + word.length] === "(") result += `<span class="hl-function">${word}</span>`;
+      else result += word;
+    }
+    else { result += esc(m[0]); }
   }
 
-  // Restore protected tokens
-  tokenized = tokenized.replace(/\x00(\d+)\x00/g, (_, i) => tokens[Number(i)]);
+  // Append remaining text
+  if (last < code.length) result += esc(code.slice(last));
 
-  return tokenized + "\n"; // trailing newline keeps pre height in sync
+  return result + "\n";
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 }
 
 function renderScript() {
