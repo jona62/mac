@@ -54,6 +54,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  gap: 6px;
+  overflow-x: auto;
+  white-space: nowrap;
   background: var(--bg-warm);
   border-bottom: 1px solid var(--line);
   z-index: 10;
@@ -692,7 +695,7 @@ select {
 .btn--ghost { background: transparent; border-color: transparent; color: var(--ink-muted); }
 .btn--ghost:hover { background: var(--surface); color: var(--ink); }
 .btn--outline { background: transparent; }
-.btn--sm { padding: 5px 10px; font-size: 0.72rem; }
+.btn--sm { padding: 5px 10px; font-size: 0.72rem; white-space: nowrap; }
 
 .badge {
   font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
@@ -739,7 +742,26 @@ select {
 
   .mobile-toggle { display: inline-flex; }
   .topbar__stats { display: none; }
-  .canvas-area__stage { padding: 12px; }
+  .topbar__brand { font-size: 0.9rem; }
+
+  .canvas-area__stage {
+    padding: 8px;
+    min-height: 0;
+  }
+  .canvas-area__stage img {
+    max-width: 100%;
+    max-height: calc(100vh - 160px);
+    width: auto;
+    height: auto;
+  }
+  .canvas-area__footer {
+    padding: 6px 12px;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+  }
+  .bottom-dock { font-size: 0.72rem; }
+  .dock__strip { padding: 6px 10px; }
+  .scene-card { width: 110px; padding: 6px 8px; }
 
   .mobile-backdrop {
     display: none;
