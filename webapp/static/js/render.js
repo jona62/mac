@@ -91,7 +91,7 @@ function renderSceneStrip() {
     parts.push(`<button class="scene-card${active ? " is-active" : ""}" type="button" data-scene-action="select" data-scene-index="${i}">
       <span class="scene-card__label">Scene ${i + 1}</span>
       <span class="scene-card__meta">${formatDuration(scene.durationMs)}</span>
-      <span class="scene-card__actions" onclick="event.stopPropagation()">
+      <span class="scene-card__actions">
         <span class="icon-btn" data-scene-action="dup" data-scene-index="${i}">+</span>
         <span class="icon-btn" data-scene-action="del" data-scene-index="${i}" ${state.scenes.length === 1 ? "style='display:none'" : ""}>×</span>
       </span>
