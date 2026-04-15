@@ -79,19 +79,14 @@ function renderSceneStrip() {
   $("sceneStrip").innerHTML = state.scenes.map((scene, i) => {
     const active = i === state.selectedSceneIndex;
     const lead = sceneLeadText(scene);
-    return `<article class="scene-card${active ? " is-active" : ""}">
-      <button class="scene-card__body" type="button" data-scene-action="select" data-scene-index="${i}">
-        <span class="scene-card__kicker">Scene ${i + 1}</span>
-        <strong class="scene-card__title">${esc(layoutName(scene.layout.kind))}</strong>
-        <span class="scene-card__summary">${esc(lead)}</span>
-        <span class="scene-card__meta">${scene.slots.length} slot${scene.slots.length > 1 ? "s" : ""} · ${formatDuration(scene.durationMs)}</span>
-      </button>
-      <div class="scene-card__actions">
-        <button class="icon-btn" type="button" data-scene-action="up" data-scene-index="${i}" ${i === 0 ? "disabled" : ""}>↑</button>
-        <button class="icon-btn" type="button" data-scene-action="down" data-scene-index="${i}" ${i === state.scenes.length - 1 ? "disabled" : ""}>↓</button>
-        <button class="icon-btn" type="button" data-scene-action="dup" data-scene-index="${i}">Dup</button>
-        <button class="icon-btn" type="button" data-scene-action="del" data-scene-index="${i}" ${state.scenes.length === 1 ? "disabled" : ""}>×</button>
-      </div></article>`;
+    return `<button class="scene-card${active ? " is-active" : ""}" type="button" data-scene-action="select" data-scene-index="${i}">
+      <span class="scene-card__label">Scene ${i + 1}</span>
+      <span class="scene-card__meta">${formatDuration(scene.durationMs)}</span>
+      <span class="scene-card__actions" onclick="event.stopPropagation()">
+        <span class="icon-btn" data-scene-action="dup" data-scene-index="${i}">+</span>
+        <span class="icon-btn" data-scene-action="del" data-scene-index="${i}" ${state.scenes.length === 1 ? "style='display:none'" : ""}>×</span>
+      </span>
+    </button>`;
   }).join("");
 }
 

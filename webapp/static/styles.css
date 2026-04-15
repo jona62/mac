@@ -467,29 +467,34 @@ body {
 
 .scene-card {
   flex-shrink: 0;
-  width: 140px;
-  padding: 8px 10px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
   border: 1.5px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--surface);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
+  font: inherit;
+  color: var(--ink);
+  white-space: nowrap;
 }
 
 .scene-card:hover { border-color: var(--ink-faint); }
 .scene-card.is-active { border-color: var(--accent); background: var(--accent-soft); }
 
-.scene-card__kicker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
-.scene-card__title { font-size: 0.72rem; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.scene-card__meta { font-size: 0.6rem; color: var(--ink-muted); margin-top: 2px; }
-.scene-card__summary { display: none; }
-.scene-card__body { display: none; }
+.scene-card__label { font-size: 0.72rem; font-weight: 600; }
+.scene-card__meta { font-size: 0.6rem; color: var(--ink-muted); }
 
 .scene-card__actions {
-  display: flex;
+  display: none;
   gap: 3px;
-  margin-top: 4px;
+  margin-left: 2px;
 }
+
+.scene-card:hover .scene-card__actions { display: flex; }
 
 .icon-btn {
   padding: 2px 5px;
@@ -830,7 +835,8 @@ select {
   }
   .dock__strip { padding: 6px 10px; }
   .scene-strip { -webkit-overflow-scrolling: touch; }
-  .scene-card { width: 110px; padding: 6px 8px; }
+  .scene-card { padding: 5px 10px; }
+  .scene-card__actions { display: flex; }
 
   /* Prevent iOS zoom on focus — inputs must be >= 16px */
   input[type="number"], input[type="text"], textarea, select {
