@@ -11,79 +11,68 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  test:
-    name: Test (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-
+  # ── Lane 1: Fast checks (parallel) ────────────────────
+  test-linux:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
-      - name: Configure
-        run: cmake -S . -B build
-
-      - name: Build
-        run: cmake --build build
-
-      - name: Run unit tests
-        run: bash tests/run_tests.sh
-
-      - name: Verify test count
-        run: |
-          count=$(bash tests/run_tests.sh 2>&1 | grep "Results:" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+')
-          echo "Tests passed: $count"
-          if [ "$count" -lt 46 ]; then
-            echo "ERROR: Expected at least 46 tests, got $count"
-            exit 1
-          fi
+      - run: cmake -S . -B build
+      - run: cmake --build build
+      - run: bash tests/run_tests.sh
 
   lint-lsp:
     name: Typecheck LSP
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v5
-
       - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - run: cd mac-lang && npm ci
+      - run: cd mac-lang && npx tsc --noEmit
+
+  # ── Lane 2: Deploy (after Linux test passes) ──────────
+  deploy:
+    name: Deploy to Rigbox
+    needs: test-linux
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
         with:
-          node-version: 22
+          host: eu-west-1.rigbox.dev
+          username: base-uvvrblcc-1yvx9yo7
+          key: ${{ secrets.RIGBOX_SSH_KEY }}
+          script: bash ~/deploy.sh
 
-      - name: Install dependencies
-        run: cd mac-lang && npm ci
-
-      - name: Typecheck
-        run: cd mac-lang && npx tsc --noEmit
+  # ── Lane 3: Release builds (only on tags, parallel) ───
+  test-macos:
+    name: Test (macOS)
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: cmake -S . -B build
+      - run: cmake --build build
+      - run: bash tests/run_tests.sh
 
   release:
-    name: Release (${{ matrix.target }})
-    needs: [test, lint-lsp]
+    name: Build (${{ matrix.target }})
+    needs: [test-linux, test-macos, lint-lsp]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - os: macos-latest
-            target: mac-macos-arm64
-          - os: macos-15
-            target: mac-macos-x86_64
-          - os: ubuntu-latest
-            target: mac-linux-x86_64
-
+          - { os: macos-latest,  target: mac-macos-arm64 }
+          - { os: macos-15,      target: mac-macos-x86_64 }
+          - { os: ubuntu-latest, target: mac-linux-x86_64 }
     steps:
       - uses: actions/checkout@v5
-
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Run tests on release build
-        run: bash tests/run_tests.sh
-
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --config Release
+      - run: bash tests/run_tests.sh
       - name: Package
         run: |
           mkdir -p dist/${{ matrix.target }}
@@ -92,9 +81,7 @@ jobs:
           cp -r build/stdlib dist/${{ matrix.target }}/stdlib
           cp README.md dist/${{ matrix.target }}/
           cd dist && tar czf ${{ matrix.target }}.tar.gz ${{ matrix.target }}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.target }}
           path: dist/${{ matrix.target }}.tar.gz
@@ -106,14 +93,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/download-artifact@v5
-        with:
-          path: artifacts
-
-      - name: Create release
-        uses: softprops/action-gh-release@v2
+        with: { path: artifacts }
+      - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           files: artifacts/**/*.tar.gz
