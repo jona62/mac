@@ -99,6 +99,8 @@ function bindStaticControls() {
   $("layoutGrid").addEventListener("click", onLayoutPick);
   $("presetGrid").addEventListener("click", onPresetPick);
   $("sceneStrip").addEventListener("click", (e) => {
+    const loopPip = e.target.closest("[data-transition-loop]");
+    if (loopPip) { onTransitionPipClick(loopPip, state.scenes.length - 1); return; }
     const transPip = e.target.closest("[data-transition-index]");
     if (transPip) { onTransitionPipClick(transPip, Number(transPip.dataset.transitionIndex)); return; }
     onSceneStripAction(e);

@@ -489,12 +489,13 @@ body {
 .scene-card__meta { font-size: 0.6rem; color: var(--ink-muted); }
 
 .scene-card__actions {
-  display: none;
+  display: flex;
   gap: 3px;
   margin-left: 2px;
+  visibility: hidden;
 }
 
-.scene-card:hover .scene-card__actions { display: flex; }
+.scene-card:hover .scene-card__actions { visibility: visible; }
 
 /* Transition connector between scene pills */
 .transition-pip {
@@ -520,6 +521,8 @@ body {
 
 .transition-pip:hover { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
 .transition-pip__label { pointer-events: none; }
+.transition-pip__loop-icon { font-size: 0.7rem; pointer-events: none; }
+.transition-pip--loop { border-style: dotted; }
 
 .transition-popover {
   z-index: 60;
@@ -881,7 +884,7 @@ select {
   .dock__strip { padding: 6px 10px; }
   .scene-strip { -webkit-overflow-scrolling: touch; }
   .scene-card { padding: 5px 10px; }
-  .scene-card__actions { display: flex; }
+  .scene-card__actions { visibility: visible; }
   .transition-popover { width: 160px; }
 
   /* Prevent iOS zoom on focus — inputs must be >= 16px */

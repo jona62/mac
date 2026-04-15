@@ -97,6 +97,16 @@ function renderSceneStrip() {
       </span>
     </button>`);
   });
+  // Loop-back transition pip after last scene (only for multi-scene)
+  if (state.scenes.length > 1) {
+    const last = state.scenes[state.scenes.length - 1];
+    const loopTrans = last.transition || { type: "cut", durationMs: 150, easing: "linear" };
+    const loopLabel = loopTrans.type === "cut" ? "cut" : loopTrans.type;
+    parts.push(`<button class="transition-pip transition-pip--loop" type="button" data-transition-loop title="Loop back: ${loopLabel} ${loopTrans.durationMs}ms">
+      <span class="transition-pip__label">${esc(loopLabel)}</span>
+      <span class="transition-pip__loop-icon">↩</span>
+    </button>`);
+  }
   $("sceneStrip").innerHTML = parts.join("");
 }
 
