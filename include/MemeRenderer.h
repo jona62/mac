@@ -90,16 +90,53 @@ namespace meme {
 
             // Build RGBA buffer -- resize to target by simple nearest-neighbor if needed
             std::vector<unsigned char> pixels(w * h * 4);
-            for (int y = 0; y < h; ++y) {
-                int srcY = y * imgH / h;
-                for (int x = 0; x < w; ++x) {
-                    int srcX = x * imgW / w;
-                    int srcIdx = (srcY * imgW + srcX) * 4;
-                    int dstIdx = (y * w + x) * 4;
-                    pixels[dstIdx + 0] = imgData[srcIdx + 0];
-                    pixels[dstIdx + 1] = imgData[srcIdx + 1];
-                    pixels[dstIdx + 2] = imgData[srcIdx + 2];
-                    pixels[dstIdx + 3] = imgData[srcIdx + 3];
+
+            if (activeStyle.bgA > 0) {
+                // Background replaces the template canvas entirely
+                for (int i = 0; i < w * h; ++i) {
+                    pixels[i * 4 + 0] = activeStyle.bgR;
+                    pixels[i * 4 + 1] = activeStyle.bgG;
+                    pixels[i * 4 + 2] = activeStyle.bgB;
+                    pixels[i * 4 + 3] = activeStyle.bgA;
+                }
+                // Composite non-white template pixels on top (borders, dividers, etc.)
+                for (int y = 0; y < h; ++y) {
+                    int srcY = y * imgH / h;
+                    for (int x = 0; x < w; ++x) {
+                        int srcX = x * imgW / w;
+                        int srcIdx = (srcY * imgW + srcX) * 4;
+                        // Skip fully white opaque pixels (template "canvas" area)
+                        if (imgData[srcIdx+0] == 255 && imgData[srcIdx+1] == 255 &&
+                            imgData[srcIdx+2] == 255 && imgData[srcIdx+3] == 255) continue;
+                        // Skip fully transparent pixels
+                        if (imgData[srcIdx+3] == 0) continue;
+                        int dstIdx = (y * w + x) * 4;
+                        float srcA = imgData[srcIdx + 3] / 255.0f;
+                        float dstA = pixels[dstIdx + 3] / 255.0f;
+                        float outA = srcA + dstA * (1.0f - srcA);
+                        if (outA > 0) {
+                            pixels[dstIdx+0] = static_cast<unsigned char>(
+                                (imgData[srcIdx+0]*srcA + pixels[dstIdx+0]*dstA*(1.0f-srcA)) / outA);
+                            pixels[dstIdx+1] = static_cast<unsigned char>(
+                                (imgData[srcIdx+1]*srcA + pixels[dstIdx+1]*dstA*(1.0f-srcA)) / outA);
+                            pixels[dstIdx+2] = static_cast<unsigned char>(
+                                (imgData[srcIdx+2]*srcA + pixels[dstIdx+2]*dstA*(1.0f-srcA)) / outA);
+                            pixels[dstIdx+3] = static_cast<unsigned char>(outA * 255.0f);
+                        }
+                    }
+                }
+            } else {
+                for (int y = 0; y < h; ++y) {
+                    int srcY = y * imgH / h;
+                    for (int x = 0; x < w; ++x) {
+                        int srcX = x * imgW / w;
+                        int srcIdx = (srcY * imgW + srcX) * 4;
+                        int dstIdx = (y * w + x) * 4;
+                        pixels[dstIdx + 0] = imgData[srcIdx + 0];
+                        pixels[dstIdx + 1] = imgData[srcIdx + 1];
+                        pixels[dstIdx + 2] = imgData[srcIdx + 2];
+                        pixels[dstIdx + 3] = imgData[srcIdx + 3];
+                    }
                 }
             }
             stbi_image_free(imgData);

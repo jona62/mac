@@ -350,10 +350,31 @@ namespace callable {
             throw std::runtime_error("Map does not contain rendered image data.");
         }
 
+        // Detect sequence types (Gif/Timeline) and give helpful error messages
+        if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) {
+            throw std::runtime_error(
+                "Cannot use Gif as a frame — Gif is a sequence type. "
+                "Wrap the containing block in a 'gif' instead.");
+        }
+        if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) {
+            throw std::runtime_error(
+                "Cannot use Timeline as a frame — Timeline is a sequence type. "
+                "Wrap the containing block in a 'timeline' instead.");
+        }
+
         if (!std::holds_alternative<std::shared_ptr<instance::MacInstance>>(val)) {
             throw std::runtime_error("Expected a Meme instance.");
         }
         auto inst = std::get<std::shared_ptr<instance::MacInstance>>(val);
+
+        // Detect prelude-wrapped sequence types (Gif/Timeline class instances)
+        auto className = inst->getClass()->name;
+        if (className == "Gif" || className == "Timeline") {
+            throw std::runtime_error(
+                "Cannot use " + className + " as a frame — " + className +
+                " is a sequence type. Wrap the containing block in a '" +
+                (className == "Gif" ? "gif" : "timeline") + "' instead.");
+        }
 
         // Check for renderedPath field (temp file path)
         token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("renderedPath")), 0);
@@ -468,6 +489,9 @@ namespace callable {
         else if (fontSizeStr == "lg") style.fontSizeOverride = -3;
         else if (fontSizeStr == "xlg") style.fontSizeOverride = -4;
         else style.fontSizeOverride = static_cast<float>(getNum("fontSize", 0));
+
+        auto bgColor = getStr("background");
+        if (!bgColor.empty()) parseHex(bgColor, style.bgR, style.bgG, style.bgB, style.bgA);
 
         return style;
     }

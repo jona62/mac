@@ -311,19 +311,26 @@ namespace analyzer {
             int tc = p->templateName.column > 0 ? p->templateName.column : 1;
             int tec = tc + static_cast<int>(tname.size());
 
-            // Emit reference for the template name → Template class in prelude
-            auto* templateDef = resolve("Template");
-            if (templateDef) {
-                result.references.push_back({p->templateName.line, tc, tec,
-                    templateDef->line, templateDef->col, templateDef->endCol,
-                    templateDef->name, currentSource, templateDef->source,
-                    templateDef->visibility, templateDef->ownerType});
-            }
-
-            // Semantic token for template name (colored as a type/class)
-            if (p->templateName.line > 0 && currentSource == "user") {
-                result.semanticTokens.push_back({p->templateName.line, tc,
-                    static_cast<int>(tname.size()), "class", currentSource});
+            if (p->templateName.type == token::TokenType::STRING) {
+                // String template: @"path/to/image.png" — emit as string token
+                if (p->templateName.line > 0 && currentSource == "user") {
+                    // tc is column of opening quote, +2 for both quotes
+                    result.semanticTokens.push_back({p->templateName.line, tc,
+                        static_cast<int>(tname.size()) + 2, "string", currentSource});
+                }
+            } else {
+                // Identifier template: @two_panel — emit reference + class token
+                auto* templateDef = resolve("Template");
+                if (templateDef) {
+                    result.references.push_back({p->templateName.line, tc, tec,
+                        templateDef->line, templateDef->col, templateDef->endCol,
+                        templateDef->name, currentSource, templateDef->source,
+                        templateDef->visibility, templateDef->ownerType});
+                }
+                if (p->templateName.line > 0 && currentSource == "user") {
+                    result.semanticTokens.push_back({p->templateName.line, tc,
+                        static_cast<int>(tname.size()), "class", currentSource});
+                }
             }
 
             // Emit reference for style name if present

@@ -1,0 +1,19 @@
+// Background color in style blocks
+style redBg {
+    color: "#FFFFFF"
+    background: "#FF0000"
+    outline: 3
+}
+
+@blank redBg "Red Background" => "bg_red.png";
+print "red bg done";            // expect: red bg done
+
+// Background with alpha
+style semiTransparent {
+    color: "#000000"
+    background: "#0000FF80"
+    outline: 2
+}
+
+@blank semiTransparent "Blue Tint" => "bg_blue.png";
+print "blue bg done";           // expect: blue bg done

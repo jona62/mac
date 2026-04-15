@@ -125,6 +125,11 @@ void run(string source) {
 }
 
 void run_file(const char *path) {
+    // Set script directory for resolving relative @"path" templates
+    auto scriptDir = std::filesystem::path(path).parent_path().string();
+    if (scriptDir.empty()) scriptDir = ".";
+    meme::MacMeme::scriptDir() = scriptDir;
+
     ifstream source_file(path);
     if (!source_file.is_open()) {
         cout << "Could not open file for reading: " << path << endl;
@@ -153,6 +158,11 @@ void run_prompt() {
 }
 
 void analyze_file(const char *path) {
+    // Set script directory for resolving relative @"path" templates
+    auto scriptDir = std::filesystem::path(path).parent_path().string();
+    if (scriptDir.empty()) scriptDir = ".";
+    meme::MacMeme::scriptDir() = scriptDir;
+
     string source = readFile(path);
     if (source.empty()) {
         cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\",\"source\":\"user\"}],\"properties\":[],\"foldingRanges\":[],\"semanticTokens\":[],\"paramHints\":[],\"chainHints\":[],\"signatures\":[],\"classes\":[],\"templates\":[]}" << endl;

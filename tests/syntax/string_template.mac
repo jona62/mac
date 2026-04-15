@@ -1,0 +1,3 @@
+// String template paths: @"path/to/image.png"
+@"assets/templates/blank.png" "String Path" => "str_tmpl.png";
+print "string template done";   // expect: string template done

@@ -1,0 +1,38 @@
+// Frame vs sequence composition rules
+// Frame types (Meme, Grid, effects) compose freely
+
+// Grid inside grid
+var inner = grid 2x1 {
+    @blank "A"
+    @blank "B"
+};
+print type(inner);              // expect: map
+
+var outer = grid 1x2 {
+    inner
+    inner
+};
+print type(outer);              // expect: map
+
+// Grid inside gif
+var g = gif loop {
+    grid 2x2 {
+        @blank "1"
+        @blank "2"
+        @blank "3"
+        @blank "4"
+    } : 300ms
+    @blank "solo" : 300ms
+};
+print type(g);                  // expect: gif
+
+// Grid inside timeline
+var tl = timeline loop {
+    grid 1x2 {
+        @blank "Left"
+        @blank "Right"
+    } : 500ms
+    --- crossfade 150ms ---
+    @blank "Full" : 500ms
+};
+print type(tl);                 // expect: instance

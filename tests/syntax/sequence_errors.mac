@@ -1,0 +1,11 @@
+// Sequence types cannot be used as frames
+// Gif and Timeline are sequence types — they produce frame sequences, not pixels
+
+var g = gif loop {
+    @blank "1" : 250ms
+    @blank "2" : 250ms
+};
+
+// Gif inside grid should error
+grid 2x1 { g @blank "ok" } => "fail.png";
+// expect runtime error: Cannot use Gif as a frame

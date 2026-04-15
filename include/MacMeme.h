@@ -20,6 +20,7 @@ namespace meme {
         int shadowOffsetX = 0, shadowOffsetY = 0;
         unsigned char shadowR = 0, shadowG = 0, shadowB = 0, shadowA = 128;
         float fontSizeOverride = 0;
+        unsigned char bgR = 0, bgG = 0, bgB = 0, bgA = 0;  // 0 alpha = no background
     };
 
     // Forward declare MemeRenderer -- included only in method bodies below
@@ -61,6 +62,12 @@ namespace meme {
             return dir;
         }
 
+        // Script file directory for resolving relative @"path" templates
+        static std::string& scriptDir() {
+            static std::string dir = ".";
+            return dir;
+        }
+
         // Resolve a template name to an image file path
         static std::string resolveTemplate(const std::string& name) {
             auto& map = templateMap();
@@ -93,7 +100,9 @@ namespace meme {
                 }
             }
 
-            // Treat as a direct file path — try binary-relative first
+            // Treat as a direct file path — try script-relative, then binary-relative
+            auto scrPath = scriptDir() + "/" + name;
+            if (std::filesystem::exists(scrPath)) return scrPath;
             auto binPath = binaryDir() + "/" + name;
             if (std::filesystem::exists(binPath)) return binPath;
             return name;
