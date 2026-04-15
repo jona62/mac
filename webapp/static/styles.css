@@ -558,9 +558,14 @@ body {
   flex: 1;
   min-height: 0;
   max-height: none;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-radius: 0;
   -webkit-overflow-scrolling: touch;
+}
+
+.dock__script.is-fullscreen .code-editor__input {
+  min-height: 100%;
 }
 
 /* Syntax highlighting token colors */
