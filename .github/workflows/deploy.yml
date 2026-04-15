@@ -1,0 +1,17 @@
+name: Deploy to Rigbox
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: eu-west-1.rigbox.dev
+          username: base-uvvrblcc-1yvx9yo7
+          key: ${{ secrets.RIGBOX_SSH_KEY }}
+          script: bash ~/deploy.sh
