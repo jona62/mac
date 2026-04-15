@@ -1116,7 +1116,8 @@ function renderStage() {
   }
   $("stageLabel").textContent = state.stageLabel;
   $("refreshPreviewBtn").disabled = state.isPreviewing;
-  $("refreshPreviewBtn").textContent = state.isPreviewing ? "Refreshing…" : "Refresh Preview";
+  const compact = window.innerWidth < 800;
+  $("refreshPreviewBtn").textContent = state.isPreviewing ? "Refreshing…" : (compact ? "Refresh" : "Refresh Preview");
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : "Export & Download";
 
