@@ -35,6 +35,7 @@ function renderStats() {
 function renderTemplateGrids() {
   renderTemplateGrid("canvasTemplateGrid", "canvas");
   renderTemplateGrid("memeTemplateGrid", "meme");
+  renderTemplateGrid("uploadTemplateGrid", "uploads");
 }
 
 function renderTemplateGrid(containerId, category) {

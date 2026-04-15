@@ -48,6 +48,16 @@
           <!-- Assets tab -->
           <div class="sidebar__pane" data-pane="assets">
             <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Your Uploads</h3>
+                <label class="btn btn--accent btn--sm upload-btn">
+                  Upload
+                  <input type="file" id="imageUpload" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+                </label>
+              </div>
+              <div class="library-grid" id="uploadTemplateGrid"></div>
+            </section>
+            <section class="sb-section">
               <h3 class="sb-section__title">Templates</h3>
               <div class="library-grid" id="canvasTemplateGrid"></div>
             </section>

@@ -13,6 +13,7 @@ tools/gen_templates
 !assets/templates/**/*.gif
 webapp/generated/*
 !webapp/generated/.gitkeep
+webapp/uploads/
 webapp/server.pid
 webapp/server.log
 output/

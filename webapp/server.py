@@ -21,9 +21,12 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 WEBAPP_DIR = ROOT_DIR / "webapp"
 STATIC_DIR = WEBAPP_DIR / "static"
 GENERATED_DIR = WEBAPP_DIR / "generated"
+UPLOADS_DIR = WEBAPP_DIR / "uploads"
 MAC_BINARY = ROOT_DIR / "build" / "mac"
 
 MAX_REQUEST_BYTES = 256 * 1024
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024   # 5 MB max image upload
+MAX_UPLOADS = 50                      # max uploaded images retained
 MAX_SCENE_COUNT = 24
 MAX_FILE_AGE_SECONDS = 60 * 60 * 24
 MAX_GENERATED_FILES = 200
@@ -392,7 +395,7 @@ def normalize_slot(raw_slot: object) -> dict[str, object]:
         raise ValueError("Each slot must be an object.")
 
     template_id = str(raw_slot.get("templateId") or "blank").strip()
-    if template_id not in TEMPLATE_IDS:
+    if template_id not in TEMPLATE_IDS and not template_id.startswith("user."):
         raise ValueError("Unknown template selected.")
 
     text_payload = raw_slot.get("text")
@@ -564,12 +567,27 @@ def build_slot_expr(slot: dict[str, object], scene_index: int, slot_index: int, 
         if value:
             entries.append(f"    {position}: {mac_string_literal(value)}")
 
+    # User uploads use @"absolute/path" syntax; built-in templates use @identifier
+    tid = slot["templateId"]
+    if tid.startswith("user."):
+        # Resolve to absolute path
+        stem = tid.removeprefix("user.")
+        upload_path = None
+        if UPLOADS_DIR.is_dir():
+            for f in UPLOADS_DIR.iterdir():
+                if f.stem == stem:
+                    upload_path = str(f.resolve())
+                    break
+        tmpl_ref = f'@"{upload_path or tid}"' if upload_path else f"@{tid}"
+    else:
+        tmpl_ref = f"@{tid}"
+
     if not entries:
-        return f"@{slot['templateId']} {slot_width}x{slot_height}{style_suffix} {{}}"
+        return f"{tmpl_ref} {slot_width}x{slot_height}{style_suffix} {{}}"
 
     return "\n".join(
         [
-            f"@{slot['templateId']} {slot_width}x{slot_height}{style_suffix} {{",
+            f"{tmpl_ref} {slot_width}x{slot_height}{style_suffix} {{",
             *entries,
             "}",
         ]
@@ -698,6 +716,110 @@ def cleanup_mac_temp_files() -> None:
             shutil.rmtree(d, ignore_errors=True)
         except Exception:
             pass
+
+
+ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
+    """Accept an image upload, save to uploads/, return template info."""
+    content_length = int(handler.headers.get("Content-Length", 0))
+    if content_length <= 0:
+        raise ValueError("Upload body is empty.")
+    if content_length > MAX_UPLOAD_BYTES:
+        raise ValueError(f"File too large. Maximum is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.")
+
+    content_type = handler.headers.get("Content-Type", "")
+    if "multipart/form-data" not in content_type:
+        raise ValueError("Expected multipart/form-data upload.")
+
+    raw = handler.rfile.read(content_length)
+
+    # Parse the multipart boundary
+    boundary = content_type.split("boundary=")[-1].strip()
+    parts = raw.split(f"--{boundary}".encode())
+
+    file_data = None
+    filename = "upload"
+    for part in parts:
+        if b"Content-Disposition" not in part:
+            continue
+        header_end = part.find(b"\r\n\r\n")
+        if header_end < 0:
+            continue
+        headers = part[:header_end].decode("utf-8", errors="replace")
+        body = part[header_end + 4:]
+        if body.endswith(b"\r\n"):
+            body = body[:-2]
+
+        if 'name="image"' in headers or 'name="file"' in headers:
+            file_data = body
+            # Extract filename
+            for segment in headers.split(";"):
+                segment = segment.strip()
+                if segment.startswith('filename="'):
+                    filename = segment[10:].rstrip('"')
+
+    if not file_data or len(file_data) < 100:
+        raise ValueError("No image file found in the upload.")
+
+    ext = Path(filename).suffix.lower()
+    if ext not in ALLOWED_IMAGE_EXTS:
+        raise ValueError(f"Unsupported format '{ext}'. Use PNG, JPG, GIF, or WebP.")
+
+    # Save with unique name
+    safe_name = f"upload-{uuid.uuid4().hex[:10]}{ext}"
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    dest = UPLOADS_DIR / safe_name
+    dest.write_bytes(file_data)
+
+    cleanup_uploads_dir()
+
+    template_id = f"user.{dest.stem}"
+    return {
+        "ok": True,
+        "templateId": template_id,
+        "name": Path(filename).stem.replace("_", " ").title(),
+        "previewUrl": f"/uploads/{safe_name}",
+    }
+
+
+def get_uploaded_templates() -> list[dict[str, str]]:
+    """Return uploaded images as template catalog entries."""
+    if not UPLOADS_DIR.is_dir():
+        return []
+    templates = []
+    for img in sorted(UPLOADS_DIR.iterdir()):
+        if img.suffix.lower() not in ALLOWED_IMAGE_EXTS:
+            continue
+        templates.append({
+            "id": f"user.{img.stem}",
+            "name": img.stem.replace("upload-", "").replace("_", " ").title(),
+            "description": "User uploaded image",
+            "bestFor": "Custom templates and personal images.",
+            "previewUrl": f"/uploads/{img.name}",
+            "category": "uploads",
+        })
+    return templates
+
+
+def cleanup_uploads_dir() -> None:
+    """Keep only the newest MAX_UPLOADS files."""
+    if not UPLOADS_DIR.is_dir():
+        return
+    files = []
+    for p in UPLOADS_DIR.iterdir():
+        if not p.is_file():
+            continue
+        try:
+            files.append((p.stat().st_mtime, p))
+        except FileNotFoundError:
+            continue
+    if len(files) <= MAX_UPLOADS:
+        return
+    files.sort(key=lambda item: item[0], reverse=True)
+    for _, old in files[MAX_UPLOADS:]:
+        old.unlink(missing_ok=True)
 
 
 def cleanup_generated_dir() -> None:
@@ -907,7 +1029,7 @@ class GifStudioHandler(BaseHTTPRequestHandler):
             json_response(
                 self,
                 {
-                    "templates": TEMPLATE_CATALOG,
+                    "templates": TEMPLATE_CATALOG + get_uploaded_templates(),
                     "effects": [
                         {key: value for key, value in effect.items() if key != "expression"}
                         for effect in EFFECT_CATALOG
@@ -951,6 +1073,15 @@ class GifStudioHandler(BaseHTTPRequestHandler):
             serve_file(self, candidate, cache_control="no-store", send_body=send_body)
             return
 
+        if path.startswith("/uploads/"):
+            relative_path = path.removeprefix("/uploads/").lstrip("/")
+            candidate = safe_child_path(UPLOADS_DIR, relative_path)
+            if candidate is None:
+                self.send_error(HTTPStatus.NOT_FOUND, "File not found.")
+                return
+            serve_file(self, candidate, send_body=send_body)
+            return
+
         if path.startswith("/assets/"):
             relative_path = path.removeprefix("/assets/").lstrip("/")
             candidate = safe_child_path(ROOT_DIR / "assets", relative_path)
@@ -969,6 +1100,20 @@ class GifStudioHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+
+        if path == "/api/upload":
+            try:
+                client_ip = self.client_address[0]
+                if not _rate_limiter.allow(client_ip):
+                    json_response(self, {"error": "Too many requests."}, status=HTTPStatus.TOO_MANY_REQUESTS)
+                    return
+                result = handle_upload(self)
+                json_response(self, result)
+            except ValueError as exc:
+                json_response(self, {"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            except Exception as exc:
+                json_response(self, {"error": str(exc)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
 
         if path != "/api/generate":
             self.send_error(HTTPStatus.NOT_FOUND, "Route not found.")

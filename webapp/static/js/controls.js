@@ -90,6 +90,8 @@ function bindStaticControls() {
 
   $("canvasTemplateGrid").addEventListener("click", onTemplatePick);
   $("memeTemplateGrid").addEventListener("click", onTemplatePick);
+  $("uploadTemplateGrid").addEventListener("click", onTemplatePick);
+  $("imageUpload").addEventListener("change", onImageUpload);
   $("layoutGrid").addEventListener("click", onLayoutPick);
   $("presetGrid").addEventListener("click", onPresetPick);
   $("sceneStrip").addEventListener("click", onSceneStripAction);
@@ -117,6 +119,39 @@ function updateHexField(field, value, allowAlpha) {
   commitChange({ schedule: false });
   renderInspector();
   schedulePreview();
+}
+
+async function onImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    setStatus("Upload failed: file exceeds 5 MB limit.", "", "error");
+    renderStatus();
+    return;
+  }
+  const form = new FormData();
+  form.append("image", file);
+  setStatus("Uploading image…", "", "normal");
+  renderStatus();
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Upload failed.");
+    // Add to metadata so it appears in the grid
+    state.metadata.templates.push({
+      id: data.templateId, name: data.name, description: "User upload",
+      bestFor: "Custom templates.", previewUrl: data.previewUrl, category: "uploads",
+    });
+    const slot = selectedSlot();
+    if (slot) slot.templateId = data.templateId;
+    setStatus("Image uploaded.", "", "normal");
+    renderAll();
+    schedulePreview();
+  } catch (err) {
+    setStatus(`Upload failed: ${err.message}`, "", "error");
+    renderStatus();
+  }
+  e.target.value = "";
 }
 
 function onTemplatePick(e) {

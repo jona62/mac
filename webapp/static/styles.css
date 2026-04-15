@@ -216,6 +216,8 @@ body {
   margin: -4px 0 10px;
 }
 
+.upload-btn { cursor: pointer; }
+
 .sb-badge {
   font-family: var(--mono);
   font-size: 0.65rem;
