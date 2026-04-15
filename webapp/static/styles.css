@@ -24,8 +24,8 @@
   --mono: 'IBM Plex Mono', monospace;
   --topbar-h: 48px;
   --dock-h: 56px;
-  --sidebar-w-left: 272px;
-  --sidebar-w-right: 310px;
+  --sidebar-w-left: 290px;
+  --sidebar-w-right: 340px;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; }

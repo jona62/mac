@@ -53,6 +53,67 @@
               <h3 class="sb-section__title">Layouts</h3>
               <div class="layout-grid" id="layoutGrid"></div>
             </section>
+
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Canvas</h3>
+                <span class="sb-badge" id="canvasBadge">720&times;720</span>
+              </div>
+              <div class="control-group">
+                <label class="field">
+                  <span class="field__label">Width</span>
+                  <div class="range-pair">
+                    <input type="range" id="canvasWidthRange" min="240" max="1200" step="10" />
+                    <input type="number" id="canvasWidthInput" min="240" max="1200" step="10" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Height</span>
+                  <div class="range-pair">
+                    <input type="range" id="canvasHeightRange" min="240" max="1200" step="10" />
+                    <input type="number" id="canvasHeightInput" min="240" max="1200" step="10" />
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Scene</h3>
+                <span class="sb-badge" id="sceneMeta">Scene 1</span>
+              </div>
+              <div class="control-group">
+                <label class="field">
+                  <span class="field__label">Layout</span>
+                  <div class="readonly-chip" id="selectedLayoutLabel">Single</div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Duration</span>
+                  <div class="range-pair">
+                    <input type="range" id="sceneDurationRange" min="80" max="2500" step="10" />
+                    <input type="number" id="sceneDurationInput" min="80" max="2500" step="10" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Padding</span>
+                  <div class="range-pair">
+                    <input type="range" id="scenePaddingRange" min="0" max="60" step="1" />
+                    <input type="number" id="scenePaddingInput" min="0" max="60" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Border</span>
+                  <div class="range-pair">
+                    <input type="range" id="sceneBorderRange" min="0" max="24" step="1" />
+                    <input type="number" id="sceneBorderInput" min="0" max="24" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Scene Effect</span>
+                  <select id="sceneEffectSelect"></select>
+                </label>
+              </div>
+            </section>
           </div>
           <!-- Presets tab -->
           <div class="sidebar__pane" data-pane="presets" hidden>
@@ -92,69 +153,6 @@
           <span class="sidebar-tab is-active">Inspector</span>
         </div>
         <div class="sidebar__scroll">
-
-          <!-- Canvas -->
-          <section class="sb-section">
-            <div class="sb-section__head">
-              <h3 class="sb-section__title">Canvas</h3>
-              <span class="sb-badge" id="canvasBadge">720&times;720</span>
-            </div>
-            <div class="control-group">
-              <label class="field">
-                <span class="field__label">Width</span>
-                <div class="range-pair">
-                  <input type="range" id="canvasWidthRange" min="240" max="1200" step="10" />
-                  <input type="number" id="canvasWidthInput" min="240" max="1200" step="10" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Height</span>
-                <div class="range-pair">
-                  <input type="range" id="canvasHeightRange" min="240" max="1200" step="10" />
-                  <input type="number" id="canvasHeightInput" min="240" max="1200" step="10" />
-                </div>
-              </label>
-            </div>
-          </section>
-
-          <!-- Scene -->
-          <section class="sb-section">
-            <div class="sb-section__head">
-              <h3 class="sb-section__title">Scene</h3>
-              <span class="sb-badge" id="sceneMeta">Scene 1</span>
-            </div>
-            <div class="control-group">
-              <label class="field">
-                <span class="field__label">Layout</span>
-                <div class="readonly-chip" id="selectedLayoutLabel">Single</div>
-              </label>
-              <label class="field">
-                <span class="field__label">Duration</span>
-                <div class="range-pair">
-                  <input type="range" id="sceneDurationRange" min="80" max="2500" step="10" />
-                  <input type="number" id="sceneDurationInput" min="80" max="2500" step="10" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Padding</span>
-                <div class="range-pair">
-                  <input type="range" id="scenePaddingRange" min="0" max="60" step="1" />
-                  <input type="number" id="scenePaddingInput" min="0" max="60" step="1" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Border</span>
-                <div class="range-pair">
-                  <input type="range" id="sceneBorderRange" min="0" max="24" step="1" />
-                  <input type="number" id="sceneBorderInput" min="0" max="24" step="1" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Scene Effect</span>
-                <select id="sceneEffectSelect"></select>
-              </label>
-            </div>
-          </section>
 
           <!-- Slot Inspector -->
           <section class="sb-section">
