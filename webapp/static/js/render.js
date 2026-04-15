@@ -48,9 +48,12 @@ function renderTemplateGrid(containerId, category) {
   }
   container.innerHTML = templates.map((t) => {
     const active = slot && slot.templateId === t.id;
-    return `<button class="template-card${active ? " is-active" : ""}" type="button" data-template-id="${escAttr(t.id)}" title="${escAttr(t.description)}">
-      <div class="template-card__thumb" style="background-image:url('${cssUrl(t.previewUrl)}')"></div>
-      <span class="template-card__name">${esc(t.name)}</span></button>`;
+    const isUpload = t.category === "uploads";
+    return `<div class="template-card${active ? " is-active" : ""}${isUpload ? " template-card--upload" : ""}">
+      <button class="template-card__pick" type="button" data-template-id="${escAttr(t.id)}" title="${escAttr(t.description)}">
+        <div class="template-card__thumb" style="background-image:url('${cssUrl(t.previewUrl)}')"></div>
+        <span class="template-card__name">${esc(t.name)}</span>
+      </button>${isUpload ? `<button class="template-card__del" type="button" data-delete-upload="${escAttr(t.id)}" title="Remove">×</button>` : ""}</div>`;
   }).join("");
 }
 

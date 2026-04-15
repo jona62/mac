@@ -90,7 +90,11 @@ function bindStaticControls() {
 
   $("canvasTemplateGrid").addEventListener("click", onTemplatePick);
   $("memeTemplateGrid").addEventListener("click", onTemplatePick);
-  $("uploadTemplateGrid").addEventListener("click", onTemplatePick);
+  $("uploadTemplateGrid").addEventListener("click", (e) => {
+    const delBtn = e.target.closest("[data-delete-upload]");
+    if (delBtn) { onDeleteUpload(delBtn.dataset.deleteUpload); return; }
+    onTemplatePick(e);
+  });
   $("imageUpload").addEventListener("change", onImageUpload);
   $("layoutGrid").addEventListener("click", onLayoutPick);
   $("presetGrid").addEventListener("click", onPresetPick);
@@ -155,10 +159,28 @@ async function onImageUpload(e) {
 }
 
 function onTemplatePick(e) {
-  const btn = e.target.closest("[data-template-id]"); if (!btn) return;
+  const btn = e.target.closest("[data-template-id]");
+  if (!btn) return;
   const s = selectedSlot(); if (!s) return;
   s.templateId = btn.dataset.templateId;
   commitChange();
+}
+
+async function onDeleteUpload(templateId) {
+  try {
+    const res = await fetch("/api/upload", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ templateId }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Delete failed.");
+    state.metadata.templates = state.metadata.templates.filter((t) => t.id !== templateId);
+    renderAll();
+  } catch (err) {
+    setStatus(`Delete failed: ${err.message}`, "", "error");
+    renderStatus();
+  }
 }
 
 function onLayoutPick(e) {

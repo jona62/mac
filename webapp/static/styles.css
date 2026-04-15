@@ -257,6 +257,41 @@ body {
   background-color: var(--bg);
 }
 
+.template-card--upload { position: relative; }
+
+.template-card__pick {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+  color: inherit;
+  font: inherit;
+}
+
+.template-card__del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.template-card--upload:hover .template-card__del { display: flex; }
+.template-card__del:hover { background: var(--accent); }
+
 .template-card__name {
   padding: 4px 5px;
   font-size: 0.62rem;
