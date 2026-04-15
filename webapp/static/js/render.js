@@ -180,9 +180,18 @@ function renderInspector() {
 
 function renderStage() {
   const hasAsset = Boolean(state.stageAssetUrl);
-  $("stageImage").hidden = !hasAsset;
   $("stagePlaceholder").hidden = hasAsset;
-  if (hasAsset) $("stageImage").src = state.stageAssetUrl;
+  const oldImg = $("stageImage");
+  if (hasAsset) {
+    // Replace <img> element to force GIF animation restart
+    const newImg = document.createElement("img");
+    newImg.id = "stageImage";
+    newImg.alt = "Studio preview";
+    newImg.src = state.stageAssetUrl;
+    oldImg.replaceWith(newImg);
+  } else {
+    oldImg.hidden = true;
+  }
   $("stageLabel").textContent = state.stageLabel;
   const compact = window.innerWidth < 800;
   $("refreshPreviewBtn").disabled = state.isPreviewing;
