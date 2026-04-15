@@ -43,7 +43,7 @@ const FALLBACK_STYLE_PRESETS = [
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  metadata: { templates: [], effects: [], layouts: [], stylePresets: [], limits: { ...DEFAULT_LIMITS } },
+  metadata: { templates: [], effects: [], effectDefinitions: [], layouts: [], stylePresets: [], limits: { ...DEFAULT_LIMITS } },
   canvas: { width: 720, height: 720 },
   output: { format: "png" },
   scenes: [],

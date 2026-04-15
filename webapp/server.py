@@ -210,6 +210,27 @@ EFFECT_CATALOG = [
 ]
 EFFECT_LOOKUP = {effect["id"]: effect for effect in EFFECT_CATALOG}
 
+EFFECT_DEFINITIONS = [
+    {"id": "blur", "name": "Blur", "param": "radius", "min": 1, "max": 20, "default": 5, "step": 1},
+    {"id": "pixelate", "name": "Pixelate", "param": "blockSize", "min": 1, "max": 32, "default": 4, "step": 1},
+    {"id": "noise", "name": "Noise", "param": "amount", "min": 0.01, "max": 1.0, "default": 0.2, "step": 0.05},
+    {"id": "saturate", "name": "Saturate", "param": "factor", "min": 0.0, "max": 5.0, "default": 1.5, "step": 0.1},
+    {"id": "contrast", "name": "Contrast", "param": "factor", "min": 0.1, "max": 3.0, "default": 1.5, "step": 0.1},
+    {"id": "brightness", "name": "Brightness", "param": "factor", "min": 0.1, "max": 3.0, "default": 1.0, "step": 0.1},
+    {"id": "jpeg", "name": "JPEG Artifacts", "param": "quality", "min": 1, "max": 100, "default": 10, "step": 1},
+    {"id": "hueShift", "name": "Hue Shift", "param": "degrees", "min": 0, "max": 360, "default": 90, "step": 10},
+    {"id": "glow", "name": "Glow", "param": "radius", "min": 1, "max": 20, "default": 4, "step": 1},
+    {"id": "posterize", "name": "Posterize", "param": "levels", "min": 2, "max": 16, "default": 5, "step": 1},
+    {"id": "chromatic", "name": "Chromatic", "param": "offset", "min": 1, "max": 20, "default": 3, "step": 1},
+    {"id": "threshold", "name": "Threshold", "param": "level", "min": 0, "max": 255, "default": 128, "step": 1},
+    {"id": "sepia", "name": "Sepia", "param": None},
+    {"id": "invert", "name": "Invert", "param": None},
+    {"id": "sharpen", "name": "Sharpen", "param": None},
+    {"id": "vignette", "name": "Vignette", "param": None},
+    {"id": "grayscale", "name": "Grayscale", "param": None},
+]
+EFFECT_DEF_LOOKUP = {d["id"]: d for d in EFFECT_DEFINITIONS}
+
 STYLE_PRESET_CATALOG = [
     {
         "id": "cinematic",
@@ -457,6 +478,21 @@ def normalize_scene(raw_scene: object) -> dict[str, object]:
                 "easing": str(raw_trans.get("easing", "linear")).strip() if str(raw_trans.get("easing", "")).strip() in valid_easings else "linear",
             }
 
+    # Custom effect chain
+    custom_effects = []
+    raw_custom = layout_payload.get("customEffects")
+    if isinstance(raw_custom, list):
+        for item in raw_custom:
+            if not isinstance(item, dict) or "id" not in item:
+                continue
+            eid = str(item["id"]).strip()
+            if eid not in EFFECT_DEF_LOOKUP:
+                continue
+            entry = {"id": eid}
+            if item.get("param") is not None and EFFECT_DEF_LOOKUP[eid]["param"]:
+                entry["param"] = float(item["param"])
+            custom_effects.append(entry)
+
     return {
         "durationMs": duration,
         "layout": {
@@ -464,6 +500,7 @@ def normalize_scene(raw_scene: object) -> dict[str, object]:
             "padding": clamp_int(layout_payload.get("padding"), PADDING_LIMITS["min"], PADDING_LIMITS["max"], 0),
             "border": clamp_int(layout_payload.get("border"), BORDER_LIMITS["min"], BORDER_LIMITS["max"], 0),
             "effect": effect_id,
+            "customEffects": custom_effects,
         },
         "slots": slots,
         "transition": transition,
@@ -702,7 +739,28 @@ def build_script_bundle(document: dict[str, object], output_path: Path, preview_
             pipes.append(f"pad({padding})")
         if border > 0:
             pipes.append(f"border({border})")
-        if effect_id != "none":
+        custom_effects = scene["layout"].get("customEffects", [])
+        if custom_effects:
+            # Build custom effect chain expression
+            parts = []
+            for ce in custom_effects:
+                defn = EFFECT_DEF_LOOKUP.get(ce["id"])
+                if not defn:
+                    continue
+                if defn["param"] and "param" in ce:
+                    val = ce["param"]
+                    parts.append(f"{ce['id']}({val:g})")
+                else:
+                    parts.append(ce["id"])
+            if parts:
+                chain_key = " >> ".join(parts)
+                effect_ref = effect_cache.get(chain_key, "")
+                if not effect_ref:
+                    effect_ref = f"fx_custom_{scene_index + 1}"
+                    effect_defs.append(f"effect {effect_ref} = {chain_key};")
+                    effect_cache[chain_key] = effect_ref
+                pipes.append(effect_ref)
+        elif effect_id != "none":
             effect_ref = effect_cache.get(effect_id, "")
             if not effect_ref:
                 effect_ref = f"fx_{effect_id}"
@@ -1100,6 +1158,7 @@ class GifStudioHandler(BaseHTTPRequestHandler):
                         {key: value for key, value in effect.items() if key != "expression"}
                         for effect in EFFECT_CATALOG
                     ],
+                    "effectDefinitions": EFFECT_DEFINITIONS,
                     "layouts": LAYOUT_CATALOG,
                     "stylePresets": STYLE_PRESET_CATALOG,
                     "limits": {

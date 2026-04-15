@@ -93,6 +93,34 @@ function bindStaticControls() {
     commitChange();
   });
 
+  $("addEffectBtn").addEventListener("click", () => {
+    const scene = selectedScene(); if (!scene) return;
+    const id = $("addEffectSelect").value; if (!id) return;
+    const defn = state.metadata.effectDefinitions.find((d) => d.id === id);
+    const entry = { id };
+    if (defn && defn.param) entry.param = defn.default;
+    if (!scene.layout.customEffects) scene.layout.customEffects = [];
+    scene.layout.customEffects.push(entry);
+    commitChange();
+  });
+  $("effectChainBuilder").addEventListener("click", (e) => {
+    const del = e.target.closest("[data-fx-del]");
+    if (!del) return;
+    const scene = selectedScene(); if (!scene) return;
+    scene.layout.customEffects.splice(Number(del.dataset.fxDel), 1);
+    commitChange();
+  });
+  $("effectChainBuilder").addEventListener("input", (e) => {
+    const input = e.target.closest("[data-fx-index]");
+    if (!input) return;
+    const scene = selectedScene(); if (!scene) return;
+    const i = Number(input.dataset.fxIndex);
+    if (scene.layout.customEffects[i]) {
+      scene.layout.customEffects[i].param = Number(input.value);
+      commitChange();
+    }
+  });
+
   $("refreshPreviewBtn").addEventListener("click", () => schedulePreview(20, true));
   $("exportBtn").addEventListener("click", exportDocument);
 

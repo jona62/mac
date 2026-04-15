@@ -7,6 +7,7 @@ async function loadMetadata() {
     if (!res.ok) throw new Error(data.error || "Could not load studio metadata.");
     state.metadata.templates = data.templates || [];
     state.metadata.effects = data.effects || [];
+    state.metadata.effectDefinitions = data.effectDefinitions || [];
     state.metadata.layouts = Array.isArray(data.layouts) && data.layouts.length
       ? data.layouts : clone(FALLBACK_LAYOUTS);
     state.metadata.stylePresets = Array.isArray(data.stylePresets) && data.stylePresets.length

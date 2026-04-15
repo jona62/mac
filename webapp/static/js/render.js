@@ -1,5 +1,29 @@
 // Mac Studio — All render* functions (DOM updates)
 
+function renderEffectChain() {
+  const scene = selectedScene();
+  if (!scene) return;
+  const chain = scene.layout.customEffects || [];
+  const builder = $("effectChainBuilder");
+  builder.innerHTML = chain.map((item, i) => {
+    const defn = state.metadata.effectDefinitions.find((d) => d.id === item.id);
+    const hasParam = defn && defn.param;
+    return `<div class="fx-item">
+      <span class="fx-item__name">${esc(defn ? defn.name : item.id)}</span>
+      ${hasParam ? `<input class="fx-item__param" type="number" min="${defn.min}" max="${defn.max}" step="${defn.step}" value="${item.param != null ? item.param : defn.default}" data-fx-index="${i}" />` : ""}
+      <button class="fx-item__del" data-fx-del="${i}" type="button">&times;</button>
+    </div>`;
+  }).join("");
+
+  // Populate the add dropdown
+  const sel = $("addEffectSelect");
+  if (sel && !sel.options.length) {
+    sel.innerHTML = state.metadata.effectDefinitions.map((d) =>
+      `<option value="${escAttr(d.id)}">${esc(d.name)}${d.param ? ` (${d.param})` : ""}</option>`
+    ).join("");
+  }
+}
+
 function renderAll() {
   ensureOutputCompatibility(false);
   renderStats();
@@ -9,6 +33,7 @@ function renderAll() {
   renderSceneStrip();
   renderSlotTabs();
   renderInspector();
+  renderEffectChain();
   renderStage();
   renderScript();
   renderStatus();

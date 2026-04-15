@@ -518,6 +518,36 @@ body {
 
 .transition-pip:hover { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
 .transition-pip__label { pointer-events: none; }
+/* ── Advanced Effects Panel ────────────────────────── */
+
+.advanced-fx { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+.advanced-fx__toggle {
+  font-size: 0.7rem; font-weight: 600; color: var(--ink-muted);
+  cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 4px 0;
+}
+.advanced-fx__toggle::-webkit-details-marker { display: none; }
+.advanced-fx__toggle::before { content: '\25B6'; font-size: 0.5rem; transition: transform 0.2s; }
+.advanced-fx[open] .advanced-fx__toggle::before { transform: rotate(90deg); }
+
+.advanced-fx__chain { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+
+.fx-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--surface); font-size: 0.72rem;
+}
+.fx-item__name { font-weight: 600; min-width: 60px; }
+.fx-item__param { width: 60px; }
+.fx-item__del {
+  margin-left: auto; border: none; background: none; color: var(--ink-faint);
+  cursor: pointer; font-size: 0.8rem; padding: 0 4px;
+}
+.fx-item__del:hover { color: var(--accent); }
+
+.advanced-fx__add { display: flex; gap: 6px; align-items: center; }
+.advanced-fx__add select { flex: 1; font-size: 0.72rem; }
+
 .transition-pip--cut { opacity: 0.35; border-style: dotted; }
 .transition-pip__loop-icon { font-size: 0.7rem; pointer-events: none; }
 .transition-pip--loop { border-style: dotted; }

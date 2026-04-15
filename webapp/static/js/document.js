@@ -70,7 +70,7 @@ function createScene(kind = "single", seedSlots = []) {
   while (slots.length < slotCount) slots.push(createSlot());
   return {
     durationMs: 420,
-    layout: { kind, padding: 0, border: 0, effect: "none" },
+    layout: { kind, padding: 0, border: 0, effect: "none", customEffects: [] },
     slots,
     transition: { type: "crossfade", durationMs: 150, easing: "ease" },
   };
@@ -210,7 +210,7 @@ function buildPayload(extra = {}) {
     output: clone(state.output),
     scenes: state.scenes.map((scene, i) => ({
       durationMs: scene.durationMs,
-      layout: clone(scene.layout),
+      layout: { ...clone(scene.layout), customEffects: scene.layout.customEffects || [] },
       transition: (i > 0 && scene.transition && scene.transition.type !== "cut")
         ? clone(scene.transition) : null,
       slots: scene.slots.map((slot) => ({
