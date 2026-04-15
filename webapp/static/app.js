@@ -168,13 +168,12 @@ function buildDefaultDocument() {
     scenes: [
       {
         durationMs: 760,
-        layout: { kind: "single", padding: 0, border: 0, effect: "none" },
+        layout: { kind: "grid2x2", padding: 5, border: 2, effect: "none" },
         slots: [
-          createSlot("blank", {
-            top: "MAC STUDIO",
-            center: "ALL-INCLUSIVE",
-            bottom: "Layouts • Styles • Scenes",
-          }, "cinematic"),
+          createSlot("meme.shrek_smirk", { bottom: "Ask AI to fix the bug" }, "chill"),
+          createSlot("meme.king_bach_stare", { bottom: "AI refactors entire codebase" }, "cinematic"),
+          createSlot("meme.kid_crying", { bottom: "Now nothing compiles" }, "panic"),
+          createSlot("meme.jordan_crying", { bottom: "git reset --hard" }, "panic"),
         ],
       },
     ],
