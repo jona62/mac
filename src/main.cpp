@@ -1,6 +1,7 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <unistd.h>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -149,13 +150,57 @@ void run_file(const char *path) {
 }
 
 void run_prompt() {
+    bool interactive = isatty(fileno(stdin));
+
+    // Non-interactive (piped) mode: read all input and run as a batch
+    if (!interactive) {
+        ostringstream ss;
+        string line;
+        while (getline(cin, line)) {
+            line.erase(line.find_last_not_of(" \n\r\t") + 1);
+            if (line == "exit") break;
+            ss << line << '\n';
+        }
+        run(ss.str());
+        return;
+    }
+
+    // Interactive mode: line-by-line with multi-line support
+    string buffer;
+    int braceDepth = 0;
+    int bracketDepth = 0;
+    int parenDepth = 0;
     do {
-        cout << "|> ";
+        bool continuation = braceDepth > 0 || bracketDepth > 0 || parenDepth > 0;
+        cout << (continuation ? ".. " : "|> ");
         string line;
         if (!getline(cin, line)) break;
         line.erase(line.find_last_not_of(" \n\r\t") + 1);
-        if (line == "exit") break;
-        run(line);
+        if (line == "exit" && !continuation) break;
+
+        if (!buffer.empty()) buffer += "\n";
+        buffer += line;
+
+        // Track nesting depth for multi-line input
+        bool inString = false;
+        for (char c : line) {
+            if (c == '"') inString = !inString;
+            if (inString) continue;
+            if (c == '{') braceDepth++;
+            else if (c == '}') braceDepth--;
+            else if (c == '[') bracketDepth++;
+            else if (c == ']') bracketDepth--;
+            else if (c == '(') parenDepth++;
+            else if (c == ')') parenDepth--;
+        }
+
+        if (braceDepth <= 0 && bracketDepth <= 0 && parenDepth <= 0) {
+            braceDepth = 0;
+            bracketDepth = 0;
+            parenDepth = 0;
+            run(buffer);
+            buffer.clear();
+        }
     } while (true);
 }
 
