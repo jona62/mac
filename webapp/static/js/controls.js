@@ -314,7 +314,7 @@ function bindScriptEditor() {
       state.stageLabel = "Applied from script";
       setStatus("Script applied.", `${Math.max(1, Math.round((data.summary?.fileSizeBytes || 0) / 1024))} KB`, "normal");
     } catch (err) { setStatus(`Apply failed: ${err.message}`, "", "error"); }
-    finally { $("scriptApplyBtn").disabled = false; $("scriptApplyBtn").textContent = "Apply Script"; renderStage(); }
+    finally { $("scriptApplyBtn").disabled = false; $("scriptApplyBtn").textContent = "Apply Script"; renderStage(); renderStatus(); }
   });
   $("scriptFullscreenBtn").addEventListener("click", () => {
     const d = document.querySelector(".dock__script");
