@@ -1127,7 +1127,7 @@ function renderStage() {
   const compact = window.innerWidth < 800;
   $("refreshPreviewBtn").textContent = state.isPreviewing ? "Refreshing…" : (compact ? "Refresh" : "Refresh Preview");
   $("exportBtn").disabled = state.isExporting;
-  $("exportBtn").textContent = state.isExporting ? "Exporting…" : "Export & Download";
+  $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
 
   if (state.lastExport && state.lastExport.downloadUrl) {
     const ext = state.output.format || "png";
