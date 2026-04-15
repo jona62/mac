@@ -224,6 +224,9 @@ body {
   font-size: 0.75rem;
 }
 
+.template-card--imported { opacity: 0.6; }
+.template-card--imported .template-card__name { color: var(--teal); }
+
 .sb-badge {
   font-family: var(--mono);
   font-size: 0.65rem;
