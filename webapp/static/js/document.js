@@ -1,5 +1,25 @@
 // Mac Studio — Document, scene, slot, and style builders + presets
 
+const TRANSITION_TYPES = [
+  { id: "cut", label: "Cut (none)" },
+  { id: "crossfade", label: "Crossfade" },
+  { id: "slideLeft", label: "Slide Left" },
+  { id: "slideRight", label: "Slide Right" },
+  { id: "slideUp", label: "Slide Up" },
+  { id: "slideDown", label: "Slide Down" },
+  { id: "wipe", label: "Wipe" },
+  { id: "fadeBlack", label: "Fade to Black" },
+  { id: "zoom", label: "Zoom" },
+];
+
+const EASING_TYPES = [
+  { id: "linear", label: "Linear" },
+  { id: "ease", label: "Ease" },
+  { id: "easeIn", label: "Ease In" },
+  { id: "easeOut", label: "Ease Out" },
+  { id: "easeInOut", label: "Ease In-Out" },
+];
+
 function defaultStyleFields() {
   return {
     preset: "", color: "#FFFFFF", outline: 3, outlineColor: "#000000",
@@ -48,7 +68,12 @@ function createScene(kind = "single", seedSlots = []) {
   const slotCount = slotCountForLayout(kind);
   const slots = seedSlots.slice(0, slotCount).map((s) => clone(s));
   while (slots.length < slotCount) slots.push(createSlot());
-  return { durationMs: 420, layout: { kind, padding: 0, border: 0, effect: "none" }, slots };
+  return {
+    durationMs: 420,
+    layout: { kind, padding: 0, border: 0, effect: "none" },
+    slots,
+    transition: { type: "crossfade", durationMs: 150, easing: "ease" },
+  };
 }
 
 function preserveSlots(existingSlots, layoutKind) {
@@ -114,9 +139,11 @@ function buildPayload(extra = {}) {
   return {
     canvas: clone(state.canvas),
     output: clone(state.output),
-    scenes: state.scenes.map((scene) => ({
+    scenes: state.scenes.map((scene, i) => ({
       durationMs: scene.durationMs,
       layout: clone(scene.layout),
+      transition: (i > 0 && scene.transition && scene.transition.type !== "cut")
+        ? clone(scene.transition) : null,
       slots: scene.slots.map((slot) => ({
         templateId: slot.templateId,
         text: clone(slot.text),

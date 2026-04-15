@@ -98,7 +98,11 @@ function bindStaticControls() {
   $("imageUpload").addEventListener("change", onImageUpload);
   $("layoutGrid").addEventListener("click", onLayoutPick);
   $("presetGrid").addEventListener("click", onPresetPick);
-  $("sceneStrip").addEventListener("click", onSceneStripAction);
+  $("sceneStrip").addEventListener("click", (e) => {
+    const transPip = e.target.closest("[data-transition-index]");
+    if (transPip) { onTransitionPipClick(transPip, Number(transPip.dataset.transitionIndex)); return; }
+    onSceneStripAction(e);
+  });
   $("slotTabs").addEventListener("click", onSlotTabAction);
 
   bindSidebarTabs();
@@ -196,6 +200,57 @@ function onPresetPick(e) {
   const btn = e.target.closest("[data-preset-id]"); if (!btn) return;
   const preset = presetDocuments().find((p) => p.id === btn.dataset.presetId);
   if (preset) applyDocument(preset.build());
+}
+
+function onTransitionPipClick(pip, sceneIndex) {
+  // Remove any existing popover
+  document.querySelectorAll(".transition-popover").forEach((el) => el.remove());
+
+  const scene = state.scenes[sceneIndex];
+  if (!scene) return;
+  const trans = scene.transition || { type: "cut", durationMs: 150, easing: "linear" };
+
+  const pop = document.createElement("div");
+  pop.className = "transition-popover";
+  pop.innerHTML = `
+    <label class="field"><span class="field__label">Type</span>
+      <select class="tp-type">${TRANSITION_TYPES.map((t) =>
+        `<option value="${t.id}"${t.id === trans.type ? " selected" : ""}>${t.label}</option>`).join("")}
+      </select></label>
+    <label class="field"><span class="field__label">Duration</span>
+      <input class="tp-dur" type="number" min="50" max="1000" step="10" value="${trans.durationMs}" /></label>
+    <label class="field"><span class="field__label">Easing</span>
+      <select class="tp-ease">${EASING_TYPES.map((e) =>
+        `<option value="${e.id}"${e.id === trans.easing ? " selected" : ""}>${e.label}</option>`).join("")}
+      </select></label>`;
+  pip.style.position = "relative";
+  pop.style.position = "absolute";
+  pop.style.bottom = "100%";
+  pop.style.left = "50%";
+  pop.style.transform = "translateX(-50%)";
+  pip.appendChild(pop);
+
+  const update = () => {
+    scene.transition = {
+      type: pop.querySelector(".tp-type").value,
+      durationMs: clamp(pop.querySelector(".tp-dur").value, 50, 1000),
+      easing: pop.querySelector(".tp-ease").value,
+    };
+    pip.querySelector(".transition-pip__label").textContent =
+      scene.transition.type === "cut" ? "cut" : scene.transition.type;
+    commitChange();
+  };
+  pop.addEventListener("change", update);
+  pop.addEventListener("input", update);
+
+  // Close on outside click
+  const close = (e) => {
+    if (!pop.contains(e.target) && e.target !== pip) {
+      pop.remove();
+      document.removeEventListener("pointerdown", close);
+    }
+  };
+  setTimeout(() => document.addEventListener("pointerdown", close), 0);
 }
 
 function onSceneStripAction(e) {

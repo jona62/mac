@@ -76,18 +76,28 @@ function renderPresetGrid() {
 }
 
 function renderSceneStrip() {
-  $("sceneStrip").innerHTML = state.scenes.map((scene, i) => {
+  const parts = [];
+  state.scenes.forEach((scene, i) => {
+    // Transition connector between scenes
+    if (i > 0) {
+      const trans = scene.transition || { type: "cut", durationMs: 150, easing: "linear" };
+      const label = trans.type === "cut" ? "cut" : trans.type;
+      parts.push(`<button class="transition-pip" type="button" data-transition-index="${i}" title="${label} ${trans.durationMs}ms ${trans.easing}">
+        <span class="transition-pip__label">${esc(label)}</span>
+      </button>`);
+    }
+    // Scene pill
     const active = i === state.selectedSceneIndex;
-    const lead = sceneLeadText(scene);
-    return `<button class="scene-card${active ? " is-active" : ""}" type="button" data-scene-action="select" data-scene-index="${i}">
+    parts.push(`<button class="scene-card${active ? " is-active" : ""}" type="button" data-scene-action="select" data-scene-index="${i}">
       <span class="scene-card__label">Scene ${i + 1}</span>
       <span class="scene-card__meta">${formatDuration(scene.durationMs)}</span>
       <span class="scene-card__actions" onclick="event.stopPropagation()">
         <span class="icon-btn" data-scene-action="dup" data-scene-index="${i}">+</span>
         <span class="icon-btn" data-scene-action="del" data-scene-index="${i}" ${state.scenes.length === 1 ? "style='display:none'" : ""}>×</span>
       </span>
-    </button>`;
-  }).join("");
+    </button>`);
+  });
+  $("sceneStrip").innerHTML = parts.join("");
 }
 
 function sceneLeadText(scene) {

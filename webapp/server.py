@@ -442,6 +442,19 @@ def normalize_scene(raw_scene: object) -> dict[str, object]:
         400,
     )
 
+    transition = None
+    raw_trans = raw_scene.get("transition")
+    if isinstance(raw_trans, dict) and raw_trans.get("type"):
+        valid_types = {"crossfade", "slideLeft", "slideRight", "slideUp", "slideDown", "wipe", "fadeBlack", "zoom"}
+        valid_easings = {"linear", "ease", "easeIn", "easeOut", "easeInOut"}
+        t_type = str(raw_trans["type"]).strip()
+        if t_type in valid_types:
+            transition = {
+                "type": t_type,
+                "durationMs": clamp_int(raw_trans.get("durationMs"), 50, 1000, 150),
+                "easing": str(raw_trans.get("easing", "linear")).strip() if str(raw_trans.get("easing", "")).strip() in valid_easings else "linear",
+            }
+
     return {
         "durationMs": duration,
         "layout": {
@@ -451,6 +464,7 @@ def normalize_scene(raw_scene: object) -> dict[str, object]:
             "effect": effect_id,
         },
         "slots": slots,
+        "transition": transition,
     }
 
 
@@ -612,6 +626,28 @@ def layout_expression(layout_kind: str, slot_var_names: list[str]) -> str:
     raise ValueError(f"Unsupported layout kind: {layout_kind}")
 
 
+def _animation_block(scenes: list[dict], save_target: str) -> list[str]:
+    """Generate gif loop { } or timeline loop { } lines depending on transitions."""
+    has_transitions = any(
+        scene.get("transition") and scene["transition"].get("type") not in (None, "cut")
+        for scene in scenes
+    )
+    lines: list[str] = []
+    block_type = "timeline" if has_transitions else "gif"
+    lines.append(f"{block_type} loop {{")
+    for i, scene in enumerate(scenes):
+        trans = scene.get("transition") if i > 0 else None
+        if trans and trans.get("type") and trans["type"] != "cut" and has_transitions:
+            t_type = trans["type"]
+            t_dur = int(trans.get("durationMs", 150))
+            t_ease = trans.get("easing", "linear")
+            ease_part = f" {t_ease}" if t_ease != "linear" else ""
+            lines.append(f"    --- {t_type} {t_dur}ms{ease_part} ---")
+        lines.append(f"    scene_{i + 1} : {scene['durationMs']}ms")
+    lines.append(f"}} => {save_target};")
+    return lines
+
+
 def build_script_bundle(document: dict[str, object], output_path: Path, preview_scene_index: int | None = None) -> dict[str, str]:
     used_presets: list[str] = []
     custom_style_defs: list[str] = []
@@ -680,10 +716,7 @@ def build_script_bundle(document: dict[str, object], output_path: Path, preview_
     if document["output"]["format"] == "png":
         export_lines.append(f'scene_1 => "{display_output_name}";')
     else:
-        export_lines.append("gif loop {")
-        for scene_index, scene in enumerate(document["scenes"]):
-            export_lines.append(f"    scene_{scene_index + 1} : {scene['durationMs']}ms")
-        export_lines.append(f'}} => "{display_output_name}";')
+        export_lines.extend(_animation_block(document["scenes"], f'"{display_output_name}"'))
 
     document_script = "\n\n".join([*sections, "\n".join(export_lines)]).strip() + "\n"
 
@@ -694,10 +727,7 @@ def build_script_bundle(document: dict[str, object], output_path: Path, preview_
     elif document["output"]["format"] == "png":
         run_export_lines.append(f'scene_1 => "{run_output_path}";')
     else:
-        run_export_lines.append("gif loop {")
-        for scene_index, scene in enumerate(document["scenes"]):
-            run_export_lines.append(f"    scene_{scene_index + 1} : {scene['durationMs']}ms")
-        run_export_lines.append(f'}} => "{run_output_path}";')
+        run_export_lines.extend(_animation_block(document["scenes"], f'"{run_output_path}"'))
 
     run_script = "\n\n".join([*sections, "\n".join(run_export_lines)]).strip() + "\n"
 
