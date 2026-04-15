@@ -1037,8 +1037,10 @@ function renderStage() {
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : "Export Document";
 
   if (state.lastExport && state.lastExport.downloadUrl) {
+    const ext = state.output.format || "png";
     $("downloadLink").hidden = false;
     $("downloadLink").href = state.lastExport.downloadUrl;
+    $("downloadLink").download = `mac-studio-export.${ext}`;
   } else {
     $("downloadLink").hidden = true;
   }
