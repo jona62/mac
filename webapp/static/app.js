@@ -579,12 +579,60 @@ function bindStaticControls() {
     });
   }
 
-  // Script editor: sync highlighting on input and scroll
+  // Script editor: sync highlighting on input
   $("scriptPreview").addEventListener("input", () => {
     state.script = $("scriptPreview").value;
     $("scriptHighlight").innerHTML = highlightMac(state.script);
   });
-  $("scriptPreview").addEventListener("scroll", syncScriptScroll);
+
+  // Apply edited script — re-render using the script content
+  $("scriptApplyBtn").addEventListener("click", async () => {
+    const script = $("scriptPreview").value;
+    if (!script.trim()) return;
+    $("scriptApplyBtn").disabled = true;
+    $("scriptApplyBtn").textContent = "Applying…";
+    try {
+      const res = await fetch("/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...buildPayload(),
+          rawScript: script,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Apply failed.");
+      state.lastExport = data;
+      state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
+      setStatus("Script applied.", "", "normal");
+      renderStage();
+    } catch (err) {
+      setStatus(err.message, "Script apply failed.", "error");
+      renderStatus();
+    } finally {
+      $("scriptApplyBtn").disabled = false;
+      $("scriptApplyBtn").textContent = "Apply Script";
+    }
+  });
+
+  // Fullscreen toggle
+  $("scriptFullscreenBtn").addEventListener("click", () => {
+    const drawer = document.querySelector(".dock__script");
+    drawer.classList.toggle("is-fullscreen");
+    const isFS = drawer.classList.contains("is-fullscreen");
+    $("scriptFullscreenBtn").textContent = isFS ? "Exit Fullscreen" : "Expand";
+  });
+
+  // Esc exits fullscreen
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const drawer = document.querySelector(".dock__script");
+      if (drawer.classList.contains("is-fullscreen")) {
+        drawer.classList.remove("is-fullscreen");
+        $("scriptFullscreenBtn").textContent = "Expand";
+      }
+    }
+  });
 }
 
 function bindRangePair(rangeId, inputId, onChange) {
@@ -1128,10 +1176,6 @@ function renderScript() {
   $("scriptHighlight").innerHTML = highlightMac(code);
 }
 
-function syncScriptScroll() {
-  $("scriptHighlight").scrollTop = $("scriptPreview").scrollTop;
-  $("scriptHighlight").scrollLeft = $("scriptPreview").scrollLeft;
-}
 
 function formatDuration(ms) {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;

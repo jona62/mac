@@ -258,8 +258,14 @@
         <button class="btn btn--accent btn--sm" id="addSceneBtn" type="button">+ Scene</button>
       </div>
       <details class="dock__script" open>
-        <summary class="dock__script-toggle">Mac Script <span class="badge">v2</span></summary>
-        <div class="code-editor">
+        <summary class="dock__script-toggle">
+          Mac Script <span class="badge">v2</span>
+        </summary>
+        <div class="code-editor__toolbar">
+          <button class="btn btn--ghost btn--sm" id="scriptFullscreenBtn" type="button">Expand</button>
+          <button class="btn btn--accent btn--sm" id="scriptApplyBtn" type="button">Apply Script</button>
+        </div>
+        <div class="code-editor" id="codeEditor">
           <pre class="code-editor__highlight" id="scriptHighlight" aria-hidden="true"></pre>
           <textarea class="code-editor__input" id="scriptPreview" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea>
         </div>
