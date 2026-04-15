@@ -2,7 +2,9 @@
 #define NATIVE_FUNCTIONS_H
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
+#include <unistd.h>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -516,13 +518,20 @@ namespace callable {
     }
 
     // Helper: save pixels to a temp file and return the path
-    static int tempCounter = 0;
+    static std::atomic<int> tempCounter{0};
     static std::string saveTempImage(const std::vector<unsigned char>& pixels, int w, int h) {
-        std::string tmpDir = "/tmp/mac_effects";
+        std::string tmpDir = "/tmp/mac_effects_" + std::to_string(getpid());
         std::filesystem::create_directories(tmpDir);
-        std::string path = tmpDir + "/effect_" + std::to_string(tempCounter++) + ".png";
+        int id = tempCounter.fetch_add(1);
+        std::string path = tmpDir + "/fx_" + std::to_string(id) + ".png";
         meme::MemeRenderer::saveImage(pixels, w, h, path);
         return path;
+    }
+
+    // Clean up temp effect files for this process
+    static void cleanupTempFiles() {
+        std::string tmpDir = "/tmp/mac_effects_" + std::to_string(getpid());
+        std::filesystem::remove_all(tmpDir);
     }
 
     // Helper: create a new Meme-like MacInstance with _rendered set

@@ -2,12 +2,14 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import mimetypes
 import re
 import socketserver
 import subprocess
 import tempfile
+import threading
 import time
 import uuid
 from http import HTTPStatus
@@ -25,6 +27,32 @@ MAX_REQUEST_BYTES = 256 * 1024
 MAX_SCENE_COUNT = 24
 MAX_FILE_AGE_SECONDS = 60 * 60 * 24
 MAX_GENERATED_FILES = 200
+RATE_LIMIT_WINDOW = 60          # seconds
+RATE_LIMIT_MAX_REQUESTS = 30    # max renders per IP per window
+
+
+class RateLimiter:
+    """Thread-safe sliding-window rate limiter keyed by IP."""
+
+    def __init__(self, window: int = RATE_LIMIT_WINDOW, max_reqs: int = RATE_LIMIT_MAX_REQUESTS):
+        self._window = window
+        self._max = max_reqs
+        self._lock = threading.Lock()
+        self._hits: dict[str, collections.deque] = {}
+
+    def allow(self, ip: str) -> bool:
+        now = time.monotonic()
+        with self._lock:
+            q = self._hits.setdefault(ip, collections.deque())
+            while q and q[0] < now - self._window:
+                q.popleft()
+            if len(q) >= self._max:
+                return False
+            q.append(now)
+            return True
+
+
+_rate_limiter = RateLimiter()
 
 WIDTH_LIMITS = {"min": 240, "max": 1200}
 HEIGHT_LIMITS = {"min": 240, "max": 1200}
@@ -878,6 +906,15 @@ class GifStudioHandler(BaseHTTPRequestHandler):
 
         if path != "/api/generate":
             self.send_error(HTTPStatus.NOT_FOUND, "Route not found.")
+            return
+
+        client_ip = self.client_address[0]
+        if not _rate_limiter.allow(client_ip):
+            json_response(
+                self,
+                {"error": "Too many requests. Try again in a minute."},
+                status=HTTPStatus.TOO_MANY_REQUESTS,
+            )
             return
 
         if not MAC_BINARY.exists():

@@ -13,6 +13,7 @@
 #include "Parser.h"
 #include "Resolver.h"
 #include "MacAnalyzer.h"
+#include "NativeFunctions.h"
 #include "MacMeme.h"
 
 #ifdef __APPLE__
@@ -111,6 +112,7 @@ namespace runner {
             return;
         }
         rt.run(source);
+        callable::cleanupTempFiles();
     }
 
     // Interactive REPL or piped stdin
