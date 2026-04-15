@@ -582,16 +582,36 @@ namespace interpreter {
             auto posCenter = env->get(token::Token(token::TokenType::IDENTIFIER,
                 token::TokenValue(std::string("Center")), 0));
 
-            for (auto& entry : expr->entries) {
-                auto key = std::get<std::string>(entry.key.lexeme);
-                auto textVal = evaluate(entry.value);
+            // Collect positioned text entries (text: "..." x: N y: N)
+            std::vector<meme::PositionedText> positionedTexts;
+            for (size_t ei = 0; ei < expr->entries.size(); ei++) {
+                auto key = std::get<std::string>(expr->entries[ei].key.lexeme);
 
+                if (key == "text") {
+                    // Positioned text: look ahead for x and y
+                    auto textVal = evaluate(expr->entries[ei].value);
+                    auto content = std::get<std::string>(textVal);
+                    int px = 0, py = 0;
+                    if (ei + 1 < expr->entries.size()) {
+                        auto nk = std::get<std::string>(expr->entries[ei + 1].key.lexeme);
+                        if (nk == "x") { px = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value))); ei++; }
+                    }
+                    if (ei + 1 < expr->entries.size()) {
+                        auto nk = std::get<std::string>(expr->entries[ei + 1].key.lexeme);
+                        if (nk == "y") { py = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value))); ei++; }
+                    }
+                    positionedTexts.push_back({content, px, py});
+                    continue;
+                }
+
+                if (key == "x" || key == "y") continue; // consumed by text above
+
+                auto textVal = evaluate(expr->entries[ei].value);
                 MacValue position;
                 if (key == "top") position = posTop;
                 else if (key == "bottom") position = posBottom;
                 else position = posCenter;
 
-                // Call meme.text(position, str) — get the 'text' method
                 auto inst = std::get<shared_ptr<instance::MacInstance>>(meme);
                 token::Token textTok(token::TokenType::IDENTIFIER,
                     token::TokenValue(std::string("text")), 0);
@@ -630,6 +650,22 @@ namespace interpreter {
                 auto method = inst->get(resizeTok);
                 auto fn = std::get<shared_ptr<callable::MacCallable>>(method);
                 meme = fn->call(shared_from_this(), {size});
+            }
+
+            // Store positioned texts AFTER style/resize (which create new instances)
+            if (!positionedTexts.empty()) {
+                auto inst = std::get<shared_ptr<instance::MacInstance>>(meme);
+                auto arr = std::make_shared<collection::MacArray>();
+                for (auto& pt : positionedTexts) {
+                    auto map = std::make_shared<collection::MacMap>();
+                    map->set("content", MacValue(pt.content));
+                    map->set("x", MacValue(static_cast<double>(pt.x)));
+                    map->set("y", MacValue(static_cast<double>(pt.y)));
+                    arr->elements.push_back(MacValue(map));
+                }
+                token::Token ptTok(token::TokenType::IDENTIFIER,
+                    token::TokenValue(std::string("positionedTexts")), 0);
+                inst->set(ptTok, MacValue(arr));
             }
 
             return meme;

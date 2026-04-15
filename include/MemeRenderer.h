@@ -102,6 +102,16 @@ namespace meme {
             return surface->pixels;
         }
 
+        // Render with positioned text entries at absolute x,y coordinates
+        static std::vector<unsigned char> renderWithPositions(
+                const std::string& imagePath, const std::string& topText,
+                const std::string& bottomText, const std::string& centerText,
+                int targetWidth, int targetHeight, int& outWidth, int& outHeight,
+                const TextStyle& style, const std::vector<PositionedText>& posTexts) {
+            return renderInternal(imagePath, topText, bottomText, centerText,
+                                   targetWidth, targetHeight, outWidth, outHeight, style, posTexts);
+        }
+
         // Save rendered RGBA pixels to a PNG or JPG file (detected by extension).
         static bool saveImage(const std::vector<unsigned char>& pixels,
                               int width, int height,
@@ -246,7 +256,8 @@ namespace meme {
                 int targetHeight,
                 int& outWidth,
                 int& outHeight,
-                const TextStyle& activeStyle = TextStyle{}) {
+                const TextStyle& activeStyle = TextStyle{},
+                const std::vector<PositionedText>& posTexts = {}) {
 
             // Load template image (cached)
             const auto& cached = loadImageCached(imagePath);
@@ -329,6 +340,16 @@ namespace meme {
                              regionY, regionH, activeStyle, textLayoutCache, 1);
             }
 
+            // Draw positioned text entries at absolute x,y coordinates
+            for (const auto& pt : posTexts) {
+                if (pt.content.empty()) continue;
+                // Render at the specified position — use a small region around the point
+                int regionH = h / 4;  // use 25% of image height for font sizing
+                drawMemeText(pixels, w, h, fontInfo, fontData, pt.content,
+                             pt.y - regionH / 2, regionH, activeStyle, textLayoutCache, 0,
+                             pt.x);
+            }
+
             outWidth = w;
             outHeight = h;
             return pixels;
@@ -383,7 +404,8 @@ namespace meme {
                                  int regionY, int regionH,
                                  const TextStyle& activeStyle,
                                  TextLayoutCache& textLayoutCache,
-                                 int align = 0) {
+                                 int align = 0,
+                                 int xCenter = -1) {
 
             std::string upper = toUpper(text);
             float maxWidth = imgW * 0.9f;
@@ -450,7 +472,9 @@ namespace meme {
             // Draw each line
             for (size_t li = 0; li < lines.size(); ++li) {
                 float lineWidth = measureText(fontInfo, lines[li], scale, textLayoutCache);
-                int startX = static_cast<int>((imgW - lineWidth) / 2.0f);
+                int startX = (xCenter >= 0)
+                    ? static_cast<int>(xCenter - lineWidth / 2.0f)
+                    : static_cast<int>((imgW - lineWidth) / 2.0f);
                 int startY = static_cast<int>(blockStartY + li * lineHeight + ascentPx);
 
                 // Draw shadow if enabled

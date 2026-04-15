@@ -23,6 +23,11 @@ namespace meme {
         unsigned char bgR = 0, bgG = 0, bgB = 0, bgA = 0;  // 0 alpha = no background
     };
 
+    struct PositionedText {
+        std::string content;
+        int x = 0, y = 0;  // pixel coordinates from top-left
+    };
+
     // Forward declare MemeRenderer -- included only in method bodies below
     class MemeRenderer;
 
@@ -36,6 +41,7 @@ namespace meme {
         int width = 0;          // 0 = use template's native size
         int height = 0;
         TextStyle style;        // text rendering style
+        std::vector<PositionedText> positionedTexts;
 
         MacMeme(const std::string& tmpl, const std::string& top, const std::string& bottom,
                 const std::string& center = "")
@@ -166,11 +172,11 @@ namespace meme {
 
 inline std::vector<unsigned char> meme::MacMeme::render() const {
     int w, h;
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, centerText, width, height, w, h, style);
+    return meme::MemeRenderer::renderWithPositions(imagePath, topText, bottomText, centerText, width, height, w, h, style, positionedTexts);
 }
 
 inline std::vector<unsigned char> meme::MacMeme::render(int& outW, int& outH) const {
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, centerText, width, height, outW, outH, style);
+    return meme::MemeRenderer::renderWithPositions(imagePath, topText, bottomText, centerText, width, height, outW, outH, style, positionedTexts);
 }
 
 inline bool meme::MacMeme::save(const std::string& outputPath) const {

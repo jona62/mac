@@ -1,0 +1,16 @@
+// Positioned text at absolute x,y coordinates
+var m = @blank 600x600 {
+    top: "Title"
+    text: "Custom" x: 300 y: 400
+    text: "Another" x: 100 y: 200
+    bottom: "Footer"
+};
+print type(m);                  // expect: instance
+print m.topText;                // expect: Title
+print m.bottomText;             // expect: Footer
+
+// Positioned text with save
+@blank 400x400 {
+    text: "Centered" x: 200 y: 200
+} => "pos_text_test.png";
+print "positioned saved";       // expect: positioned saved

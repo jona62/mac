@@ -543,6 +543,32 @@ namespace callable {
         int w = static_cast<int>(std::get<double>(inst->get(wTok)));
         int h = static_cast<int>(std::get<double>(inst->get(hTok)));
 
+        // Extract positioned texts if present
+        std::vector<meme::PositionedText> posTexts;
+        token::Token ptTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("positionedTexts")), 0);
+        try {
+            auto ptVal = inst->get(ptTok);
+            if (std::holds_alternative<std::shared_ptr<collection::MacArray>>(ptVal)) {
+                auto arr = std::get<std::shared_ptr<collection::MacArray>>(ptVal);
+                for (auto& elem : arr->elements) {
+                    auto map = std::get<std::shared_ptr<collection::MacMap>>(elem);
+                    posTexts.push_back({
+                        std::get<std::string>(map->get("content")),
+                        static_cast<int>(std::get<double>(map->get("x"))),
+                        static_cast<int>(std::get<double>(map->get("y")))
+                    });
+                }
+            }
+        } catch (...) {}
+
+        if (!posTexts.empty()) {
+            int outW, outH;
+            auto pixels = meme::MemeRenderer::renderWithPositions(
+                templatePath, topText, bottomText, centerText, w, h, outW, outH,
+                extractStyle(inst), posTexts);
+            return std::make_shared<meme::RenderSurface>(std::move(pixels), outW, outH);
+        }
+
         return meme::MemeRenderer::renderSurface(
             templatePath, topText, bottomText, centerText, w, h, extractStyle(inst)
         );
