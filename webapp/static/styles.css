@@ -509,6 +509,8 @@ input[type="number"], input[type="text"], textarea, select {
   font-size: 0.78rem;
   background: var(--surface);
   color: var(--ink);
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -526,6 +528,9 @@ select {
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 24px;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .color-pair { display: flex; gap: 6px; align-items: center; }
