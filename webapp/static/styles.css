@@ -166,8 +166,14 @@ body {
 
 /* ── Sidebar Sections ─────────────────────────────── */
 
-.sb-section { margin-bottom: 20px; }
-.sb-section:last-child { margin-bottom: 0; }
+.sb-section {
+  margin-bottom: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.sb-section:first-child { padding-top: 0; }
+.sb-section:last-child { margin-bottom: 0; border-bottom: none; }
 
 .sb-section__head {
   display: flex;
