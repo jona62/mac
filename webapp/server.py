@@ -718,7 +718,7 @@ def cleanup_mac_temp_files() -> None:
             pass
 
 
-ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg", ".ico", ".heic", ".heif", ".avif"}
 
 
 def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
@@ -740,7 +740,7 @@ def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
     parts = raw.split(f"--{boundary}".encode())
 
     file_data = None
-    filename = "upload"
+    filename = "upload.png"
     for part in parts:
         if b"Content-Disposition" not in part:
             continue
@@ -752,16 +752,32 @@ def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
         if body.endswith(b"\r\n"):
             body = body[:-2]
 
-        if 'name="image"' in headers or 'name="file"' in headers:
-            file_data = body
-            # Extract filename
-            for segment in headers.split(";"):
-                segment = segment.strip()
-                if segment.startswith('filename="'):
-                    filename = segment[10:].rstrip('"')
+        if 'name="image"' not in headers and 'name="file"' not in headers:
+            continue
+        file_data = body
+        # Extract filename via regex
+        fn_match = re.search(r'filename="([^"]*)"', headers)
+        if fn_match and fn_match.group(1):
+            filename = fn_match.group(1)
+        break
 
     if not file_data or len(file_data) < 100:
         raise ValueError("No image file found in the upload.")
+
+    # Detect extension from magic bytes if filename has none
+    ext = Path(filename).suffix.lower()
+    if not ext or ext not in ALLOWED_IMAGE_EXTS:
+        if file_data[:8].startswith(b"\x89PNG"):
+            ext = ".png"
+        elif file_data[:3] in (b"\xff\xd8\xff", b"\xff\xd8"):
+            ext = ".jpg"
+        elif file_data[:6] in (b"GIF87a", b"GIF89a"):
+            ext = ".gif"
+        elif file_data[:4] == b"RIFF" and file_data[8:12] == b"WEBP":
+            ext = ".webp"
+        else:
+            ext = ".png"
+        filename = Path(filename).stem + ext
 
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_IMAGE_EXTS:
@@ -916,8 +932,7 @@ def run_raw_script(script: str) -> dict[str, object]:
     output_path = GENERATED_DIR / output_name
 
     # Rewrite => "..." save targets to point to our generated dir
-    import re as _re
-    patched = _re.sub(
+    patched = re.sub(
         r'=>\s*"[^"]*"',
         f'=> "{output_path}"',
         script,
