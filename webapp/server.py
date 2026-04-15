@@ -28,8 +28,8 @@ MAX_REQUEST_BYTES = 256 * 1024
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024   # 5 MB max image upload
 MAX_UPLOADS = 50                      # max uploaded images retained
 MAX_SCENE_COUNT = 24
-MAX_FILE_AGE_SECONDS = 60 * 60 * 24
-MAX_GENERATED_FILES = 200
+MAX_FILE_AGE_SECONDS = 60 * 60       # 1 hour TTL (was 24h — disk fills fast with GIFs)
+MAX_GENERATED_FILES = 50             # 50 files max (was 200 — ~25MB ceiling)
 RATE_LIMIT_WINDOW = 60          # seconds
 RATE_LIMIT_MAX_REQUESTS = 30    # max renders per IP per window
 
