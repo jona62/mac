@@ -708,13 +708,19 @@ def build_script_bundle(document: dict[str, object], output_path: Path, preview_
 
 
 def cleanup_mac_temp_files() -> None:
-    """Remove /tmp/mac_effects_* dirs left by mac subprocess calls."""
+    """Remove /tmp/mac_effects_* dirs for dead processes only."""
     import glob
+    import os
+    import shutil
     for d in glob.glob("/tmp/mac_effects_*"):
         try:
-            import shutil
-            shutil.rmtree(d, ignore_errors=True)
-        except Exception:
+            pid = int(d.rsplit("_", 1)[-1])
+            # Only delete if the process no longer exists
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                shutil.rmtree(d, ignore_errors=True)
+        except (ValueError, Exception):
             pass
 
 
@@ -1112,35 +1118,30 @@ class GifStudioHandler(BaseHTTPRequestHandler):
             candidate = STATIC_DIR / "index.html"
         serve_file(self, candidate, send_body=send_body)
 
-    def do_DELETE(self) -> None:
-        parsed = urlparse(self.path)
-        path = unquote(parsed.path)
-        if path != "/api/upload":
-            self.send_error(HTTPStatus.NOT_FOUND)
-            return
-        try:
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = json.loads(self.rfile.read(content_length)) if content_length > 0 else {}
-            template_id = str(body.get("templateId", ""))
-            if not template_id.startswith("user."):
-                raise ValueError("Can only delete user uploads.")
-            stem = template_id.removeprefix("user.")
-            deleted = False
-            if UPLOADS_DIR.is_dir():
-                for f in UPLOADS_DIR.iterdir():
-                    if f.stem == stem:
-                        f.unlink(missing_ok=True)
-                        deleted = True
-                        break
-            json_response(self, {"ok": True, "deleted": deleted})
-        except ValueError as exc:
-            json_response(self, {"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
-        except Exception as exc:
-            json_response(self, {"error": str(exc)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
-
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = unquote(parsed.path)
+
+        if path == "/api/upload/delete":
+            try:
+                body = read_json_body(self)
+                template_id = str(body.get("templateId", ""))
+                if not template_id.startswith("user."):
+                    raise ValueError("Can only delete user uploads.")
+                stem = template_id.removeprefix("user.")
+                deleted = False
+                if UPLOADS_DIR.is_dir():
+                    for f in UPLOADS_DIR.iterdir():
+                        if f.stem == stem:
+                            f.unlink(missing_ok=True)
+                            deleted = True
+                            break
+                json_response(self, {"ok": True, "deleted": deleted})
+            except ValueError as exc:
+                json_response(self, {"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            except Exception as exc:
+                json_response(self, {"error": str(exc)}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+            return
 
         if path == "/api/upload":
             try:
