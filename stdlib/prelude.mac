@@ -81,10 +81,12 @@ class Meme {
     init(template) {
         this.template = template;
         this.topText = "";
+        this.centerText = "";
         this.bottomText = "";
         this.width = 0;
         this.height = 0;
         this.renderedPath = nil;
+        this._style = nil;
     }
 
     // Add text at a position (Top, Bottom, Center).
@@ -92,13 +94,15 @@ class Meme {
     text(position, str) {
         var m = Meme(this.template);
         m.topText = this.topText;
+        m.centerText = this.centerText;
         m.bottomText = this.bottomText;
         m.width = this.width;
         m.height = this.height;
         m.renderedPath = this.renderedPath;
+        m._style = this._style;
         if (position == Top) m.topText = str;
         if (position == Bottom) m.bottomText = str;
-        if (position == Center) m.bottomText = str;
+        if (position == Center) m.centerText = str;
         return m;
     }
 
@@ -108,8 +112,7 @@ class Meme {
         if (this.renderedPath) {
             _save_rendered(this.renderedPath, path);
         } else {
-            _meme_save(this.template.path, this.topText, this.bottomText,
-                       this.width, this.height, path);
+            save(this, path);
         }
     }
 
@@ -117,10 +120,12 @@ class Meme {
     resize(size) {
         var m = Meme(this.template);
         m.topText = this.topText;
+        m.centerText = this.centerText;
         m.bottomText = this.bottomText;
         m.width = size.width;
         m.height = size.height;
         m.renderedPath = this.renderedPath;
+        m._style = this._style;
         return m;
     }
 
@@ -146,6 +151,7 @@ class Gif {
         push(this._frames, {
             path: memeObj.template.path,
             top: memeObj.topText,
+            center: memeObj.centerText,
             bottom: memeObj.bottomText,
             width: memeObj.width,
             height: memeObj.height,

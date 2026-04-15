@@ -276,16 +276,17 @@ namespace callable {
             auto templatePath = std::get<std::string>(args[0]);
             auto topText = std::get<std::string>(args[1]);
             auto bottomText = std::get<std::string>(args[2]);
-            int width = static_cast<int>(std::get<double>(args[3]));
-            int height = static_cast<int>(std::get<double>(args[4]));
-            auto outputPath = toOutputPath(std::get<std::string>(args[5]));
-            auto m = std::make_shared<meme::MacMeme>("", topText, bottomText);
+            auto centerText = std::get<std::string>(args[3]);
+            int width = static_cast<int>(std::get<double>(args[4]));
+            int height = static_cast<int>(std::get<double>(args[5]));
+            auto outputPath = toOutputPath(std::get<std::string>(args[6]));
+            auto m = std::make_shared<meme::MacMeme>("", topText, bottomText, centerText);
             m->imagePath = templatePath;
             m->width = width;
             m->height = height;
             return m->save(outputPath);
         }
-        int arity() override { return 6; }
+        int arity() override { return 7; }
         std::string toString() override { return "<native fn>"; }
     };
 
@@ -301,10 +302,13 @@ namespace callable {
                 auto path = std::get<std::string>(frameMap->get("path"));
                 auto top = std::get<std::string>(frameMap->get("top"));
                 auto bottom = std::get<std::string>(frameMap->get("bottom"));
+                auto center = frameMap->has("center")
+                    ? std::get<std::string>(frameMap->get("center"))
+                    : std::string("");
                 int w = static_cast<int>(std::get<double>(frameMap->get("width")));
                 int h = static_cast<int>(std::get<double>(frameMap->get("height")));
                 int dur = static_cast<int>(std::get<double>(frameMap->get("duration")));
-                auto m = std::make_shared<meme::MacMeme>("", top, bottom);
+                auto m = std::make_shared<meme::MacMeme>("", top, bottom, center);
                 m->imagePath = path;
                 m->width = w;
                 m->height = h;
@@ -422,18 +426,20 @@ namespace callable {
         auto templatePath = std::get<std::string>(tplInst->get(pathTok));
 
         token::Token topTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("topText")), 0);
+        token::Token centerTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("centerText")), 0);
         token::Token botTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("bottomText")), 0);
         token::Token wTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("width")), 0);
         token::Token hTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("height")), 0);
 
         auto topText = std::get<std::string>(inst->get(topTok));
+        auto centerText = std::get<std::string>(inst->get(centerTok));
         auto bottomText = std::get<std::string>(inst->get(botTok));
         int w = static_cast<int>(std::get<double>(inst->get(wTok)));
         int h = static_cast<int>(std::get<double>(inst->get(hTok)));
 
         auto style = extractStyle(inst);
         int outW, outH;
-        auto pixels = meme::MemeRenderer::render(templatePath, topText, bottomText, w, h, outW, outH, style);
+        auto pixels = meme::MemeRenderer::render(templatePath, topText, bottomText, centerText, w, h, outW, outH, style);
         return {pixels, outW, outH};
     }
 
@@ -1579,16 +1585,18 @@ namespace callable {
         }
 
         auto topVal = getField("topText");
+        auto centerVal = getField("centerText");
         auto bottomVal = getField("bottomText");
         auto wVal = getField("width");
         auto hVal = getField("height");
 
         std::string top = std::holds_alternative<std::string>(topVal) ? std::get<std::string>(topVal) : "";
+        std::string center = std::holds_alternative<std::string>(centerVal) ? std::get<std::string>(centerVal) : "";
         std::string bottom = std::holds_alternative<std::string>(bottomVal) ? std::get<std::string>(bottomVal) : "";
         int w = std::holds_alternative<double>(wVal) ? static_cast<int>(std::get<double>(wVal)) : 0;
         int h = std::holds_alternative<double>(hVal) ? static_cast<int>(std::get<double>(hVal)) : 0;
 
-        auto m = std::make_shared<meme::MacMeme>("", top, bottom);
+        auto m = std::make_shared<meme::MacMeme>("", top, bottom, center);
         m->imagePath = templatePath;
         m->width = w;
         m->height = h;

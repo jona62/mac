@@ -14,7 +14,8 @@ print type(m2);                  // expect: instance
 // Access fields
 print m.topText;                 // expect: Hello
 print m.bottomText;              // expect: World
-print m2.bottomText;             // expect: Just this
+print m2.centerText;             // expect: Just this
+print m2.bottomText;             // expect:
 
 // Dotted template name (category.name)
 var m3 = @meme.shrek_smirk {
@@ -23,3 +24,10 @@ var m3 = @meme.shrek_smirk {
 };
 print type(m3);                  // expect: instance
 print m3.topText;                // expect: Dotted
+
+var m4 = @blank {
+    top: "North"
+    center: "Middle"
+    bottom: "South"
+};
+print m4.centerText;             // expect: Middle

@@ -29,7 +29,7 @@ namespace meme {
                                                   int targetWidth = 0,
                                                   int targetHeight = 0) {
             int w, h;
-            return renderInternal(imagePath, topText, bottomText, targetWidth, targetHeight, w, h);
+            return renderInternal(imagePath, topText, bottomText, "", targetWidth, targetHeight, w, h);
         }
 
         // Overload that also returns actual width / height
@@ -41,7 +41,29 @@ namespace meme {
                                                   int& outWidth,
                                                   int& outHeight,
                                                   const TextStyle& style = TextStyle{}) {
-            return renderInternal(imagePath, topText, bottomText, targetWidth, targetHeight, outWidth, outHeight, style);
+            return renderInternal(imagePath, topText, bottomText, "", targetWidth, targetHeight, outWidth, outHeight, style);
+        }
+
+        static std::vector<unsigned char> render(const std::string& imagePath,
+                                                  const std::string& topText,
+                                                  const std::string& bottomText,
+                                                  const std::string& centerText,
+                                                  int targetWidth = 0,
+                                                  int targetHeight = 0) {
+            int w, h;
+            return renderInternal(imagePath, topText, bottomText, centerText, targetWidth, targetHeight, w, h);
+        }
+
+        static std::vector<unsigned char> render(const std::string& imagePath,
+                                                  const std::string& topText,
+                                                  const std::string& bottomText,
+                                                  const std::string& centerText,
+                                                  int targetWidth,
+                                                  int targetHeight,
+                                                  int& outWidth,
+                                                  int& outHeight,
+                                                  const TextStyle& style = TextStyle{}) {
+            return renderInternal(imagePath, topText, bottomText, centerText, targetWidth, targetHeight, outWidth, outHeight, style);
         }
 
         // Save rendered RGBA pixels to a PNG or JPG file (detected by extension).
@@ -72,6 +94,7 @@ namespace meme {
                 const std::string& imagePath,
                 const std::string& topText,
                 const std::string& bottomText,
+                const std::string& centerText,
                 int targetWidth,
                 int targetHeight,
                 int& outWidth,
@@ -154,6 +177,10 @@ namespace meme {
                 int regionY = 0;
                 int regionH = h / 2;
                 drawMemeText(pixels, w, h, fontInfo, fontData, topText, regionY, regionH, activeStyle, -1);
+            }
+
+            if (!centerText.empty()) {
+                drawMemeText(pixels, w, h, fontInfo, fontData, centerText, 0, h, activeStyle, 0);
             }
 
             // Draw bottom text (lower half) — anchored to bottom edge

@@ -41,7 +41,7 @@ namespace meme {
             if (w == 0 || h == 0) {
                 int rw, rh;
                 MemeRenderer::render(first.meme->imagePath,
-                                     first.meme->topText, first.meme->bottomText,
+                                     first.meme->topText, first.meme->bottomText, first.meme->centerText,
                                      0, 0, rw, rh);
                 if (w == 0) w = rw;
                 if (h == 0) h = rh;
@@ -53,8 +53,8 @@ namespace meme {
                 int rw, rh;
                 auto pixels = MemeRenderer::render(
                     frame.meme->imagePath,
-                    frame.meme->topText, frame.meme->bottomText,
-                    w, h, rw, rh);
+                    frame.meme->topText, frame.meme->bottomText, frame.meme->centerText,
+                    w, h, rw, rh, frame.meme->style);
                 int delayCs = frame.durationMs / 10; // ms -> centiseconds
                 if (delayCs < 1) delayCs = 1;
                 enc.addFrame(pixels.data(), delayCs);

@@ -30,14 +30,16 @@ namespace meme {
     public:
         std::string templateName;
         std::string topText;
+        std::string centerText;
         std::string bottomText;
         std::string imagePath;  // resolved path to template image
         int width = 0;          // 0 = use template's native size
         int height = 0;
         TextStyle style;        // text rendering style
 
-        MacMeme(const std::string& tmpl, const std::string& top, const std::string& bottom)
-            : templateName(tmpl), topText(top), bottomText(bottom) {}
+        MacMeme(const std::string& tmpl, const std::string& top, const std::string& bottom,
+                const std::string& center = "")
+            : templateName(tmpl), topText(top), centerText(center), bottomText(bottom) {}
 
         // Known template map + custom templates
         static std::unordered_map<std::string, std::string>& templateMap() {
@@ -122,10 +124,11 @@ namespace meme {
 
         // Create resized copy
         std::shared_ptr<MacMeme> resize(int w, int h) const {
-            auto copy = std::make_shared<MacMeme>(templateName, topText, bottomText);
+            auto copy = std::make_shared<MacMeme>(templateName, topText, bottomText, centerText);
             copy->imagePath = imagePath;
             copy->width = w;
             copy->height = h;
+            copy->style = style;
             return copy;
         }
 
@@ -137,6 +140,9 @@ namespace meme {
             out << "| " << std::left << std::setw(w - 2) << templateName << " |\n";
             out << "+" << border << "+\n";
             out << "| " << std::left << std::setw(w - 2) << topText << " |\n";
+            if (!centerText.empty()) {
+                out << "| " << std::left << std::setw(w - 2) << centerText << " |\n";
+            }
             out << "|" << std::string(w, ' ') << "|\n";
             out << "| " << std::left << std::setw(w - 2) << bottomText << " |\n";
             out << "+" << border << "+";
@@ -144,10 +150,11 @@ namespace meme {
         }
 
         std::shared_ptr<MacMeme> remix(const std::string& newTop, const std::string& newBottom) const {
-            auto copy = std::make_shared<MacMeme>(templateName, newTop, newBottom);
+            auto copy = std::make_shared<MacMeme>(templateName, newTop, newBottom, centerText);
             copy->imagePath = imagePath;
             copy->width = width;
             copy->height = height;
+            copy->style = style;
             return copy;
         }
     };
@@ -159,11 +166,11 @@ namespace meme {
 
 inline std::vector<unsigned char> meme::MacMeme::render() const {
     int w, h;
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height, w, h, style);
+    return meme::MemeRenderer::render(imagePath, topText, bottomText, centerText, width, height, w, h, style);
 }
 
 inline std::vector<unsigned char> meme::MacMeme::render(int& outW, int& outH) const {
-    return meme::MemeRenderer::render(imagePath, topText, bottomText, width, height, outW, outH, style);
+    return meme::MemeRenderer::render(imagePath, topText, bottomText, centerText, width, height, outW, outH, style);
 }
 
 inline bool meme::MacMeme::save(const std::string& outputPath) const {
