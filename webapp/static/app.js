@@ -578,6 +578,13 @@ function bindStaticControls() {
       });
     });
   }
+
+  // Script editor: sync highlighting on input and scroll
+  $("scriptPreview").addEventListener("input", () => {
+    state.script = $("scriptPreview").value;
+    $("scriptHighlight").innerHTML = highlightMac(state.script);
+  });
+  $("scriptPreview").addEventListener("scroll", syncScriptScroll);
 }
 
 function bindRangePair(rangeId, inputId, onChange) {
@@ -1057,8 +1064,73 @@ function renderStage() {
   }
 }
 
+// ── Syntax highlighting (patterns from mac-lang/syntaxes/mac.tmLanguage.json) ──
+
+const MAC_HIGHLIGHT_RULES = [
+  { pattern: /(\/\/.*$)/gm, cls: "hl-comment" },
+  { pattern: /("(?:[^"\\]|\\.)*")/g, cls: "hl-string" },
+  { pattern: /\b(\d+(?:ms|s))\b/g, cls: "hl-number" },
+  { pattern: /\b(\d+(?:\.\d+)?)\b/g, cls: "hl-number" },
+  { pattern: /(@\w+(?:\.\w+)*)/g, cls: "hl-template" },
+  { pattern: /\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|and|or)\b/g, cls: "hl-keyword" },
+  { pattern: /\b(gif|timeline|grid|loop)\b/g, cls: "hl-keyword" },
+  { pattern: /\b(true|false|nil)\b/g, cls: "hl-constant" },
+  { pattern: /\b(this|super)\b/g, cls: "hl-constant" },
+  { pattern: /\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\b/g, cls: "hl-class" },
+  { pattern: /\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\b/g, cls: "hl-constant" },
+  { pattern: /(=>|->|\|>|>>|---)/g, cls: "hl-operator" },
+  { pattern: /\b([A-Za-z_]\w*)\s*(?=\()/g, cls: "hl-function" },
+];
+
+function highlightMac(code) {
+  // Escape HTML first
+  let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // Tokenize by extracting strings and comments first to avoid highlighting inside them
+  const tokens = [];
+  let tokenized = html.replace(/(\/\/.*$)/gm, (m) => {
+    tokens.push(`<span class="hl-comment">${m}</span>`);
+    return `\x00${tokens.length - 1}\x00`;
+  });
+  tokenized = tokenized.replace(/(&quot;|")((?:[^"\\]|\\.)*)(&quot;|")/g, (m) => {
+    tokens.push(`<span class="hl-string">${m}</span>`);
+    return `\x00${tokens.length - 1}\x00`;
+  });
+
+  // Apply remaining rules
+  const rules = [
+    [/\b(\d+(?:ms|s))\b/g, "hl-number"],
+    [/\b(\d+(?:\.\d+)?)\b/g, "hl-number"],
+    [/(@\w+(?:\.\w+)*)/g, "hl-template"],
+    [/\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|and|or)\b/g, "hl-keyword"],
+    [/\b(gif|timeline|grid|loop)\b/g, "hl-keyword"],
+    [/\b(true|false|nil)\b/g, "hl-constant"],
+    [/\b(this|super)\b/g, "hl-constant"],
+    [/\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\b/g, "hl-class"],
+    [/\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\b/g, "hl-constant"],
+    [/(=&gt;|-&gt;|\|&gt;|&gt;&gt;|---)/g, "hl-operator"],
+    [/\b([A-Za-z_]\w*)(?=\s*\()/g, "hl-function"],
+  ];
+
+  for (const [re, cls] of rules) {
+    tokenized = tokenized.replace(re, `<span class="${cls}">$1</span>`);
+  }
+
+  // Restore protected tokens
+  tokenized = tokenized.replace(/\x00(\d+)\x00/g, (_, i) => tokens[Number(i)]);
+
+  return tokenized + "\n"; // trailing newline keeps pre height in sync
+}
+
 function renderScript() {
-  $("scriptPreview").textContent = state.script || "// Studio script will appear here.\n";
+  const code = state.script || "// Studio script will appear here.\n";
+  $("scriptPreview").value = code;
+  $("scriptHighlight").innerHTML = highlightMac(code);
+}
+
+function syncScriptScroll() {
+  $("scriptHighlight").scrollTop = $("scriptPreview").scrollTop;
+  $("scriptHighlight").scrollLeft = $("scriptPreview").scrollLeft;
 }
 
 function formatDuration(ms) {
