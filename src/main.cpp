@@ -45,9 +45,11 @@ static string resolvePath(const string& relative) {
 }
 
 static auto interp = make_shared<interpreter::Interpreter>();
+static auto resolverInstance = make_shared<resolver::Resolver>(interp);
 
-// Keep prelude AST alive so resolver entries (raw pointers) remain valid
+// Keep AST alive so MacFunction raw pointers remain valid
 static vector<shared_ptr<stmt::Stmt<interpreter::MacValue>>> preludeStatements;
+static vector<vector<shared_ptr<stmt::Stmt<interpreter::MacValue>>>> replStatements;
 
 void run(string source);
 void run_file(const char *path);
@@ -75,7 +77,6 @@ void loadPrelude() {
     preludeStatements = parser.parse<interpreter::MacValue>();
     if (preludeStatements.empty()) return;
 
-    auto resolverInstance = make_shared<resolver::Resolver>(interp);
     resolverInstance->resolve(preludeStatements);
     interp->interpret(preludeStatements);
 }
@@ -118,10 +119,11 @@ void run(string source) {
     auto statements = parser.parse<interpreter::MacValue>();
     if (statements.empty()) return;
 
-    auto resolverInstance = make_shared<resolver::Resolver>(interp);
     resolverInstance->resolve(statements);
-
     interp->interpret(statements);
+
+    // Keep AST alive so MacFunction raw pointers remain valid across REPL lines
+    replStatements.push_back(std::move(statements));
 }
 
 void run_file(const char *path) {
