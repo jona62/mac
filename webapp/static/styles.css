@@ -676,12 +676,12 @@ body {
   flex: 1;
   min-height: 0;
   max-height: none;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
   border-radius: 0;
   -webkit-overflow-scrolling: touch;
 }
 
+.dock__script.is-fullscreen .code-editor__highlight,
 .dock__script.is-fullscreen .code-editor__input {
   min-height: 100%;
 }

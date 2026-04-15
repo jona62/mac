@@ -17,10 +17,13 @@ function renderEffectChain() {
 
   // Populate the add dropdown
   const sel = $("addEffectSelect");
-  if (sel && !sel.options.length) {
-    sel.innerHTML = state.metadata.effectDefinitions.map((d) =>
-      `<option value="${escAttr(d.id)}">${esc(d.name)}${d.param ? ` (${d.param})` : ""}</option>`
-    ).join("");
+  if (sel) {
+    const defs = state.metadata.effectDefinitions || [];
+    if (defs.length && sel.options.length !== defs.length) {
+      sel.innerHTML = defs.map((d) =>
+        `<option value="${escAttr(d.id)}">${esc(d.name)}${d.param ? ` (${d.param})` : ""}</option>`
+      ).join("");
+    }
   }
 }
 
