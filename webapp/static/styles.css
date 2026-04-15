@@ -474,7 +474,7 @@ body {
 
 /* ── Controls ─────────────────────────────────────── */
 
-.control-group { display: grid; gap: 10px; }
+.control-group { display: grid; gap: 10px; min-width: 0; }
 
 .control-group--style {
   margin-top: 14px;
@@ -482,7 +482,7 @@ body {
   border-top: 1px solid var(--line);
 }
 
-.field { display: grid; gap: 4px; }
+.field { display: grid; gap: 4px; min-width: 0; }
 
 .field__label {
   font-size: 0.68rem;
@@ -491,9 +491,9 @@ body {
   letter-spacing: 0.04em;
 }
 
-.range-pair { display: flex; gap: 8px; align-items: center; }
-.range-pair input[type="range"] { flex: 1; accent-color: var(--accent); height: 4px; }
-.range-pair input[type="number"] { width: 60px; }
+.range-pair { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.range-pair input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); height: 4px; }
+.range-pair input[type="number"] { width: 56px; flex-shrink: 0; }
 
 input[type="number"], input[type="text"], textarea, select {
   border: 1px solid var(--line-strong);
