@@ -585,33 +585,33 @@ function bindStaticControls() {
     $("scriptHighlight").innerHTML = highlightMac(state.script);
   });
 
-  // Apply edited script — re-render using the script content
+  // Apply edited script — execute raw Mac code on server
   $("scriptApplyBtn").addEventListener("click", async () => {
     const script = $("scriptPreview").value;
     if (!script.trim()) return;
     $("scriptApplyBtn").disabled = true;
     $("scriptApplyBtn").textContent = "Applying…";
+    setStatus("Applying script…", "Executing raw Mac code on the server.", "normal");
+    renderStatus();
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...buildPayload(),
-          rawScript: script,
-        }),
+        body: JSON.stringify({ rawScript: script }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Apply failed.");
       state.lastExport = data;
       state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-      setStatus("Script applied.", "", "normal");
-      renderStage();
+      state.stageLabel = "Applied from script";
+      const kb = Math.max(1, Math.round((data.summary?.fileSizeBytes || 0) / 1024));
+      setStatus("Script applied.", `${kb} KB`, "normal");
     } catch (err) {
-      setStatus(err.message, "Script apply failed.", "error");
-      renderStatus();
+      setStatus(`Apply failed: ${err.message}`, "", "error");
     } finally {
       $("scriptApplyBtn").disabled = false;
       $("scriptApplyBtn").textContent = "Apply Script";
+      renderStage();
     }
   });
 
