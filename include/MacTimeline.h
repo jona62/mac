@@ -107,6 +107,31 @@ namespace meme {
                 }
             }
 
+            // Loop-back transition: last frame → first frame (for seamless looping)
+            if (loopCount != 1 && keyframes.size() > 1) {
+                size_t lastIdx = keyframes.size() - 1;
+                if (lastIdx < transitions.size() && transitions[lastIdx].durationMs > 0) {
+                    auto& trans = transitions[lastIdx];
+                    int transMs = trans.durationMs;
+                    int fps = 15;
+                    int frameCount = std::max(2, transMs * fps / 1000);
+                    int frameDelayCs = transMs / (frameCount * 10);
+                    if (frameDelayCs < 1) frameDelayCs = 1;
+
+                    auto from = resizeToTarget(keyframes[lastIdx].pixels, keyframes[lastIdx].width,
+                                                keyframes[lastIdx].height, targetW, targetH);
+                    auto to = resizeToTarget(keyframes[0].pixels, keyframes[0].width,
+                                              keyframes[0].height, targetW, targetH);
+
+                    for (int f = 1; f < frameCount; f++) {
+                        float t = static_cast<float>(f) / frameCount;
+                        t = applyEasing(t, trans.easing);
+                        auto frame = renderTransitionFrame(from, to, targetW, targetH, t, trans.type);
+                        output.push_back({frame, targetW, targetH, frameDelayCs});
+                    }
+                }
+            }
+
             return output;
         }
 
