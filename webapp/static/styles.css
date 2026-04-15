@@ -492,10 +492,7 @@ body {
   display: flex;
   gap: 3px;
   margin-left: 2px;
-  visibility: hidden;
 }
-
-.scene-card:hover .scene-card__actions { visibility: visible; }
 
 /* Transition connector between scene pills */
 .transition-pip {
