@@ -502,20 +502,23 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 2px 8px;
-  border: none;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px dashed var(--ink-faint);
   border-radius: 999px;
-  background: var(--surface-active);
+  background: transparent;
   color: var(--ink-muted);
   font: inherit;
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
 }
 
-.transition-pip:hover { background: var(--accent-soft); color: var(--ink); }
+.transition-pip::before { content: "⟫"; font-size: 0.7rem; }
+
+.transition-pip:hover { background: var(--accent-soft); color: var(--ink); border-color: var(--accent); }
 .transition-pip__label { pointer-events: none; }
 
 .transition-popover {
