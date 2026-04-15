@@ -223,31 +223,33 @@ function onTransitionPipClick(pip, sceneIndex) {
       <select class="tp-ease">${EASING_TYPES.map((e) =>
         `<option value="${e.id}"${e.id === trans.easing ? " selected" : ""}>${e.label}</option>`).join("")}
       </select></label>`;
-  pip.style.position = "relative";
-  pop.style.position = "absolute";
-  pop.style.bottom = "100%";
-  pop.style.left = "50%";
-  pop.style.transform = "translateX(-50%)";
-  pip.appendChild(pop);
 
-  const update = () => {
+  // Position popover above the pip using fixed positioning
+  const rect = pip.getBoundingClientRect();
+  pop.style.position = "fixed";
+  pop.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+  pop.style.left = `${rect.left + rect.width / 2 - 90}px`;
+  document.body.appendChild(pop);
+
+  // Update state without re-rendering the strip (which would destroy the popover)
+  const updateState = () => {
     scene.transition = {
       type: pop.querySelector(".tp-type").value,
       durationMs: clamp(pop.querySelector(".tp-dur").value, 50, 1000),
       easing: pop.querySelector(".tp-ease").value,
     };
-    pip.querySelector(".transition-pip__label").textContent =
-      scene.transition.type === "cut" ? "cut" : scene.transition.type;
-    commitChange();
+    const label = pip.querySelector(".transition-pip__label");
+    if (label) label.textContent = scene.transition.type === "cut" ? "cut" : scene.transition.type;
   };
-  pop.addEventListener("change", update);
-  pop.addEventListener("input", update);
+  pop.addEventListener("change", updateState);
+  pop.addEventListener("input", updateState);
 
-  // Close on outside click
+  // Close on outside click — then do the full re-render + preview
   const close = (e) => {
-    if (!pop.contains(e.target) && e.target !== pip) {
+    if (!pop.contains(e.target) && !pip.contains(e.target)) {
       pop.remove();
       document.removeEventListener("pointerdown", close);
+      commitChange();
     }
   };
   setTimeout(() => document.addEventListener("pointerdown", close), 0);
