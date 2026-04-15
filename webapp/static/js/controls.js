@@ -269,14 +269,26 @@ function populateSelectOptions() {
 // ── UI chrome ──
 
 function bindSidebarTabs() {
-  const sidebar = $("sidebarLeft");
-  if (!sidebar) return;
-  sidebar.querySelector(".sidebar__head").addEventListener("click", (e) => {
-    const tab = e.target.closest(".sidebar-tab"); if (!tab) return;
-    sidebar.querySelectorAll(".sidebar-tab").forEach((t) => t.classList.remove("is-active"));
-    tab.classList.add("is-active");
-    sidebar.querySelectorAll(".sidebar__pane").forEach((p) => { p.hidden = p.dataset.pane !== tab.dataset.tab; });
-  });
+  // Left sidebar: Assets / Presets
+  const left = $("sidebarLeft");
+  if (left) {
+    left.querySelector(".sidebar__head").addEventListener("click", (e) => {
+      const tab = e.target.closest(".sidebar-tab"); if (!tab) return;
+      left.querySelectorAll(".sidebar-tab").forEach((t) => t.classList.remove("is-active"));
+      tab.classList.add("is-active");
+      left.querySelectorAll(".sidebar__pane").forEach((p) => { p.hidden = p.dataset.pane !== tab.dataset.tab; });
+    });
+  }
+  // Right sidebar: Slot / Scene / Document
+  const right = $("sidebarRight");
+  if (right) {
+    right.querySelector(".sidebar__head").addEventListener("click", (e) => {
+      const tab = e.target.closest(".sidebar-tab"); if (!tab || !tab.dataset.inspector) return;
+      right.querySelectorAll(".sidebar-tab").forEach((t) => t.classList.remove("is-active"));
+      tab.classList.add("is-active");
+      right.querySelectorAll("[data-inspector-pane]").forEach((p) => { p.hidden = p.dataset.inspectorPane !== tab.dataset.inspector; });
+    });
+  }
 }
 
 function bindScriptEditor() {

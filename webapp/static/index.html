@@ -65,71 +65,6 @@
               <h3 class="sb-section__title">Meme Library</h3>
               <div class="library-grid" id="memeTemplateGrid"></div>
             </section>
-            <section class="sb-section">
-              <h3 class="sb-section__title">Layouts</h3>
-              <div class="layout-grid" id="layoutGrid"></div>
-            </section>
-
-            <section class="sb-section">
-              <div class="sb-section__head">
-                <h3 class="sb-section__title">Canvas</h3>
-                <span class="sb-badge" id="canvasBadge">720&times;720</span>
-              </div>
-              <div class="control-group">
-                <label class="field">
-                  <span class="field__label">Width</span>
-                  <div class="range-pair">
-                    <input type="range" id="canvasWidthRange" min="240" max="1200" step="10" />
-                    <input type="number" id="canvasWidthInput" min="240" max="1200" step="10" />
-                  </div>
-                </label>
-                <label class="field">
-                  <span class="field__label">Height</span>
-                  <div class="range-pair">
-                    <input type="range" id="canvasHeightRange" min="240" max="1200" step="10" />
-                    <input type="number" id="canvasHeightInput" min="240" max="1200" step="10" />
-                  </div>
-                </label>
-              </div>
-            </section>
-
-            <section class="sb-section">
-              <div class="sb-section__head">
-                <h3 class="sb-section__title">Scene</h3>
-                <span class="sb-badge" id="sceneMeta">Scene 1</span>
-              </div>
-              <div class="control-group">
-                <label class="field">
-                  <span class="field__label">Layout</span>
-                  <div class="readonly-chip" id="selectedLayoutLabel">Single</div>
-                </label>
-                <label class="field">
-                  <span class="field__label">Duration</span>
-                  <div class="range-pair">
-                    <input type="range" id="sceneDurationRange" min="80" max="2500" step="10" />
-                    <input type="number" id="sceneDurationInput" min="80" max="2500" step="10" />
-                  </div>
-                </label>
-                <label class="field">
-                  <span class="field__label">Padding</span>
-                  <div class="range-pair">
-                    <input type="range" id="scenePaddingRange" min="0" max="60" step="1" />
-                    <input type="number" id="scenePaddingInput" min="0" max="60" step="1" />
-                  </div>
-                </label>
-                <label class="field">
-                  <span class="field__label">Border</span>
-                  <div class="range-pair">
-                    <input type="range" id="sceneBorderRange" min="0" max="24" step="1" />
-                    <input type="number" id="sceneBorderInput" min="0" max="24" step="1" />
-                  </div>
-                </label>
-                <label class="field">
-                  <span class="field__label">Scene Effect</span>
-                  <select id="sceneEffectSelect"></select>
-                </label>
-              </div>
-            </section>
           </div>
           <!-- Presets tab -->
           <div class="sidebar__pane" data-pane="presets" hidden>
@@ -162,104 +97,171 @@
         </div>
       </main>
 
-      <!-- Right Sidebar: Inspector -->
-      <aside class="sidebar sidebar--right">
+      <!-- Right Sidebar: Inspector (tabbed: Slot / Scene / Document) -->
+      <aside class="sidebar sidebar--right" id="sidebarRight">
         <div class="sidebar__head">
-          <span class="sidebar-tab is-active">Inspector</span>
+          <button class="sidebar-tab is-active" data-inspector="slot">Slot</button>
+          <button class="sidebar-tab" data-inspector="scene">Scene</button>
+          <button class="sidebar-tab" data-inspector="document">Document</button>
         </div>
         <div class="sidebar__scroll">
 
-          <!-- Slot Inspector -->
-          <section class="sb-section">
-            <div class="sb-section__head">
-              <h3 class="sb-section__title">Slot Inspector</h3>
-              <span class="sb-badge" id="slotMeta">Slot 1</span>
-            </div>
-
-            <div class="slot-tabs" id="slotTabs"></div>
-            <p class="help-text" id="slotHint">Pick a slot, then click a template or meme image to assign it.</p>
-
-            <div class="control-group">
-              <div class="field">
-                <span class="field__label">Template</span>
-                <div class="readonly-chip" id="slotTemplateLabel">Blank</div>
+          <!-- Slot pane -->
+          <div class="sidebar__pane" data-inspector-pane="slot">
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Slot</h3>
+                <span class="sb-badge" id="slotMeta">Slot 1</span>
               </div>
-              <label class="field">
-                <span class="field__label">Top Text</span>
-                <textarea id="slotTopText" rows="2" placeholder="Headline"></textarea>
-              </label>
-              <label class="field">
-                <span class="field__label">Center Text</span>
-                <textarea id="slotCenterText" rows="2" placeholder="Center"></textarea>
-              </label>
-              <label class="field">
-                <span class="field__label">Bottom Text</span>
-                <textarea id="slotBottomText" rows="2" placeholder="Footer"></textarea>
-              </label>
-            </div>
-
-            <div class="control-group control-group--style">
-              <label class="field">
-                <span class="field__label">Style Preset</span>
-                <select id="slotStylePreset"></select>
-              </label>
-              <label class="field">
-                <span class="field__label">Text Color</span>
-                <div class="color-pair">
-                  <input type="color" id="slotTextColor" />
-                  <input type="text" id="slotTextColorHex" maxlength="7" />
+              <div class="slot-tabs" id="slotTabs"></div>
+              <p class="help-text" id="slotHint">Pick a slot, then click a template or meme image to assign it.</p>
+              <div class="control-group">
+                <div class="field">
+                  <span class="field__label">Template</span>
+                  <div class="readonly-chip" id="slotTemplateLabel">Blank</div>
                 </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Outline</span>
-                <div class="range-pair">
-                  <input type="range" id="slotOutlineRange" min="0" max="10" step="1" />
-                  <input type="number" id="slotOutlineInput" min="0" max="10" step="1" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Outline Color</span>
-                <div class="color-pair">
-                  <input type="color" id="slotOutlineColor" />
-                  <input type="text" id="slotOutlineColorHex" maxlength="7" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Shadow</span>
-                <div class="range-pair">
-                  <input type="range" id="slotShadowRange" min="0" max="10" step="1" />
-                  <input type="number" id="slotShadowInput" min="0" max="10" step="1" />
-                </div>
-              </label>
-              <label class="field">
-                <span class="field__label">Shadow Color</span>
-                <input type="text" id="slotShadowColorHex" maxlength="9" placeholder="#00000080" />
-              </label>
-              <label class="field">
-                <span class="field__label">Font Size</span>
-                <select id="slotFontSizeMode"></select>
-              </label>
-              <label class="field" id="slotFontSizePxField">
-                <span class="field__label">Custom Size (px)</span>
-                <input type="number" id="slotFontSizePx" min="8" max="240" step="1" />
-              </label>
-            </div>
-          </section>
-
-          <!-- Export -->
-          <section class="sb-section">
-            <div class="sb-section__head">
-              <h3 class="sb-section__title">Export</h3>
-              <span class="sb-badge" id="exportMeta">Document</span>
-            </div>
-            <div class="control-group">
-              <div class="segmented" id="formatToggle">
-                <button class="segmented__btn" type="button" data-format="png">PNG Still</button>
-                <button class="segmented__btn" type="button" data-format="gif">GIF Loop</button>
+                <label class="field">
+                  <span class="field__label">Top Text</span>
+                  <textarea id="slotTopText" rows="2" placeholder="Headline"></textarea>
+                </label>
+                <label class="field">
+                  <span class="field__label">Center Text</span>
+                  <textarea id="slotCenterText" rows="2" placeholder="Center"></textarea>
+                </label>
+                <label class="field">
+                  <span class="field__label">Bottom Text</span>
+                  <textarea id="slotBottomText" rows="2" placeholder="Footer"></textarea>
+                </label>
               </div>
-              <p class="help-text" id="formatHelp">Single-scene documents export as PNG or GIF.</p>
-            </div>
-          </section>
+              <div class="control-group control-group--style">
+                <label class="field">
+                  <span class="field__label">Style Preset</span>
+                  <select id="slotStylePreset"></select>
+                </label>
+                <label class="field">
+                  <span class="field__label">Text Color</span>
+                  <div class="color-pair">
+                    <input type="color" id="slotTextColor" />
+                    <input type="text" id="slotTextColorHex" maxlength="7" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Outline</span>
+                  <div class="range-pair">
+                    <input type="range" id="slotOutlineRange" min="0" max="10" step="1" />
+                    <input type="number" id="slotOutlineInput" min="0" max="10" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Outline Color</span>
+                  <div class="color-pair">
+                    <input type="color" id="slotOutlineColor" />
+                    <input type="text" id="slotOutlineColorHex" maxlength="7" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Shadow</span>
+                  <div class="range-pair">
+                    <input type="range" id="slotShadowRange" min="0" max="10" step="1" />
+                    <input type="number" id="slotShadowInput" min="0" max="10" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Shadow Color</span>
+                  <input type="text" id="slotShadowColorHex" maxlength="9" placeholder="#00000080" />
+                </label>
+                <label class="field">
+                  <span class="field__label">Font Size</span>
+                  <select id="slotFontSizeMode"></select>
+                </label>
+                <label class="field" id="slotFontSizePxField">
+                  <span class="field__label">Custom Size (px)</span>
+                  <input type="number" id="slotFontSizePx" min="8" max="240" step="1" />
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <!-- Scene pane -->
+          <div class="sidebar__pane" data-inspector-pane="scene" hidden>
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Scene</h3>
+                <span class="sb-badge" id="sceneMeta">Scene 1</span>
+              </div>
+              <div class="control-group">
+                <label class="field">
+                  <span class="field__label">Layout</span>
+                  <div class="readonly-chip" id="selectedLayoutLabel">Single</div>
+                </label>
+                <div class="layout-grid" id="layoutGrid"></div>
+                <label class="field">
+                  <span class="field__label">Duration</span>
+                  <div class="range-pair">
+                    <input type="range" id="sceneDurationRange" min="80" max="2500" step="10" />
+                    <input type="number" id="sceneDurationInput" min="80" max="2500" step="10" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Padding</span>
+                  <div class="range-pair">
+                    <input type="range" id="scenePaddingRange" min="0" max="60" step="1" />
+                    <input type="number" id="scenePaddingInput" min="0" max="60" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Border</span>
+                  <div class="range-pair">
+                    <input type="range" id="sceneBorderRange" min="0" max="24" step="1" />
+                    <input type="number" id="sceneBorderInput" min="0" max="24" step="1" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Scene Effect</span>
+                  <select id="sceneEffectSelect"></select>
+                </label>
+              </div>
+            </section>
+          </div>
+
+          <!-- Document pane -->
+          <div class="sidebar__pane" data-inspector-pane="document" hidden>
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Canvas</h3>
+                <span class="sb-badge" id="canvasBadge">720&times;720</span>
+              </div>
+              <div class="control-group">
+                <label class="field">
+                  <span class="field__label">Width</span>
+                  <div class="range-pair">
+                    <input type="range" id="canvasWidthRange" min="240" max="1200" step="10" />
+                    <input type="number" id="canvasWidthInput" min="240" max="1200" step="10" />
+                  </div>
+                </label>
+                <label class="field">
+                  <span class="field__label">Height</span>
+                  <div class="range-pair">
+                    <input type="range" id="canvasHeightRange" min="240" max="1200" step="10" />
+                    <input type="number" id="canvasHeightInput" min="240" max="1200" step="10" />
+                  </div>
+                </label>
+              </div>
+            </section>
+            <section class="sb-section">
+              <div class="sb-section__head">
+                <h3 class="sb-section__title">Export</h3>
+                <span class="sb-badge" id="exportMeta">Document</span>
+              </div>
+              <div class="control-group">
+                <div class="segmented" id="formatToggle">
+                  <button class="segmented__btn" type="button" data-format="png">PNG Still</button>
+                  <button class="segmented__btn" type="button" data-format="gif">GIF Loop</button>
+                </div>
+                <p class="help-text" id="formatHelp">Single-scene documents export as PNG or GIF.</p>
+              </div>
+            </section>
+          </div>
 
         </div>
       </aside>
