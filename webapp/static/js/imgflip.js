@@ -4,9 +4,12 @@
 const IMGFLIP_API = "https://api.imgflip.com/get_memes";
 const IMGFLIP_CACHE_KEY = "mac_imgflip_memes";
 const IMGFLIP_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
-const imgflipImported = new Set(); // track already-imported URLs this session
+const IMGFLIP_BATCH_SIZE = 20;
+const imgflipImported = new Set();
 let imgflipMemes = [];
 let imgflipLoaded = false;
+let imgflipRenderedCount = 0;
+let imgflipCurrentFilter = "";
 
 async function loadImgflipMemes() {
   if (imgflipLoaded) return;
@@ -19,7 +22,8 @@ async function loadImgflipMemes() {
       if (Date.now() - ts < IMGFLIP_CACHE_TTL && Array.isArray(memes) && memes.length) {
         imgflipMemes = memes;
         imgflipLoaded = true;
-        renderImgflipGrid();
+        renderImgflipGrid("");
+        initImgflipScroll();
         return;
       }
     }
@@ -32,37 +36,69 @@ async function loadImgflipMemes() {
     if (data.success && data.data && data.data.memes) {
       imgflipMemes = data.data.memes;
       imgflipLoaded = true;
-      // Cache in localStorage
       try {
         localStorage.setItem(IMGFLIP_CACHE_KEY, JSON.stringify({ ts: Date.now(), memes: imgflipMemes }));
-      } catch (_) { /* quota exceeded — ignore */ }
-      renderImgflipGrid();
+      } catch (_) { /* quota exceeded */ }
+      renderImgflipGrid("");
+      initImgflipScroll();
     }
   } catch (err) {
     $("imgflipGrid").innerHTML = '<p class="empty-state">Could not load meme templates.</p>';
   }
 }
 
-function renderImgflipGrid(filter = "") {
-  const grid = $("imgflipGrid");
-  if (!grid) return;
-  const query = filter.toLowerCase();
-  const filtered = query
+function getFilteredImgflip() {
+  const query = imgflipCurrentFilter.toLowerCase();
+  return query
     ? imgflipMemes.filter((m) => m.name.toLowerCase().includes(query))
     : imgflipMemes;
+}
 
+function renderImgflipGrid(filter) {
+  if (filter !== undefined) {
+    imgflipCurrentFilter = filter;
+    imgflipRenderedCount = 0;
+    $("imgflipGrid").innerHTML = "";
+  }
+  const grid = $("imgflipGrid");
+  if (!grid) return;
+
+  const filtered = getFilteredImgflip();
   if (!filtered.length) {
     grid.innerHTML = '<p class="empty-state">No memes match your search.</p>';
     return;
   }
 
-  grid.innerHTML = filtered.map((m) => {
+  const batch = filtered.slice(imgflipRenderedCount, imgflipRenderedCount + IMGFLIP_BATCH_SIZE);
+  batch.forEach((m) => {
     const imported = imgflipImported.has(m.url);
-    return `<button class="template-card${imported ? " template-card--imported" : ""}" type="button" data-imgflip-url="${escAttr(m.url)}" data-imgflip-name="${escAttr(m.name)}" title="${escAttr(m.name)}">
-      <div class="template-card__thumb" style="background-image:url('${cssUrl(m.url)}')"></div>
-      <span class="template-card__name">${esc(m.name)}${imported ? " ✓" : ""}</span>
-    </button>`;
-  }).join("");
+    const btn = document.createElement("button");
+    btn.className = `template-card${imported ? " template-card--imported" : ""}`;
+    btn.type = "button";
+    btn.dataset.imgflipUrl = m.url;
+    btn.dataset.imgflipName = m.name;
+    btn.title = m.name;
+    btn.innerHTML = `<div class="template-card__thumb" style="background-image:url('${cssUrl(m.url)}')"></div>
+      <span class="template-card__name">${esc(m.name)}${imported ? " ✓" : ""}</span>`;
+    grid.appendChild(btn);
+  });
+  imgflipRenderedCount += batch.length;
+}
+
+function initImgflipScroll() {
+  const pane = document.querySelector('[data-pane="imgflip"]');
+  if (!pane) return;
+  const scrollParent = pane.closest(".sidebar__scroll");
+  if (!scrollParent) return;
+  scrollParent.addEventListener("scroll", () => {
+    const { scrollTop, scrollHeight, clientHeight } = scrollParent;
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      const filtered = getFilteredImgflip();
+      if (imgflipRenderedCount < filtered.length) {
+        renderImgflipGrid();
+      }
+    }
+  });
 }
 
 function onImgflipPick(e) {
