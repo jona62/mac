@@ -808,6 +808,17 @@ async function exportDocument() {
       `${summaryValue(summary, "frameCount", 1)} frame(s) · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} · ${String(summaryValue(summary, "format", "")).toUpperCase()}`,
       "normal"
     );
+
+    // Auto-trigger download
+    if (data.downloadUrl) {
+      const ext = state.output.format || "png";
+      const a = document.createElement("a");
+      a.href = data.downloadUrl;
+      a.download = `mac-studio-export.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
   } catch (error) {
     if (!markLegacyBackendIfNeeded(error.message)) {
       setStatus(error.message, "The document export did not complete.", "error");
@@ -1034,7 +1045,7 @@ function renderStage() {
   $("refreshPreviewBtn").disabled = state.isPreviewing;
   $("refreshPreviewBtn").textContent = state.isPreviewing ? "Refreshing…" : "Refresh Preview";
   $("exportBtn").disabled = state.isExporting;
-  $("exportBtn").textContent = state.isExporting ? "Exporting…" : "Export Document";
+  $("exportBtn").textContent = state.isExporting ? "Exporting…" : "Export & Download";
 
   if (state.lastExport && state.lastExport.downloadUrl) {
     const ext = state.output.format || "png";
