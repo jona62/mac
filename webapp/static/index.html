@@ -68,6 +68,7 @@
       <aside class="sidebar sidebar--left" id="sidebarLeft">
         <div class="sidebar__head">
           <button class="sidebar-tab is-active" data-tab="assets">Assets</button>
+          <button class="sidebar-tab" data-tab="imgflip">Meme Templates</button>
           <button class="sidebar-tab" data-tab="presets">Presets</button>
         </div>
         <div class="sidebar__scroll">
@@ -90,6 +91,15 @@
             <section class="sb-section">
               <h3 class="sb-section__title">Meme Library</h3>
               <div class="library-grid" id="memeTemplateGrid"></div>
+            </section>
+          </div>
+          <!-- Imgflip meme templates tab -->
+          <div class="sidebar__pane" data-pane="imgflip" hidden>
+            <section class="sb-section">
+              <h3 class="sb-section__title">Imgflip Meme Templates</h3>
+              <p class="sb-section__sub">Top 100 meme templates — click to use as slot image</p>
+              <input type="text" id="imgflipSearch" placeholder="Search memes..." class="imgflip-search" />
+              <div class="library-grid" id="imgflipGrid"></div>
             </section>
           </div>
           <!-- Presets tab -->
@@ -339,6 +349,7 @@
   <script src="/js/network.js"></script>
   <script src="/js/render.js"></script>
   <script src="/js/controls.js"></script>
+  <script src="/js/imgflip.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

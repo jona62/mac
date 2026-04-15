@@ -375,7 +375,7 @@ function populateSelectOptions() {
 // ── UI chrome ──
 
 function bindSidebarTabs() {
-  // Left sidebar: Assets / Presets
+  // Left sidebar: Assets / Imgflip / Presets
   const left = $("sidebarLeft");
   if (left) {
     left.querySelector(".sidebar__head").addEventListener("click", (e) => {
@@ -383,7 +383,13 @@ function bindSidebarTabs() {
       left.querySelectorAll(".sidebar-tab").forEach((t) => t.classList.remove("is-active"));
       tab.classList.add("is-active");
       left.querySelectorAll(".sidebar__pane").forEach((p) => { p.hidden = p.dataset.pane !== tab.dataset.tab; });
+      // Lazy-load Imgflip memes on first tab click
+      if (tab.dataset.tab === "imgflip") loadImgflipMemes();
     });
+    // Imgflip grid click → import and use
+    $("imgflipGrid").addEventListener("click", onImgflipPick);
+    // Search filter
+    $("imgflipSearch").addEventListener("input", (e) => renderImgflipGrid(e.target.value));
   }
   // Right sidebar: Slot / Scene / Document
   const right = $("sidebarRight");

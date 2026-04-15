@@ -218,6 +218,12 @@ body {
 
 .upload-btn { cursor: pointer; }
 
+.imgflip-search {
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+}
+
 .sb-badge {
   font-family: var(--mono);
   font-size: 0.65rem;
