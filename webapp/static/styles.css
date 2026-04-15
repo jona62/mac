@@ -530,8 +530,11 @@ body {
 
 .dock__script.is-fullscreen .code-editor {
   flex: 1;
+  min-height: 0;
   max-height: none;
+  overflow: auto;
   border-radius: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Syntax highlighting token colors */
