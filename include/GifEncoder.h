@@ -13,7 +13,8 @@ namespace meme {
     class GifEncoder {
     public:
         GifEncoder(const std::string& outputPath, int width, int height)
-            : width(width), height(height), firstFrame(true), fp(nullptr) {
+            : width(width > 0 ? width : 1), height(height > 0 ? height : 1), firstFrame(true), fp(nullptr) {
+            if (width <= 0 || height <= 0 || static_cast<long>(width) * height > 16000000L) return;  // 16MP max
             fp = std::fopen(outputPath.c_str(), "wb");
             if (!fp) return;
 

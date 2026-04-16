@@ -687,7 +687,11 @@ shared_ptr<Expr<T>> Parser::saveExpr() {
 
 template <typename T>
 shared_ptr<Expr<T>> Parser::expression() {
-    return saveExpr<T>();
+    if (++nestingDepth > MAX_NESTING)
+        throw ParseError(peek(), "Expression nesting too deep.");
+    auto result = saveExpr<T>();
+    --nestingDepth;
+    return result;
 }
 
 // --- Mac v2 syntax parsing ---

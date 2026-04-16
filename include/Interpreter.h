@@ -150,6 +150,8 @@ namespace interpreter {
                     return std::get<double>(left) * std::get<double>(right);
                 case token::TokenType::PERCENT:
                     checkNumberOperands(expr->operatorToken, left, right);
+                    if (std::get<double>(right) == 0)
+                        throw errors::RuntimeError(expr->operatorToken, "Modulo by zero.");
                     return std::fmod(std::get<double>(left), std::get<double>(right));
                 case token::TokenType::PLUS:
                     if (std::holds_alternative<double>(left) && std::holds_alternative<double>(right)) {

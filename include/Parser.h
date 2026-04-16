@@ -19,9 +19,12 @@ namespace parser {
         template <typename T>
         std::vector<shared_ptr<stmt::Stmt<T>>> parse();
 
+        static constexpr int MAX_NESTING = 512;
+
     private:
         const std::vector<Token>& tokens;
         size_t current;
+        int nestingDepth = 0;
 
         bool isAtEnd();
         const Token& advance();

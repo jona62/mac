@@ -81,8 +81,9 @@ namespace callable {
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
             auto str = std::get<std::string>(args[0]);
-            int start = static_cast<int>(std::get<double>(args[1]));
-            int len = static_cast<int>(std::get<double>(args[2]));
+            int start = std::max(0, static_cast<int>(std::get<double>(args[1])));
+            int len = std::max(0, static_cast<int>(std::get<double>(args[2])));
+            if (start >= static_cast<int>(str.size())) return std::string("");
             return str.substr(start, len);
         }
         int arity() override { return 3; }

@@ -586,6 +586,7 @@ namespace meme {
             std::ifstream f(path, std::ios::binary | std::ios::ate);
             if (!f.is_open()) return {};
             auto size = f.tellg();
+            if (size < 0 || static_cast<size_t>(size) > 50 * 1024 * 1024) return {};  // 50MB max
             f.seekg(0, std::ios::beg);
             std::vector<unsigned char> buf(static_cast<size_t>(size));
             f.read(reinterpret_cast<char*>(buf.data()), size);
