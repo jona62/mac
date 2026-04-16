@@ -138,8 +138,8 @@ function renderPosOverlay() {
   const img = $("stageImage");
   if (!overlay) return;
 
-  // Hide overlay when a rendered image is showing or during render
-  if (state.isPreviewing || state.stageAssetUrl) { overlay.innerHTML = ""; return; }
+  // Overlay is only for future drag-to-edit mode — always hidden during normal use
+  overlay.innerHTML = ""; return;
 
   const slot = selectedSlot();
   const layers = slot ? (slot.textLayers || []) : [];
