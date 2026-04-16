@@ -128,7 +128,12 @@ namespace runner {
                 if (line == "exit") break;
                 ss << line << '\n';
             }
-            rt.run(ss.str());
+            auto src = ss.str();
+            // Auto-append semicolon for simple expressions
+            auto trimmed = src;
+            while (!trimmed.empty() && std::isspace(static_cast<unsigned char>(trimmed.back()))) trimmed.pop_back();
+            if (!trimmed.empty() && trimmed.back() != ';' && trimmed.back() != '}') src += ";";
+            rt.run(src);
             return;
         }
 
@@ -163,6 +168,10 @@ namespace runner {
                 braceDepth = 0;
                 bracketDepth = 0;
                 parenDepth = 0;
+                // Auto-append semicolon for simple expressions
+                auto trimBuf = buffer;
+                while (!trimBuf.empty() && std::isspace(static_cast<unsigned char>(trimBuf.back()))) trimBuf.pop_back();
+                if (!trimBuf.empty() && trimBuf.back() != ';' && trimBuf.back() != '}') buffer += ";";
                 rt.run(buffer);
                 buffer.clear();
             }

@@ -313,8 +313,9 @@ const token::Token& Parser::advance() {
 
 const token::Token& Parser::peek() {
     if (current >= tokens.size()) {
-        std::cerr << "Error: Attempt to access out-of-bounds token at index " << current << std::endl;
-        exit(EXIT_FAILURE);
+        // Return a synthetic EOF token instead of crashing
+        static const token::Token eof(token::TokenType::END_OF_FILE, token::TokenValue(std::string("")), 0);
+        return eof;
     }
     return tokens[current];
 }
