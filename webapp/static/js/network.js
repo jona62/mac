@@ -1,5 +1,9 @@
 // Mac Studio — Network: preview, export, metadata loading
 
+function sessionHeaders(extra = {}) {
+  return { "X-Session-Id": SESSION_ID, ...extra };
+}
+
 async function safeJson(res) {
   try { return await res.json(); }
   catch (_) { throw new Error(`Server error (${res.status})`); }
@@ -7,7 +11,7 @@ async function safeJson(res) {
 
 async function loadMetadata() {
   try {
-    const res = await fetch("/api/templates");
+    const res = await fetch("/api/templates", { headers: sessionHeaders() });
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Could not load studio metadata.");
     state.metadata.templates = data.templates || [];
@@ -89,7 +93,7 @@ async function requestPreview() {
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sessionHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -144,7 +148,7 @@ async function exportDocument() {
   try {
     const res = await fetch("/api/generate", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sessionHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(buildPayload()),
     });
     const data = await safeJson(res);

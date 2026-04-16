@@ -598,7 +598,7 @@ async function onImageUpload(e) {
   setStatus("Uploading image…", "", "normal");
   renderStatus();
   try {
-    const res = await fetch("/api/upload", { method: "POST", body: form });
+    const res = await fetch("/api/upload", { method: "POST", headers: sessionHeaders(), body: form });
     const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Upload failed.");
     state.metadata.templates.push({
@@ -630,7 +630,7 @@ async function onDeleteUpload(templateId) {
   try {
     const res = await fetch("/api/upload/delete", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: sessionHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ templateId }),
     });
     const data = await safeJson(res);
@@ -852,7 +852,7 @@ function bindScriptEditor() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: sessionHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ rawScript: script }),
       });
       const data = await safeJson(res);

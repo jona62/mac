@@ -41,6 +41,17 @@ const FALLBACK_STYLE_PRESETS = [
 ];
 
 const $ = (id) => document.getElementById(id);
+
+// Persistent anonymous session ID — scopes uploads per browser
+function getSessionId() {
+  let id = localStorage.getItem("mac_session_id");
+  if (!id) {
+    id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("mac_session_id", id);
+  }
+  return id;
+}
+const SESSION_ID = getSessionId();
 const TEXT_LAYER_ANCHORS = ["top", "center", "bottom"];
 
 const state = {

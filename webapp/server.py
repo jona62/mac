@@ -677,13 +677,18 @@ def build_slot_expr(slot: dict[str, object], scene_index: int, slot_index: int, 
     # User uploads use @"absolute/path" syntax; built-in templates use @identifier
     tid = slot["templateId"]
     if tid.startswith("user."):
-        # Resolve to absolute path
+        # Resolve to absolute path — search all session upload dirs
         stem = tid.removeprefix("user.")
         upload_path = None
         if UPLOADS_DIR.is_dir():
-            for f in UPLOADS_DIR.iterdir():
-                if f.stem == stem:
-                    upload_path = str(f.resolve())
+            for session_dir in UPLOADS_DIR.iterdir():
+                if not session_dir.is_dir():
+                    continue
+                for f in session_dir.iterdir():
+                    if f.stem == stem:
+                        upload_path = str(f.resolve())
+                        break
+                if upload_path:
                     break
         tmpl_ref = f'@"{upload_path or tid}"' if upload_path else f"@{tid}"
     else:
@@ -897,6 +902,21 @@ def cleanup_mac_temp_files() -> None:
 ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".ico", ".heic", ".heif", ".avif"}
 # SVG, HTML, XML blocked — can contain embedded JavaScript (XSS)
 
+SESSION_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{8,64}$")
+
+
+def get_session_id(handler: BaseHTTPRequestHandler) -> str:
+    """Extract and validate session ID from X-Session-Id header."""
+    sid = str(handler.headers.get("X-Session-Id", "")).strip()
+    if not sid or not SESSION_ID_RE.match(sid):
+        return "default"
+    return sid
+
+
+def session_uploads_dir(session_id: str) -> Path:
+    """Return the upload directory for a session."""
+    return UPLOADS_DIR / session_id
+
 
 def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
     """Accept an image upload, save to uploads/, return template info."""
@@ -960,10 +980,12 @@ def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
     if ext not in ALLOWED_IMAGE_EXTS:
         raise ValueError(f"Unsupported format '{ext}'. Use PNG, JPG, GIF, or WebP.")
 
-    # Save with unique name
+    # Save with unique name in session-scoped directory
+    session_id = get_session_id(handler)
+    upload_dir = session_uploads_dir(session_id)
     safe_name = f"upload-{uuid.uuid4().hex[:10]}{ext}"
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-    dest = UPLOADS_DIR / safe_name
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / safe_name
     dest.write_bytes(file_data)
 
     cleanup_uploads_dir()
@@ -973,16 +995,17 @@ def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
         "ok": True,
         "templateId": template_id,
         "name": Path(filename).stem.replace("_", " ").title(),
-        "previewUrl": f"/uploads/{safe_name}",
+        "previewUrl": f"/uploads/{session_id}/{safe_name}",
     }
 
 
-def get_uploaded_templates() -> list[dict[str, str]]:
-    """Return uploaded images as template catalog entries."""
-    if not UPLOADS_DIR.is_dir():
+def get_uploaded_templates(session_id: str = "default") -> list[dict[str, str]]:
+    """Return uploaded images for a specific session."""
+    upload_dir = session_uploads_dir(session_id)
+    if not upload_dir.is_dir():
         return []
     templates = []
-    for img in sorted(UPLOADS_DIR.iterdir()):
+    for img in sorted(upload_dir.iterdir()):
         if img.suffix.lower() not in ALLOWED_IMAGE_EXTS:
             continue
         templates.append({
@@ -990,36 +1013,41 @@ def get_uploaded_templates() -> list[dict[str, str]]:
             "name": img.stem.replace("upload-", "").replace("_", " ").title(),
             "description": "User uploaded image",
             "bestFor": "Custom templates and personal images.",
-            "previewUrl": f"/uploads/{img.name}",
+            "previewUrl": f"/uploads/{session_id}/{img.name}",
             "category": "uploads",
         })
     return templates
 
 
 def cleanup_uploads_dir() -> None:
-    """Delete expired uploads and keep only the newest MAX_UPLOADS."""
+    """Delete expired uploads and keep only the newest MAX_UPLOADS per session."""
     if not UPLOADS_DIR.is_dir():
         return
     now = time.time()
-    files = []
-    for p in UPLOADS_DIR.iterdir():
-        if not p.is_file():
+    for session_dir in list(UPLOADS_DIR.iterdir()):
+        if not session_dir.is_dir():
+            # Legacy flat file — delete
+            session_dir.unlink(missing_ok=True)
             continue
-        try:
-            stat = p.stat()
-        except FileNotFoundError:
-            continue
-        # Delete uploads older than TTL
-        if now - stat.st_mtime > MAX_UPLOAD_AGE:
-            p.unlink(missing_ok=True)
-            continue
-        files.append((stat.st_mtime, p))
-    # Cap total count
-    if len(files) <= MAX_UPLOADS:
-        return
-    files.sort(key=lambda item: item[0], reverse=True)
-    for _, old in files[MAX_UPLOADS:]:
-        old.unlink(missing_ok=True)
+        files = []
+        for p in session_dir.iterdir():
+            if not p.is_file():
+                continue
+            try:
+                stat = p.stat()
+            except FileNotFoundError:
+                continue
+            if now - stat.st_mtime > MAX_UPLOAD_AGE:
+                p.unlink(missing_ok=True)
+                continue
+            files.append((stat.st_mtime, p))
+        if len(files) > MAX_UPLOADS:
+            files.sort(key=lambda item: item[0], reverse=True)
+            for _, old in files[MAX_UPLOADS:]:
+                old.unlink(missing_ok=True)
+        # Remove empty session dirs
+        if not any(session_dir.iterdir()):
+            session_dir.rmdir()
 
 
 def cleanup_generated_dir() -> None:
@@ -1232,7 +1260,7 @@ class GifStudioHandler(BaseHTTPRequestHandler):
             json_response(
                 self,
                 {
-                    "templates": TEMPLATE_CATALOG + get_uploaded_templates(),
+                    "templates": TEMPLATE_CATALOG + get_uploaded_templates(get_session_id(self)),
                     "effects": [
                         {key: value for key, value in effect.items() if key != "expression"}
                         for effect in EFFECT_CATALOG
@@ -1311,9 +1339,11 @@ class GifStudioHandler(BaseHTTPRequestHandler):
                 if not template_id.startswith("user."):
                     raise ValueError("Can only delete user uploads.")
                 stem = template_id.removeprefix("user.")
+                session_id = get_session_id(self)
+                upload_dir = session_uploads_dir(session_id)
                 deleted = False
-                if UPLOADS_DIR.is_dir():
-                    for f in UPLOADS_DIR.iterdir():
+                if upload_dir.is_dir():
+                    for f in upload_dir.iterdir():
                         if f.stem == stem:
                             f.unlink(missing_ok=True)
                             deleted = True
