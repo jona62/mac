@@ -50,8 +50,11 @@ function markLegacyBackendIfNeeded(errorMessage) {
 
 function schedulePreview(delay = 320, immediateMessage = false) {
   clearTimeout(state.previewTimer);
+  // Multi-scene GIFs are expensive — don't auto-render, wait for manual Preview click
+  if (state.scenes.length > 1 && !immediateMessage) return;
   if (immediateMessage) {
-    setStatus("Rendering selected scene…", "Generating a still preview for the active scene.", "normal");
+    const label = state.scenes.length > 1 ? "Rendering GIF…" : "Rendering preview…";
+    setStatus(label, "", "normal");
     renderStatus();
   }
   state.previewTimer = window.setTimeout(() => requestPreview(), delay);
