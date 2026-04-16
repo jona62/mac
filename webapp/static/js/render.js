@@ -394,15 +394,10 @@ function renderStage() {
 
   const compact = window.innerWidth < 800;
   $("stageLabel").textContent = hasAsset ? state.stageLabel : "Click Preview to render";
-  const isMulti = state.scenes.length > 1;
   $("refreshPreviewBtn").disabled = state.isPreviewing;
-  if (state.isPreviewing) {
-    $("refreshPreviewBtn").textContent = "Rendering…";
-  } else if (isMulti) {
-    $("refreshPreviewBtn").textContent = compact ? "Render" : "Render GIF";
-  } else {
-    $("refreshPreviewBtn").textContent = compact ? "Refresh" : "Refresh";
-  }
+  $("refreshPreviewBtn").textContent = state.isPreviewing
+    ? "Rendering…"
+    : (compact ? "Refresh" : "Refresh Preview");
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
 
