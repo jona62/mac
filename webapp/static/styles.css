@@ -582,7 +582,10 @@ body {
   position: absolute;
   inset: 0;
   z-index: 5;
+  transition: opacity 0.2s;
 }
+
+.pos-overlay:empty { opacity: 0; }
 
 .pos-label,
 .pos-editor {

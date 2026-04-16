@@ -136,7 +136,7 @@ function renderTextLayerEditor() {
 function renderPosOverlay() {
   const overlay = $("posOverlay");
   const img = $("stageImage");
-  if (!overlay || !img || img.hidden) {
+  if (!overlay || !img || img.hidden || state.isPreviewing) {
     if (overlay) overlay.innerHTML = "";
     return;
   }
