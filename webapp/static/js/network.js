@@ -48,30 +48,40 @@ function markLegacyBackendIfNeeded(errorMessage) {
   return false;
 }
 
-function schedulePreview(delay = 320, immediateMessage = false) {
+function schedulePreview(delay = 320, immediateMessage = false, force = false) {
   clearTimeout(state.previewTimer);
+  if (!force && state.previewMode !== "live") return;
   if (immediateMessage) {
-    setStatus("Refreshing preview…", "Rendering the selected scene through Mac.", "normal");
+    setStatus("Rendering selected scene…", "Generating a still preview for the active scene.", "normal");
     renderStatus();
   }
-  state.previewTimer = window.setTimeout(() => requestPreview(), delay);
+  state.previewTimer = window.setTimeout(() => requestPreview(force), delay);
 }
 
-async function requestPreview() {
-  if (state.backendCompatibility !== "studio") { applyLegacyBackendWarning(); renderAll(); return; }
+async function requestPreview(force = false) {
+  if (state.backendCompatibility !== "studio") {
+    applyLegacyBackendWarning();
+    renderAll();
+    return;
+  }
+  if (!force && state.previewMode !== "live") return;
 
-  const isMultiScene = state.scenes.length > 1;
-  const payload = buildPayload(isMultiScene ? {} : { previewSceneIndex: state.selectedSceneIndex });
+  if (state.previewAbortController) state.previewAbortController.abort();
+  const controller = new AbortController();
+  state.previewAbortController = controller;
+
+  const payload = buildPayload({ previewSceneIndex: state.selectedSceneIndex });
   const requestId = ++state.previewSeq;
   state.isPreviewing = true;
-  setStatus("Refreshing preview…",
-    isMultiScene ? `Rendering ${state.scenes.length}-scene GIF.` : "Rendering the selected scene.", "normal");
+  setStatus("Rendering selected scene…", "The stage preview is always a still PNG, even for GIF documents.", "normal");
   renderStatus();
 
   try {
     const res = await fetch("/api/generate", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
     const data = await res.json();
     if (requestId !== state.previewSeq) return;
@@ -80,24 +90,43 @@ async function requestPreview() {
     state.script = data.script || state.script;
     state.stageMode = "preview";
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-    state.stageLabel = isMultiScene
-      ? `${state.scenes.length}-scene GIF preview`
-      : `Scene ${state.selectedSceneIndex + 1} preview`;
+    state.stageLabel = `Scene ${state.selectedSceneIndex + 1} still`;
+    state.lastPreviewSceneIndex = state.selectedSceneIndex;
     const summary = data.summary || {};
-    setStatus("Scene preview ready.",
-      `${layoutName(selectedScene().layout.kind) || "Scene"} · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} preview`, "normal");
+    const modeCopy = state.previewMode === "live"
+      ? "Live preview is on."
+      : "Live preview is paused until you start it again.";
+    setStatus(
+      "Scene preview ready.",
+      `${layoutName(selectedScene().layout.kind) || "Scene"} · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} · ${modeCopy}`,
+      "normal"
+    );
   } catch (error) {
     if (requestId !== state.previewSeq) return;
+    if (error && error.name === "AbortError") {
+      if (state.previewMode === "paused") {
+        setStatus("Preview paused.", "The last rendered still stays on stage until you start preview again.", "normal");
+      }
+      return;
+    }
     if (!markLegacyBackendIfNeeded(error.message)) {
-      setStatus(error.message, "Preview failed. Fix the document or try exporting after the next edit.", "error");
+      setStatus(error.message, "Preview failed. Fix the document or try starting preview again.", "error");
     }
   } finally {
-    if (requestId === state.previewSeq) { state.isPreviewing = false; renderAll(); }
+    if (requestId === state.previewSeq) {
+      state.isPreviewing = false;
+      if (state.previewAbortController === controller) state.previewAbortController = null;
+      renderAll();
+    }
   }
 }
 
 async function exportDocument() {
-  if (state.backendCompatibility !== "studio") { applyLegacyBackendWarning(); renderAll(); return; }
+  if (state.backendCompatibility !== "studio") {
+    applyLegacyBackendWarning();
+    renderAll();
+    return;
+  }
 
   state.isExporting = true;
   setStatus("Exporting document…", "Rendering the full studio document.", "normal");
@@ -105,7 +134,8 @@ async function exportDocument() {
 
   try {
     const res = await fetch("/api/generate", {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(buildPayload()),
     });
     const data = await res.json();
@@ -117,8 +147,11 @@ async function exportDocument() {
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
     const summary = data.summary || {};
     state.stageLabel = `Exported ${String(summaryValue(summary, "format", "")).toUpperCase()} document`;
-    setStatus("Export complete.",
-      `${summaryValue(summary, "frameCount", 1)} frame(s) · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} · ${String(summaryValue(summary, "format", "")).toUpperCase()}`, "normal");
+    setStatus(
+      "Export complete.",
+      `${summaryValue(summary, "frameCount", 1)} frame(s) · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} · ${String(summaryValue(summary, "format", "")).toUpperCase()}`,
+      "normal"
+    );
 
     if (data.downloadUrl) {
       const a = document.createElement("a");

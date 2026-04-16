@@ -345,8 +345,10 @@ namespace meme {
                 if (pt.content.empty()) continue;
                 // Render at the specified position — use a small region around the point
                 int regionH = h / 4;  // use 25% of image height for font sizing
+                TextStyle positionedStyle = activeStyle;
+                if (pt.fontSizeOverride != 0) positionedStyle.fontSizeOverride = pt.fontSizeOverride;
                 drawMemeText(pixels, w, h, fontInfo, fontData, pt.content,
-                             pt.y - regionH / 2, regionH, activeStyle, textLayoutCache, 0,
+                             pt.y - regionH / 2, regionH, positionedStyle, textLayoutCache, 0,
                              pt.x);
             }
 

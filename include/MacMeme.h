@@ -26,6 +26,7 @@ namespace meme {
     struct PositionedText {
         std::string content;
         int x = 0, y = 0;  // pixel coordinates from top-left
+        float fontSizeOverride = 0;
     };
 
     // Forward declare MemeRenderer -- included only in method bodies below

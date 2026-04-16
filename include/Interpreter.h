@@ -588,23 +588,44 @@ namespace interpreter {
                 auto key = std::get<std::string>(expr->entries[ei].key.lexeme);
 
                 if (key == "text") {
-                    // Positioned text: look ahead for x and y
+                    // Positioned text: look ahead for x, y, and optional fontSize
                     auto textVal = evaluate(expr->entries[ei].value);
                     auto content = std::get<std::string>(textVal);
                     int px = 0, py = 0;
-                    if (ei + 1 < expr->entries.size()) {
+                    float fontSizeOverride = 0;
+                    while (ei + 1 < expr->entries.size()) {
                         auto nk = std::get<std::string>(expr->entries[ei + 1].key.lexeme);
-                        if (nk == "x") { px = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value))); ei++; }
+                        if (nk == "x") {
+                            px = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value)));
+                            ei++;
+                            continue;
+                        }
+                        if (nk == "y") {
+                            py = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value)));
+                            ei++;
+                            continue;
+                        }
+                        if (nk == "fontSize") {
+                            auto fontSizeVal = evaluate(expr->entries[ei + 1].value);
+                            if (std::holds_alternative<std::string>(fontSizeVal)) {
+                                auto fontSize = std::get<std::string>(fontSizeVal);
+                                if (fontSize == "sm") fontSizeOverride = -1;
+                                else if (fontSize == "md") fontSizeOverride = -2;
+                                else if (fontSize == "lg") fontSizeOverride = -3;
+                                else if (fontSize == "xlg") fontSizeOverride = -4;
+                            } else if (std::holds_alternative<double>(fontSizeVal)) {
+                                fontSizeOverride = static_cast<float>(std::get<double>(fontSizeVal));
+                            }
+                            ei++;
+                            continue;
+                        }
+                        break;
                     }
-                    if (ei + 1 < expr->entries.size()) {
-                        auto nk = std::get<std::string>(expr->entries[ei + 1].key.lexeme);
-                        if (nk == "y") { py = static_cast<int>(std::get<double>(evaluate(expr->entries[ei + 1].value))); ei++; }
-                    }
-                    positionedTexts.push_back({content, px, py});
+                    positionedTexts.push_back({content, px, py, fontSizeOverride});
                     continue;
                 }
 
-                if (key == "x" || key == "y") continue; // consumed by text above
+                if (key == "x" || key == "y" || key == "fontSize") continue; // consumed by text above
 
                 auto textVal = evaluate(expr->entries[ei].value);
                 MacValue position;
@@ -661,6 +682,13 @@ namespace interpreter {
                     map->set("content", MacValue(pt.content));
                     map->set("x", MacValue(static_cast<double>(pt.x)));
                     map->set("y", MacValue(static_cast<double>(pt.y)));
+                    if (pt.fontSizeOverride != 0) {
+                        if (pt.fontSizeOverride == -1) map->set("fontSize", MacValue(std::string("sm")));
+                        else if (pt.fontSizeOverride == -2) map->set("fontSize", MacValue(std::string("md")));
+                        else if (pt.fontSizeOverride == -3) map->set("fontSize", MacValue(std::string("lg")));
+                        else if (pt.fontSizeOverride == -4) map->set("fontSize", MacValue(std::string("xlg")));
+                        else map->set("fontSize", MacValue(static_cast<double>(pt.fontSizeOverride)));
+                    }
                     arr->elements.push_back(MacValue(map));
                 }
                 token::Token ptTok(token::TokenType::IDENTIFIER,

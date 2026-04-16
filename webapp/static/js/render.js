@@ -15,7 +15,6 @@ function renderEffectChain() {
     </div>`;
   }).join("");
 
-  // Populate the add dropdown
   const sel = $("addEffectSelect");
   if (sel) {
     const defs = state.metadata.effectDefinitions || [];
@@ -27,45 +26,167 @@ function renderEffectChain() {
   }
 }
 
+function renderInspectorMeta() {
+  const scene = selectedScene();
+  const slot = selectedSlot();
+  if (!scene || !slot) return;
+
+  $("slotMeta").textContent = `Slot ${state.selectedSlotIndex + 1} of ${scene.slots.length}`;
+  $("slotTemplateLabel").textContent = templateName(slot.templateId);
+  $("slotHint").textContent = scene.slots.length > 1
+    ? "Select a slot here, or click directly into a cell on the stage to make that slot active."
+    : "Canvas text you place on the stage stays tied to this slot and inherits its style.";
+
+  const selectedLayer = selectedTextLayer();
+  const layerCount = (slot.textLayers || []).length;
+  $("textLayerMeta").textContent = selectedLayer
+    ? `${layerDisplayName(selectedLayer)} active`
+    : `${layerCount} layer${layerCount === 1 ? "" : "s"}`;
+}
+
+function renderTextLayerList() {
+  const list = $("textLayerList");
+  if (!list) return;
+  const slot = selectedSlot();
+  const layers = slot ? (slot.textLayers || []) : [];
+  if (!layers.length) {
+    list.innerHTML = '<p class="empty-state empty-state--inline">No text yet. Click the stage or use one of the quick-add buttons.</p>';
+    return;
+  }
+
+  list.innerHTML = layers.map((layer) => {
+    const active = layer.id === state.selectedTextLayerId;
+    const editing = layer.id === state.editingTextLayerId;
+    const fontBadge = layer.fontSizeMode
+      ? (layer.fontSizeMode === "custom" ? `${Math.round(layer.fontSizePx || 64)}px` : layer.fontSizeMode.toUpperCase())
+      : "Slot";
+    return `<div class="text-layer-row${active ? " is-active" : ""}${editing ? " is-editing" : ""}">
+      <button class="text-layer-row__main" type="button" data-text-layer-select="${escAttr(layer.id)}">
+        <span class="text-layer-row__eyebrow">${esc(layerDisplayName(layer))}</span>
+        <span class="text-layer-row__summary">${esc(layerSummary(layer))}</span>
+      </button>
+      <div class="text-layer-row__meta">
+        <span class="text-layer-row__badge">${esc(fontBadge)}</span>
+        <button class="text-layer-row__icon" type="button" data-text-layer-edit="${escAttr(layer.id)}" title="Edit layer">Edit</button>
+        <button class="text-layer-row__icon" type="button" data-text-layer-delete="${escAttr(layer.id)}" title="Delete layer">×</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function textLayerFontSizeOptions(selectedMode) {
+  const options = ['<option value="">Match slot style</option>'];
+  FONT_SIZE_OPTIONS.forEach((option) => {
+    options.push(
+      `<option value="${escAttr(option.id)}"${option.id === selectedMode ? " selected" : ""}>${esc(option.label)}</option>`
+    );
+  });
+  return options.join("");
+}
+
+function renderTextLayerEditor() {
+  const editor = $("textLayerEditor");
+  if (!editor) return;
+  const layer = selectedTextLayer();
+  if (!layer) {
+    editor.innerHTML = '<p class="empty-state empty-state--inline">Choose a text layer to edit it here, or click the canvas to create a new one.</p>';
+    return;
+  }
+
+  const bounds = selectedSlotCanvasRect();
+  const local = textLayerLocalPoint(layer, bounds);
+  const isFree = layer.kind === "free";
+  const showCustomSize = layer.fontSizeMode === "custom";
+
+  editor.innerHTML = `
+    <div class="text-layer-editor__card">
+      <div class="text-layer-editor__topline">
+        <div>
+          <p class="text-layer-editor__eyebrow">${esc(layerDisplayName(layer))}</p>
+          <p class="text-layer-editor__sub">${isFree ? "Free-position text" : "Anchored text"}${isFree ? "" : " — drag it on the stage to convert it into a free layer."}</p>
+        </div>
+        <button class="btn btn--ghost btn--sm" id="deleteTextLayerBtn" type="button">Delete</button>
+      </div>
+      <label class="field">
+        <span class="field__label">Content</span>
+        <textarea id="textLayerContent" rows="3" placeholder="Write directly here or type on the stage.">${esc(layer.content)}</textarea>
+      </label>
+      <div class="text-layer-editor__grid">
+        <label class="field${isFree ? "" : " is-disabled"}">
+          <span class="field__label">X</span>
+          <input type="number" id="textLayerX" min="0" max="${Math.max(1, bounds.width)}" step="1" value="${Math.round(local.x)}" ${isFree ? "" : "disabled"} />
+        </label>
+        <label class="field${isFree ? "" : " is-disabled"}">
+          <span class="field__label">Y</span>
+          <input type="number" id="textLayerY" min="0" max="${Math.max(1, bounds.height)}" step="1" value="${Math.round(local.y)}" ${isFree ? "" : "disabled"} />
+        </label>
+      </div>
+      <label class="field">
+        <span class="field__label">Font Size Override</span>
+        <select id="textLayerFontSizeMode">${textLayerFontSizeOptions(layer.fontSizeMode)}</select>
+      </label>
+      <label class="field" id="textLayerFontSizePxField" ${showCustomSize ? "" : "hidden"}>
+        <span class="field__label">Custom Size (px)</span>
+        <input type="number" id="textLayerFontSizePx" min="${state.metadata.limits.fontSizePx.min}" max="${state.metadata.limits.fontSizePx.max}" step="1" value="${Math.round(layer.fontSizePx || 64)}" />
+      </label>
+    </div>
+  `;
+}
+
 function renderPosOverlay() {
   const overlay = $("posOverlay");
   const img = $("stageImage");
-  if (!overlay || !img || img.hidden) { if (overlay) overlay.innerHTML = ""; return; }
-  const slot = selectedSlot();
-  const pts = slot ? (slot.positionedTexts || []) : [];
-  if (!pts.length) { overlay.innerHTML = ""; return; }
+  if (!overlay || !img || img.hidden) {
+    if (overlay) overlay.innerHTML = "";
+    return;
+  }
 
+  const slot = selectedSlot();
+  const layers = slot ? (slot.textLayers || []) : [];
+  if (!layers.length) {
+    overlay.innerHTML = "";
+    return;
+  }
+
+  const slotRect = selectedSlotCanvasRect();
   const imgRect = img.getBoundingClientRect();
   const stageRect = overlay.parentElement.getBoundingClientRect();
   const offX = imgRect.left - stageRect.left;
   const offY = imgRect.top - stageRect.top;
   const scaleX = imgRect.width / state.canvas.width;
   const scaleY = imgRect.height / state.canvas.height;
+  const style = slot.style || {};
 
-  overlay.innerHTML = pts.map((pt, i) => {
-    const left = offX + pt.x * scaleX;
-    const top = offY + pt.y * scaleY;
-    return `<div class="pos-label" data-pos-index="${i}" style="left:${left}px;top:${top}px">${esc(pt.content || "Text")}</div>`;
+  overlay.innerHTML = layers.map((layer) => {
+    const local = textLayerLocalPoint(layer, slotRect);
+    const left = offX + (slotRect.x + local.x) * scaleX;
+    const top = offY + (slotRect.y + local.y) * scaleY;
+    const isEditing = layer.id === state.editingTextLayerId;
+    const selectedClass = layer.id === state.selectedTextLayerId ? " is-selected" : "";
+    const draggingClass = layer.id === state.draggingTextLayerId ? " is-dragging" : "";
+    const commonStyle = `left:${left}px;top:${top}px;--layer-color:${escAttr(style.color || "#FFFFFF")};--layer-outline:${escAttr(style.outlineColor || "#111111")};`;
+
+    if (isEditing) {
+      return `<textarea class="pos-editor${selectedClass}" data-layer-editor="${escAttr(layer.id)}" style="${commonStyle}" placeholder="Type here">${esc(layer.content)}</textarea>`;
+    }
+
+    return `<button class="pos-label${selectedClass}${draggingClass}" type="button" data-text-layer-id="${escAttr(layer.id)}" style="${commonStyle}">
+      <span class="pos-label__tag">${esc(layerDisplayName(layer))}</span>
+      <span class="pos-label__text">${esc(layer.content || "Text")}</span>
+    </button>`;
   }).join("");
-}
 
-function renderPosTextList() {
-  const list = $("posTextList");
-  if (!list) return;
-  const slot = selectedSlot();
-  const pts = slot ? (slot.positionedTexts || []) : [];
-  list.innerHTML = pts.map((pt, i) =>
-    `<div class="pos-text-item">
-      <input type="text" value="${escAttr(pt.content)}" data-pos-field="content" data-pos-i="${i}" placeholder="Text" />
-      <input type="number" value="${Math.round(pt.x)}" data-pos-field="x" data-pos-i="${i}" step="10" />
-      <input type="number" value="${Math.round(pt.y)}" data-pos-field="y" data-pos-i="${i}" step="10" />
-      <button class="pos-text-item__del" data-pos-del="${i}" type="button">&times;</button>
-    </div>`
-  ).join("");
+  const editor = overlay.querySelector(".pos-editor");
+  if (editor && document.activeElement !== editor) {
+    editor.focus({ preventScroll: true });
+    const length = editor.value.length;
+    editor.setSelectionRange(length, length);
+  }
 }
 
 function renderAll() {
   ensureOutputCompatibility(false);
+  ensureTextLayerSelection();
   renderStats();
   renderTemplateGrids();
   renderLayoutGrid();
@@ -74,7 +195,6 @@ function renderAll() {
   renderSlotTabs();
   renderInspector();
   renderEffectChain();
-  renderPosTextList();
   renderStage();
   renderScript();
   renderStatus();
@@ -145,7 +265,6 @@ function renderPresetGrid() {
 function renderSceneStrip() {
   const parts = [];
   state.scenes.forEach((scene, i) => {
-    // Transition connector between scenes
     if (i > 0) {
       const trans = scene.transition || { type: "cut", durationMs: 150, easing: "linear" };
       const label = trans.type === "cut" ? "cut" : trans.type;
@@ -153,7 +272,6 @@ function renderSceneStrip() {
         <span class="transition-pip__label">${esc(label)}</span>
       </button>`);
     }
-    // Scene pill
     const active = i === state.selectedSceneIndex;
     parts.push(`<button class="scene-card${active ? " is-active" : ""}" type="button" data-scene-action="select" data-scene-index="${i}">
       <span class="scene-card__label">Scene ${i + 1}</span>
@@ -164,7 +282,7 @@ function renderSceneStrip() {
       </span>
     </button>`);
   });
-  // Loop-back transition pip after last scene (only for multi-scene)
+
   if (state.scenes.length > 1) {
     const last = state.scenes[state.scenes.length - 1];
     const loopTrans = last.transition || { type: "cut", durationMs: 150, easing: "linear" };
@@ -179,13 +297,15 @@ function renderSceneStrip() {
 
 function sceneLeadText(scene) {
   const first = scene.slots[0];
-  const snippets = [first.text.top, first.text.center, first.text.bottom].filter(Boolean);
-  return snippets[0] || "Empty scene";
+  return slotTextPreview(first) || "Empty scene";
 }
 
 function renderSlotTabs() {
   const scene = selectedScene();
-  if (!scene) { $("slotTabs").innerHTML = ""; return; }
+  if (!scene) {
+    $("slotTabs").innerHTML = "";
+    return;
+  }
   $("slotTabs").innerHTML = scene.slots.map((slot, i) => `
     <button class="slot-tab${i === state.selectedSlotIndex ? " is-active" : ""}" type="button" data-slot-index="${i}">
       <span class="slot-tab__label">Slot ${i + 1}</span>
@@ -208,14 +328,9 @@ function renderInspector() {
   $("sceneBorderInput").value = scene.layout.border;
   $("sceneEffectSelect").value = scene.layout.effect;
 
-  $("slotMeta").textContent = `Slot ${state.selectedSlotIndex + 1} of ${scene.slots.length}`;
-  $("slotTemplateLabel").textContent = templateName(slot.templateId);
-  $("slotHint").textContent = scene.slots.length > 1
-    ? "Choose Slot 1-4 here, then click a template or meme image on the left to place it into that grid cell."
-    : "Templates and meme images you click on the left apply to the currently selected slot.";
-  $("slotTopText").value = slot.text.top;
-  $("slotCenterText").value = slot.text.center;
-  $("slotBottomText").value = slot.text.bottom;
+  renderInspectorMeta();
+  renderTextLayerList();
+  renderTextLayerEditor();
 
   $("slotStylePreset").value = slot.style.preset || "";
   $("slotTextColor").value = normalizeHex(slot.style.color, "#FFFFFF", false);
@@ -248,23 +363,41 @@ function renderInspector() {
 function renderStage() {
   const hasAsset = Boolean(state.stageAssetUrl);
   $("stagePlaceholder").hidden = hasAsset;
-  const oldImg = $("stageImage");
+
+  let img = $("stageImage");
   if (hasAsset) {
-    // Replace <img> element to force GIF animation restart
-    const newImg = document.createElement("img");
-    newImg.id = "stageImage";
-    newImg.alt = "Studio preview";
-    newImg.src = state.stageAssetUrl;
-    oldImg.replaceWith(newImg);
+    if (img.hidden || img.dataset.assetUrl !== state.stageAssetUrl) {
+      const newImg = document.createElement("img");
+      newImg.id = "stageImage";
+      newImg.alt = "Studio preview";
+      newImg.src = state.stageAssetUrl;
+      newImg.dataset.assetUrl = state.stageAssetUrl;
+      img.replaceWith(newImg);
+      img = newImg;
+    } else {
+      img.hidden = false;
+    }
   } else {
-    oldImg.hidden = true;
+    img.hidden = true;
   }
-  $("stageLabel").textContent = state.stageLabel;
+
+  const live = state.previewMode === "live";
   const compact = window.innerWidth < 800;
-  $("refreshPreviewBtn").disabled = state.isPreviewing;
-  $("refreshPreviewBtn").textContent = state.isPreviewing ? "Refreshing…" : (compact ? "Refresh" : "Refresh Preview");
+  $("stageFrame").classList.toggle("is-preview-paused", !live);
+  let stageCopy = state.stageLabel;
+  if (!live && state.stageMode === "preview" && state.lastPreviewSceneIndex != null && state.lastPreviewSceneIndex !== state.selectedSceneIndex) {
+    stageCopy = `Showing Scene ${state.lastPreviewSceneIndex + 1} · Scene ${state.selectedSceneIndex + 1} is paused`;
+  }
+  $("stageLabel").textContent = !hasAsset
+    ? "Waiting for the first still"
+    : live ? `${stageCopy} · Live` : `${stageCopy} · Paused`;
+  $("refreshPreviewBtn").disabled = false;
+  $("refreshPreviewBtn").textContent = live
+    ? (compact ? "Stop" : "Stop Preview")
+    : (compact ? "Start" : "Start Preview");
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
+
   if (state.lastExport && state.lastExport.downloadUrl) {
     $("downloadLink").hidden = false;
     $("downloadLink").href = state.lastExport.downloadUrl;

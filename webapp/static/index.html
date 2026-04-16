@@ -54,7 +54,7 @@
         </div>
       </div>
       <div class="topbar__right">
-        <button class="btn btn--ghost btn--sm" id="refreshPreviewBtn" type="button">Refresh Preview</button>
+        <button class="btn btn--ghost btn--sm" id="refreshPreviewBtn" type="button">Start Preview</button>
         <button class="btn btn--ghost btn--sm mobile-toggle" id="mobileInspectorBtn" type="button">Inspector</button>
         <button class="btn btn--accent btn--sm" id="exportBtn" type="button">Export &amp; Download</button>
         <a id="downloadLink" href="#" download="mac-studio-export" hidden></a>
@@ -118,7 +118,7 @@
         <div class="canvas-area__stage" id="stageFrame">
           <div class="stage-placeholder" id="stagePlaceholder">
             <p class="stage-placeholder__eyebrow">Preview</p>
-            <p class="stage-placeholder__title">Edit a scene and the stage will refresh automatically.</p>
+            <p class="stage-placeholder__title">Click the canvas to place text, then start preview when you want a fresh still.</p>
           </div>
           <img id="stageImage" alt="Studio preview" hidden />
           <div class="pos-overlay" id="posOverlay"></div>
@@ -157,18 +157,21 @@
                   <span class="field__label">Template</span>
                   <div class="readonly-chip" id="slotTemplateLabel">Blank</div>
                 </div>
-                <label class="field">
-                  <span class="field__label">Top Text</span>
-                  <textarea id="slotTopText" rows="2" placeholder="Headline"></textarea>
-                </label>
-                <label class="field">
-                  <span class="field__label">Center Text</span>
-                  <textarea id="slotCenterText" rows="2" placeholder="Center"></textarea>
-                </label>
-                <label class="field">
-                  <span class="field__label">Bottom Text</span>
-                  <textarea id="slotBottomText" rows="2" placeholder="Footer"></textarea>
-                </label>
+                <div class="text-layers">
+                  <div class="text-layers__head">
+                    <span class="field__label">Text Layers</span>
+                    <span class="sb-badge" id="textLayerMeta">Canvas-first</span>
+                  </div>
+                  <p class="help-text text-layers__help">Click the stage to create canvas text. Top, Center, and Bottom stay anchored until you drag them.</p>
+                  <div class="text-layer-quick-add" id="textLayerQuickAdd">
+                    <button class="btn btn--accent btn--sm" type="button" data-text-layer-add="canvas">Canvas Text</button>
+                    <button class="btn btn--ghost btn--sm" type="button" data-text-layer-add="top">Top</button>
+                    <button class="btn btn--ghost btn--sm" type="button" data-text-layer-add="center">Center</button>
+                    <button class="btn btn--ghost btn--sm" type="button" data-text-layer-add="bottom">Bottom</button>
+                  </div>
+                  <div class="text-layer-list" id="textLayerList"></div>
+                  <div class="text-layer-editor" id="textLayerEditor"></div>
+                </div>
               </div>
               <div class="control-group control-group--style">
                 <label class="field">
@@ -223,11 +226,6 @@
                   <input type="number" id="slotFontSizePx" min="8" max="240" step="1" />
                 </label>
               </div>
-              <details class="pos-text-panel">
-                <summary class="pos-text-panel__toggle">Positioned Texts</summary>
-                <div class="pos-text-list" id="posTextList"></div>
-                <button class="btn btn--accent btn--sm" id="addPosTextBtn" type="button">+ Add Text</button>
-              </details>
             </section>
           </div>
 

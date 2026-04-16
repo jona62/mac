@@ -413,6 +413,28 @@ def normalize_style(raw_style: object) -> dict[str, object]:
     }
 
 
+def normalize_positioned_text_font_size(item: dict[str, object], slot_style: dict[str, object]) -> object | None:
+    mode = str(item.get("fontSizeMode") or "").strip().lower()
+    if mode:
+        normalized = normalize_font_size(
+            {
+                "fontSizeMode": mode,
+                "fontSizePx": item.get("fontSizePx"),
+            },
+            slot_style["resolved"],
+        )
+        return normalized
+
+    raw_font_size = item.get("fontSize")
+    if isinstance(raw_font_size, str):
+        stripped = raw_font_size.strip().lower()
+        if stripped in FONT_SIZE_MODES:
+            return stripped
+    if isinstance(raw_font_size, (int, float)) and not isinstance(raw_font_size, bool):
+        return clamp_int(raw_font_size, FONT_SIZE_PX_LIMITS["min"], FONT_SIZE_PX_LIMITS["max"], 64)
+    return None
+
+
 def normalize_slot(raw_slot: object) -> dict[str, object]:
     if not isinstance(raw_slot, dict):
         raise ValueError("Each slot must be an object.")
@@ -424,16 +446,22 @@ def normalize_slot(raw_slot: object) -> dict[str, object]:
     text_payload = raw_slot.get("text")
     text_payload = text_payload if isinstance(text_payload, dict) else {}
 
+    slot_style = normalize_style(raw_slot.get("style"))
+
     pos_texts = []
     raw_pos = raw_slot.get("positionedTexts")
     if isinstance(raw_pos, list):
         for item in raw_pos:
             if isinstance(item, dict) and item.get("content"):
-                pos_texts.append({
+                entry = {
                     "content": normalize_caption(item["content"]),
                     "x": int(item.get("x", 0)),
                     "y": int(item.get("y", 0)),
-                })
+                }
+                font_size = normalize_positioned_text_font_size(item, slot_style)
+                if font_size is not None:
+                    entry["fontSize"] = font_size
+                pos_texts.append(entry)
 
     return {
         "templateId": template_id,
@@ -443,7 +471,7 @@ def normalize_slot(raw_slot: object) -> dict[str, object]:
             "bottom": normalize_caption(text_payload.get("bottom")),
         },
         "positionedTexts": pos_texts,
-        "style": normalize_style(raw_slot.get("style")),
+        "style": slot_style,
     }
 
 
@@ -653,7 +681,18 @@ def build_slot_expr(slot: dict[str, object], scene_index: int, slot_index: int, 
     # Add positioned text entries
     for pt in slot.get("positionedTexts", []):
         if pt.get("content"):
-            entries.append(f"    text: {mac_string_literal(pt['content'])} x: {pt['x']} y: {pt['y']}")
+            parts = [
+                f"text: {mac_string_literal(pt['content'])}",
+                f"x: {pt['x']}",
+                f"y: {pt['y']}",
+            ]
+            if pt.get("fontSize") is not None:
+                font_size = pt["fontSize"]
+                if isinstance(font_size, int):
+                    parts.append(f"fontSize: {font_size}")
+                else:
+                    parts.append(f"fontSize: {mac_string_literal(str(font_size))}")
+            entries.append(f"    {' '.join(parts)}")
 
     if not entries:
         return f"{tmpl_ref} {slot_width}x{slot_height}{style_suffix} {{}}"

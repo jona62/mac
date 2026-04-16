@@ -51,13 +51,136 @@ function createStyle(presetId = "", overrides = {}) {
   return merged;
 }
 
+function createAnchoredTextLayers(text = {}) {
+  return TEXT_LAYER_ANCHORS
+    .filter((anchor) => text[anchor])
+    .map((anchor) => normalizeTextLayer({
+      kind: "anchored",
+      anchor,
+      content: text[anchor],
+    }));
+}
+
+function createFreeTextLayer(x, y, overrides = {}) {
+  let fontSizeMode = overrides.fontSizeMode || "";
+  let fontSizePx = overrides.fontSizePx;
+  if (!fontSizeMode && overrides.fontSize) {
+    if (typeof overrides.fontSize === "number") {
+      fontSizeMode = "custom";
+      fontSizePx = overrides.fontSize;
+    } else if (typeof overrides.fontSize === "string") {
+      fontSizeMode = overrides.fontSize;
+    }
+  }
+  return normalizeTextLayer({
+    kind: "free",
+    x,
+    y,
+    content: overrides.content || "",
+    fontSizeMode,
+    fontSizePx,
+  });
+}
+
 function createSlot(templateId = "blank", text = {}, presetId = "cinematic") {
   return {
     templateId,
-    text: { top: text.top || "", center: text.center || "", bottom: text.bottom || "" },
-    positionedTexts: [],
+    textLayers: createAnchoredTextLayers(text),
     style: createStyle(presetId),
   };
+}
+
+function hydrateSlot(slot = {}) {
+  const textLayers = Array.isArray(slot.textLayers) && slot.textLayers.length
+    ? slot.textLayers.map((layer) => normalizeTextLayer(layer))
+    : [
+        ...createAnchoredTextLayers(slot.text || {}),
+        ...((slot.positionedTexts || []).map((pt) => createFreeTextLayer(pt.x, pt.y, {
+          content: pt.content,
+          fontSizeMode: pt.fontSizeMode || "",
+          fontSizePx: pt.fontSizePx,
+          fontSize: pt.fontSize,
+        }))),
+      ];
+
+  return {
+    templateId: slot.templateId || "blank",
+    textLayers,
+    style: createStyle(slot.style && slot.style.preset || "", slot.style || {}),
+  };
+}
+
+function hydrateScene(scene = {}) {
+  return {
+    durationMs: Number(scene.durationMs) || 420,
+    layout: {
+      kind: scene.layout && scene.layout.kind || "single",
+      padding: scene.layout && Number(scene.layout.padding) || 0,
+      border: scene.layout && Number(scene.layout.border) || 0,
+      effect: scene.layout && scene.layout.effect || "none",
+      customEffects: clone(scene.layout && scene.layout.customEffects || []),
+    },
+    slots: (scene.slots || []).map((slot) => hydrateSlot(slot)),
+    transition: scene.transition ? clone(scene.transition) : null,
+  };
+}
+
+function hydrateDocument(doc = {}) {
+  const hydrated = {
+    canvas: clone(doc.canvas || { width: 720, height: 720 }),
+    output: clone(doc.output || { format: "png" }),
+    scenes: (doc.scenes || []).map((scene) => hydrateScene(scene)),
+  };
+
+  let maxNumericId = 0;
+  hydrated.scenes.forEach((scene) => {
+    scene.slots.forEach((slot) => {
+      slot.textLayers.forEach((layer) => {
+        const match = /^text-layer-(\d+)$/.exec(layer.id);
+        if (match) maxNumericId = Math.max(maxNumericId, Number(match[1]));
+      });
+    });
+  });
+  state.textLayerSeq = Math.max(state.textLayerSeq, maxNumericId + 1);
+  return hydrated;
+}
+
+function serializeSlotTextLayers(slot) {
+  const text = { top: "", center: "", bottom: "" };
+  const positionedTexts = [];
+
+  (slot.textLayers || []).forEach((layer) => {
+    if (!layer.content) return;
+    if (layer.kind === "anchored" && TEXT_LAYER_ANCHORS.includes(layer.anchor)) {
+      text[layer.anchor] = layer.content;
+      return;
+    }
+    const entry = {
+      content: layer.content,
+      x: Math.round(layer.x),
+      y: Math.round(layer.y),
+    };
+    if (layer.fontSizeMode === "custom") {
+      entry.fontSizeMode = "custom";
+      entry.fontSizePx = Math.round(layer.fontSizePx);
+    } else if (layer.fontSizeMode) {
+      entry.fontSizeMode = layer.fontSizeMode;
+    }
+    positionedTexts.push(entry);
+  });
+
+  return { text, positionedTexts };
+}
+
+function cloneSceneWithFreshTextLayerIds(scene) {
+  const cloned = hydrateScene(clone(scene));
+  cloned.slots.forEach((slot) => {
+    slot.textLayers = slot.textLayers.map((layer) => normalizeTextLayer({
+      ...layer,
+      id: nextTextLayerId(),
+    }));
+  });
+  return cloned;
 }
 
 function slotCountForLayout(kind) {
@@ -67,7 +190,7 @@ function slotCountForLayout(kind) {
 
 function createScene(kind = "single", seedSlots = []) {
   const slotCount = slotCountForLayout(kind);
-  const slots = seedSlots.slice(0, slotCount).map((s) => clone(s));
+  const slots = seedSlots.slice(0, slotCount).map((s) => hydrateSlot(clone(s)));
   while (slots.length < slotCount) slots.push(createSlot());
   return {
     durationMs: 420,
@@ -79,7 +202,7 @@ function createScene(kind = "single", seedSlots = []) {
 
 function preserveSlots(existingSlots, layoutKind) {
   const targetCount = slotCountForLayout(layoutKind);
-  const next = existingSlots.slice(0, targetCount).map((s) => clone(s));
+  const next = existingSlots.slice(0, targetCount).map((s) => hydrateSlot(clone(s)));
   while (next.length < targetCount) next.push(createSlot());
   return next;
 }
@@ -214,18 +337,21 @@ function buildPayload(extra = {}) {
       layout: { ...clone(scene.layout), customEffects: scene.layout.customEffects || [] },
       transition: (i > 0 && scene.transition && scene.transition.type !== "cut")
         ? clone(scene.transition) : null,
-      slots: scene.slots.map((slot) => ({
-        templateId: slot.templateId,
-        text: clone(slot.text),
-        positionedTexts: (slot.positionedTexts || []).map((pt) => ({ content: pt.content, x: Math.round(pt.x), y: Math.round(pt.y) })),
-        style: {
-          preset: slot.style.preset || "", color: slot.style.color,
-          outline: slot.style.outline, outlineColor: slot.style.outlineColor,
-          shadow: slot.style.shadow, shadowColor: slot.style.shadowColor,
-          fontSizeMode: slot.style.fontSizeMode, fontSizePx: slot.style.fontSizePx,
-          background: slot.style.background || "",
-        },
-      })),
+      slots: scene.slots.map((slot) => {
+        const serialized = serializeSlotTextLayers(slot);
+        return {
+          templateId: slot.templateId,
+          text: serialized.text,
+          positionedTexts: serialized.positionedTexts,
+          style: {
+            preset: slot.style.preset || "", color: slot.style.color,
+            outline: slot.style.outline, outlineColor: slot.style.outlineColor,
+            shadow: slot.style.shadow, shadowColor: slot.style.shadowColor,
+            fontSizeMode: slot.style.fontSizeMode, fontSizePx: slot.style.fontSizePx,
+            background: slot.style.background || "",
+          },
+        };
+      }),
     })),
     ...extra,
   };

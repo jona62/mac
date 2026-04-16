@@ -41,6 +41,7 @@ const FALLBACK_STYLE_PRESETS = [
 ];
 
 const $ = (id) => document.getElementById(id);
+const TEXT_LAYER_ANCHORS = ["top", "center", "bottom"];
 
 const state = {
   metadata: { templates: [], effects: [], effectDefinitions: [], layouts: [], stylePresets: [], limits: { ...DEFAULT_LIMITS } },
@@ -49,17 +50,24 @@ const state = {
   scenes: [],
   selectedSceneIndex: 0,
   selectedSlotIndex: 0,
+  selectedTextLayerId: null,
+  editingTextLayerId: null,
+  textLayerSeq: 1,
   previewTimer: 0,
   previewSeq: 0,
+  previewMode: "paused",
+  previewAbortController: null,
   stageMode: "preview",
   stageAssetUrl: "",
   stageLabel: "Selected scene preview",
+  lastPreviewSceneIndex: null,
   script: "// Studio script will appear here.\n",
   backendCompatibility: "unknown",
   status: { line: "Loading studio…", meta: "Scene preview is debounced and Mac-powered.", kind: "normal" },
   isPreviewing: false,
   isExporting: false,
   lastExport: null,
+  draggingTextLayerId: null,
 };
 
 // ── Utility helpers ──
@@ -99,6 +107,105 @@ function setStatus(line, meta, kind = "normal") { state.status = { line, meta, k
 
 function selectedScene() { return state.scenes[state.selectedSceneIndex]; }
 function selectedSlot() { const s = selectedScene(); return s ? s.slots[state.selectedSlotIndex] || null : null; }
+function nextTextLayerId() {
+  const id = `text-layer-${state.textLayerSeq}`;
+  state.textLayerSeq += 1;
+  return id;
+}
+function normalizeTextLayer(layer = {}) {
+  return {
+    id: layer.id || nextTextLayerId(),
+    kind: layer.kind === "anchored" ? "anchored" : "free",
+    anchor: TEXT_LAYER_ANCHORS.includes(layer.anchor) ? layer.anchor : null,
+    content: String(layer.content || ""),
+    x: Number.isFinite(Number(layer.x)) ? Number(layer.x) : 0,
+    y: Number.isFinite(Number(layer.y)) ? Number(layer.y) : 0,
+    fontSizeMode: FONT_SIZE_OPTIONS.some((o) => o.id === layer.fontSizeMode) ? layer.fontSizeMode : "",
+    fontSizePx: Number.isFinite(Number(layer.fontSizePx)) ? Number(layer.fontSizePx) : 64,
+  };
+}
+function textLayerById(slot, id = state.selectedTextLayerId) {
+  return (slot && slot.textLayers || []).find((layer) => layer.id === id) || null;
+}
+function selectedTextLayer() { return textLayerById(selectedSlot(), state.selectedTextLayerId); }
+function anchoredLayerForSlot(slot, anchor) {
+  return (slot && slot.textLayers || []).find((layer) => layer.kind === "anchored" && layer.anchor === anchor) || null;
+}
+function slotCanvasRect(layoutKind, slotIndex, canvas = state.canvas) {
+  const width = Number(canvas.width) || 0;
+  const height = Number(canvas.height) || 0;
+  if (layoutKind === "beside") {
+    const slotWidth = Math.max(1, Math.floor(width / 2));
+    return { x: slotIndex === 1 ? slotWidth : 0, y: 0, width: slotWidth, height };
+  }
+  if (layoutKind === "stack") {
+    const slotHeight = Math.max(1, Math.floor(height / 2));
+    return { x: 0, y: slotIndex === 1 ? slotHeight : 0, width, height: slotHeight };
+  }
+  if (layoutKind === "grid2x2") {
+    const slotWidth = Math.max(1, Math.floor(width / 2));
+    const slotHeight = Math.max(1, Math.floor(height / 2));
+    return {
+      x: (slotIndex % 2) * slotWidth,
+      y: Math.floor(slotIndex / 2) * slotHeight,
+      width: slotWidth,
+      height: slotHeight,
+    };
+  }
+  return { x: 0, y: 0, width, height };
+}
+function selectedSlotCanvasRect() {
+  const scene = selectedScene();
+  return slotCanvasRect(scene ? scene.layout.kind : "single", state.selectedSlotIndex, state.canvas);
+}
+function anchorLocalPoint(anchor, bounds) {
+  const width = Math.max(1, Number(bounds && bounds.width) || 0);
+  const height = Math.max(1, Number(bounds && bounds.height) || 0);
+  if (anchor === "top") return { x: Math.round(width / 2), y: Math.round(height * 0.14) };
+  if (anchor === "bottom") return { x: Math.round(width / 2), y: Math.round(height * 0.86) };
+  return { x: Math.round(width / 2), y: Math.round(height / 2) };
+}
+function textLayerLocalPoint(layer, bounds) {
+  if (layer && layer.kind === "anchored" && layer.anchor) {
+    return anchorLocalPoint(layer.anchor, bounds);
+  }
+  return {
+    x: clamp(layer && layer.x, 0, Math.max(1, Number(bounds && bounds.width) || 0)),
+    y: clamp(layer && layer.y, 0, Math.max(1, Number(bounds && bounds.height) || 0)),
+  };
+}
+function slotIndexAtCanvasPoint(layoutKind, x, y, canvas = state.canvas) {
+  const width = Number(canvas.width) || 0;
+  const height = Number(canvas.height) || 0;
+  if (layoutKind === "beside") return x >= width / 2 ? 1 : 0;
+  if (layoutKind === "stack") return y >= height / 2 ? 1 : 0;
+  if (layoutKind === "grid2x2") {
+    const col = x >= width / 2 ? 1 : 0;
+    const row = y >= height / 2 ? 1 : 0;
+    return row * 2 + col;
+  }
+  return 0;
+}
+function slotTextPreview(slot) {
+  const anchored = TEXT_LAYER_ANCHORS
+    .map((anchor) => anchoredLayerForSlot(slot, anchor))
+    .find((layer) => layer && layer.content);
+  if (anchored) return anchored.content;
+  const free = (slot && slot.textLayers || []).find((layer) => layer.kind === "free" && layer.content);
+  return free ? free.content : "";
+}
+function layerDisplayName(layer) {
+  if (!layer) return "Text";
+  if (layer.kind === "anchored" && layer.anchor) {
+    return layer.anchor.charAt(0).toUpperCase() + layer.anchor.slice(1);
+  }
+  return "Canvas";
+}
+function layerSummary(layer) {
+  if (!layer || !layer.content) return "Empty";
+  const text = layer.content.replace(/\s+/g, " ").trim();
+  return text.length > 36 ? `${text.slice(0, 36)}…` : text;
+}
 function templateById(id) { return state.metadata.templates.find((t) => t.id === id); }
 function layoutById(id) { return state.metadata.layouts.find((l) => l.id === id); }
 function layoutName(id) { const l = layoutById(id); return l ? l.name : id; }

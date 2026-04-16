@@ -1,8 +1,8 @@
 // Positioned text at absolute x,y coordinates
 var m = @blank 600x600 {
     top: "Title"
-    text: "Custom" x: 300 y: 400
-    text: "Another" x: 100 y: 200
+    text: "Custom" x: 300 y: 400 fontSize: 72
+    text: "Another" x: 100 y: 200 fontSize: "lg"
     bottom: "Footer"
 };
 print type(m);                  // expect: instance

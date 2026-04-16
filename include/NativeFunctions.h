@@ -552,11 +552,25 @@ namespace callable {
                 auto arr = std::get<std::shared_ptr<collection::MacArray>>(ptVal);
                 for (auto& elem : arr->elements) {
                     auto map = std::get<std::shared_ptr<collection::MacMap>>(elem);
-                    posTexts.push_back({
+                    meme::PositionedText positioned{
                         std::get<std::string>(map->get("content")),
                         static_cast<int>(std::get<double>(map->get("x"))),
-                        static_cast<int>(std::get<double>(map->get("y")))
-                    });
+                        static_cast<int>(std::get<double>(map->get("y"))),
+                        0
+                    };
+                    if (map->has("fontSize")) {
+                        auto fontSizeVal = map->get("fontSize");
+                        if (std::holds_alternative<std::string>(fontSizeVal)) {
+                            auto fontSize = std::get<std::string>(fontSizeVal);
+                            if (fontSize == "sm") positioned.fontSizeOverride = -1;
+                            else if (fontSize == "md") positioned.fontSizeOverride = -2;
+                            else if (fontSize == "lg") positioned.fontSizeOverride = -3;
+                            else if (fontSize == "xlg") positioned.fontSizeOverride = -4;
+                        } else if (std::holds_alternative<double>(fontSizeVal)) {
+                            positioned.fontSizeOverride = static_cast<float>(std::get<double>(fontSizeVal));
+                        }
+                    }
+                    posTexts.push_back(positioned);
                 }
             }
         } catch (...) {}

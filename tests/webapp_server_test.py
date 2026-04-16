@@ -130,6 +130,36 @@ class StudioServerTests(unittest.TestCase):
         self.assertIn("fontSize: 88", bundle["documentScript"])
         self.assertIn('color: "#FF0000"', bundle["documentScript"])
 
+    def test_positioned_text_font_size_override_serializes(self) -> None:
+        document = server.normalize_document(
+            {
+                "canvas": {"width": 720, "height": 720},
+                "output": {"format": "png"},
+                "scenes": [
+                    {
+                        "durationMs": 700,
+                        "layout": {"kind": "single", "effect": "none"},
+                        "slots": [
+                            {
+                                "templateId": "blank",
+                                "text": {},
+                                "positionedTexts": [
+                                    {"content": "FREE", "x": 240, "y": 320, "fontSizeMode": "custom", "fontSizePx": 72},
+                                    {"content": "ANCHOR", "x": 360, "y": 160, "fontSizeMode": "lg"},
+                                ],
+                                "style": {},
+                            }
+                        ],
+                    }
+                ],
+            }
+        )
+
+        bundle = server.build_script_bundle(document, Path("/tmp/positioned-font.png"))
+
+        self.assertIn('text: "FREE" x: 240 y: 320 fontSize: 72', bundle["documentScript"])
+        self.assertIn('text: "ANCHOR" x: 360 y: 160 fontSize: "lg"', bundle["documentScript"])
+
     def test_preview_bundle_keeps_document_script_authoritative(self) -> None:
         document = server.normalize_document(
             {
