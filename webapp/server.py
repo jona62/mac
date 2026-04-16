@@ -244,7 +244,7 @@ STYLE_PRESET_CATALOG = [
             "outlineColor": "#111111",
             "shadow": 4,
             "shadowColor": "#00000088",
-            "fontSize": "md",
+            "fontSize": "sm",
         },
     },
     {
@@ -257,7 +257,7 @@ STYLE_PRESET_CATALOG = [
             "outlineColor": "#440000",
             "shadow": 3,
             "shadowColor": "#00000099",
-            "fontSize": "lg",
+            "fontSize": "sm",
         },
     },
     {
@@ -268,7 +268,7 @@ STYLE_PRESET_CATALOG = [
             "color": "#00FF41",
             "outline": 3,
             "outlineColor": "#003300",
-            "fontSize": "md",
+            "fontSize": "sm",
         },
     },
     {
@@ -281,7 +281,7 @@ STYLE_PRESET_CATALOG = [
             "outlineColor": "#000000",
             "shadow": 3,
             "shadowColor": "#00000099",
-            "fontSize": "xlg",
+            "fontSize": "sm",
         },
     },
     {
@@ -304,7 +304,7 @@ DEFAULT_STYLE = {
     "outlineColor": "#000000",
     "shadow": 0,
     "shadowColor": "#00000080",
-    "fontSize": "auto",
+    "fontSize": "sm",
 }
 FONT_SIZE_MODES = {"auto", "sm", "md", "lg", "xlg", "custom"}
 

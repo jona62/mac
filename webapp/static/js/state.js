@@ -29,13 +29,13 @@ const FALLBACK_LAYOUTS = [
 
 const FALLBACK_STYLE_PRESETS = [
   { id: "cinematic", name: "Cinematic", description: "Soft white type with a restrained shadow.",
-    style: { color: "#FFFFFF", outline: 2, outlineColor: "#111111", shadow: 4, shadowColor: "#00000088", fontSize: "md" } },
+    style: { color: "#FFFFFF", outline: 2, outlineColor: "#111111", shadow: 4, shadowColor: "#00000088", fontSize: "sm" } },
   { id: "panic", name: "Panic", description: "Red alert styling with heavier edges.",
-    style: { color: "#FF0000", outline: 5, outlineColor: "#440000", shadow: 3, shadowColor: "#00000099", fontSize: "lg" } },
+    style: { color: "#FF0000", outline: 5, outlineColor: "#440000", shadow: 3, shadowColor: "#00000099", fontSize: "sm" } },
   { id: "chill", name: "Chill", description: "Terminal green with crisp outline.",
-    style: { color: "#00FF41", outline: 3, outlineColor: "#003300", fontSize: "md" } },
+    style: { color: "#00FF41", outline: 3, outlineColor: "#003300", fontSize: "sm" } },
   { id: "shout", name: "Shout", description: "Loud white all-caps energy.",
-    style: { color: "#FFFFFF", outline: 4, outlineColor: "#000000", shadow: 3, shadowColor: "#00000099", fontSize: "xlg" } },
+    style: { color: "#FFFFFF", outline: 4, outlineColor: "#000000", shadow: 3, shadowColor: "#00000099", fontSize: "sm" } },
   { id: "whisper", name: "Whisper", description: "Muted grey with a fine outline.",
     style: { color: "#CCCCCC", outline: 1, outlineColor: "#333333", fontSize: "sm" } },
 ];
