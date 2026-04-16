@@ -138,8 +138,8 @@ function renderPosOverlay() {
   const img = $("stageImage");
   if (!overlay) return;
 
-  // Hide overlay while actively rendering preview
-  if (state.isPreviewing) { overlay.innerHTML = ""; return; }
+  // Hide overlay when a rendered image is showing or during render
+  if (state.isPreviewing || state.stageAssetUrl) { overlay.innerHTML = ""; return; }
 
   const slot = selectedSlot();
   const layers = slot ? (slot.textLayers || []) : [];
