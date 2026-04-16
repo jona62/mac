@@ -56,6 +56,7 @@ class RateLimiter:
 
 
 _rate_limiter = RateLimiter()
+_upload_limiter = RateLimiter(window=3600, max_reqs=20)  # 20 uploads/hour/IP
 
 WIDTH_LIMITS = {"min": 240, "max": 1200}
 HEIGHT_LIMITS = {"min": 240, "max": 1200}
@@ -892,7 +893,8 @@ def cleanup_mac_temp_files() -> None:
             pass
 
 
-ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".svg", ".ico", ".heic", ".heif", ".avif"}
+ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff", ".tif", ".ico", ".heic", ".heif", ".avif"}
+# SVG, HTML, XML blocked — can contain embedded JavaScript (XSS)
 
 
 def handle_upload(handler: BaseHTTPRequestHandler) -> dict[str, object]:
@@ -1047,6 +1049,7 @@ def json_response(
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(body)))
     handler.send_header("Cache-Control", "no-store")
+    handler.send_header("X-Content-Type-Options", "nosniff")
     handler.end_headers()
     if send_body:
         handler.wfile.write(body)
@@ -1084,6 +1087,7 @@ def serve_file(
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(data)))
     handler.send_header("Cache-Control", cache_control)
+    handler.send_header("X-Content-Type-Options", "nosniff")
     handler.end_headers()
     if send_body:
         handler.wfile.write(data)
@@ -1129,6 +1133,7 @@ def run_raw_script(script: str) -> dict[str, object]:
 
     if result.returncode != 0 or not output_path.exists():
         stderr = (result.stderr or result.stdout or "Unknown error").strip()
+        stderr = re.sub(r"/[^\s]+/(?:raw|request)\.mac", "<script>", stderr)
         raise RuntimeError(stderr or "Raw script execution failed.")
 
     file_size = output_path.stat().st_size if output_path.exists() else 0
@@ -1177,6 +1182,7 @@ def build_render_response(payload: dict[str, object]) -> tuple[dict[str, object]
 
     if result.returncode != 0 or not output_path.exists():
         stderr = (result.stderr or result.stdout or "Unknown error").strip()
+        stderr = re.sub(r"/[^\s]+/(?:raw|request)\.mac", "<script>", stderr)
         raise RuntimeError(stderr or "Studio render failed.")
 
     duration_ms = sum(int(scene["durationMs"]) for scene in document["scenes"])
@@ -1248,7 +1254,6 @@ class GifStudioHandler(BaseHTTPRequestHandler):
                 {
                     "ok": True,
                     "binaryReady": MAC_BINARY.exists(),
-                    "generatedDir": str(GENERATED_DIR),
                 },
                 send_body=send_body,
             )
@@ -1315,8 +1320,8 @@ class GifStudioHandler(BaseHTTPRequestHandler):
         if path == "/api/upload":
             try:
                 client_ip = self.client_address[0]
-                if not _rate_limiter.allow(client_ip):
-                    json_response(self, {"error": "Too many requests."}, status=HTTPStatus.TOO_MANY_REQUESTS)
+                if not _upload_limiter.allow(client_ip):
+                    json_response(self, {"error": "Upload limit reached. Try again later."}, status=HTTPStatus.TOO_MANY_REQUESTS)
                     return
                 result = handle_upload(self)
                 json_response(self, result)
