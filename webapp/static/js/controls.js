@@ -300,11 +300,6 @@ function bindStaticControls() {
   });
 
   $("refreshPreviewBtn").addEventListener("click", () => {
-    if (state.previewMode === "live") {
-      setPreviewMode("paused");
-      return;
-    }
-    setPreviewMode("live");
     schedulePreview(20, true, true);
   });
   $("exportBtn").addEventListener("click", exportDocument);

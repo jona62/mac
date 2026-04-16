@@ -70,7 +70,8 @@ async function requestPreview(force = false) {
   const controller = new AbortController();
   state.previewAbortController = controller;
 
-  const payload = buildPayload({ previewSceneIndex: state.selectedSceneIndex });
+  const isMultiScene = state.scenes.length > 1;
+  const payload = buildPayload(isMultiScene ? {} : { previewSceneIndex: state.selectedSceneIndex });
   const requestId = ++state.previewSeq;
   state.isPreviewing = true;
   setStatus("Rendering selected scene…", "The stage preview is always a still PNG, even for GIF documents.", "normal");
@@ -90,15 +91,14 @@ async function requestPreview(force = false) {
     state.script = data.script || state.script;
     state.stageMode = "preview";
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-    state.stageLabel = `Scene ${state.selectedSceneIndex + 1} still`;
-    state.lastPreviewSceneIndex = state.selectedSceneIndex;
+    const isMulti = state.scenes.length > 1;
+    state.stageLabel = isMulti
+      ? `${state.scenes.length}-scene GIF preview`
+      : `Scene ${state.selectedSceneIndex + 1} preview`;
     const summary = data.summary || {};
-    const modeCopy = state.previewMode === "live"
-      ? "Live preview is on."
-      : "Live preview is paused until you start it again.";
     setStatus(
-      "Scene preview ready.",
-      `${layoutName(selectedScene().layout.kind) || "Scene"} · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))} · ${modeCopy}`,
+      "Preview ready.",
+      `${layoutName(selectedScene().layout.kind) || "Scene"} · ${formatBytes(summaryValue(summary, "fileSizeBytes", 0))}`,
       "normal"
     );
   } catch (error) {

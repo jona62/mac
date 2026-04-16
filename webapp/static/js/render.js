@@ -383,20 +383,12 @@ function renderStage() {
     img.hidden = true;
   }
 
-  const live = state.previewMode === "live";
   const compact = window.innerWidth < 800;
-  $("stageFrame").classList.toggle("is-preview-paused", !live);
-  let stageCopy = state.stageLabel;
-  if (!live && state.stageMode === "preview" && state.lastPreviewSceneIndex != null && state.lastPreviewSceneIndex !== state.selectedSceneIndex) {
-    stageCopy = `Showing Scene ${state.lastPreviewSceneIndex + 1} · Scene ${state.selectedSceneIndex + 1} is paused`;
-  }
-  $("stageLabel").textContent = !hasAsset
-    ? "Waiting for the first still"
-    : live ? `${stageCopy} · Live` : `${stageCopy} · Paused`;
-  $("refreshPreviewBtn").disabled = false;
-  $("refreshPreviewBtn").textContent = live
-    ? (compact ? "Stop" : "Stop Preview")
-    : (compact ? "Start" : "Start Preview");
+  $("stageLabel").textContent = hasAsset ? state.stageLabel : "Click Preview to render";
+  $("refreshPreviewBtn").disabled = state.isPreviewing;
+  $("refreshPreviewBtn").textContent = state.isPreviewing
+    ? "Rendering…"
+    : (compact ? "Preview" : "Preview");
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
 
