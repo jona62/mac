@@ -409,7 +409,7 @@ namespace meme {
                                  int align = 0,
                                  int xCenter = -1) {
 
-            std::string upper = toUpper(text);
+            std::string upper = activeStyle.uppercase ? toUpper(text) : text;
             float maxWidth = imgW * 0.9f;
 
             // Resolve fontSize: presets (sm/md/lg/xlg encoded as -1..-4),
@@ -488,8 +488,8 @@ namespace meme {
                                  activeStyle.shadowB, activeStyle.shadowA);
                 }
 
-                // Draw outline
-                int r = activeStyle.outlineWidth;
+                // Draw outline (skip if not bold — gives clean caption look)
+                int r = activeStyle.bold ? activeStyle.outlineWidth : 0;
                 for (int ox = -r; ox <= r; ++ox) {
                     for (int oy = -r; oy <= r; ++oy) {
                         if (ox == 0 && oy == 0) continue;

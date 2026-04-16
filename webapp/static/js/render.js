@@ -347,6 +347,8 @@ function renderInspector() {
   const bg = slot.style.background || "";
   $("slotBgColor").value = bg && bg.startsWith("#") ? bg.slice(0, 7) : "#000000";
   $("slotBgColorHex").value = bg || "";
+  $("slotTextTransform").value = slot.style.textTransform || "";
+  $("slotFontWeight").value = slot.style.fontWeight || "";
   $("slotFontSizeMode").value = slot.style.fontSizeMode;
   $("slotFontSizePx").value = slot.style.fontSizePx;
   $("slotFontSizePxField").hidden = slot.style.fontSizeMode !== "custom";

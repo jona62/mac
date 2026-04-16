@@ -71,6 +71,17 @@ function bindStaticControls() {
     schedulePreview();
   });
 
+  $("slotTextTransform").addEventListener("change", (e) => {
+    const s = selectedSlot(); if (!s) return;
+    s.style.textTransform = e.target.value;
+    commitChange();
+  });
+  $("slotFontWeight").addEventListener("change", (e) => {
+    const s = selectedSlot(); if (!s) return;
+    s.style.fontWeight = e.target.value;
+    commitChange();
+  });
+
   $("slotFontSizeMode").addEventListener("change", (e) => {
     const slot = selectedSlot();
     if (!slot) return;

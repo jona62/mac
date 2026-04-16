@@ -453,6 +453,14 @@ namespace callable {
         auto bgColor = getStr("background");
         if (!bgColor.empty()) parseHex(bgColor, style.bgR, style.bgG, style.bgB, style.bgA);
 
+        auto textTransform = getStr("textTransform");
+        if (textTransform == "none") style.uppercase = false;
+        else if (textTransform == "uppercase") style.uppercase = true;
+
+        auto fontWeight = getStr("fontWeight");
+        if (fontWeight == "normal") style.bold = false;
+        else if (fontWeight == "bold") style.bold = true;
+
         return style;
     }
 

@@ -398,6 +398,8 @@ def normalize_style(raw_style: object) -> dict[str, object]:
         "shadowColor": normalize_hex_color(style_payload.get("shadowColor"), str(base_style["shadowColor"]), allow_alpha=True),
         "fontSize": normalize_font_size(style_payload, base_style),
         "background": normalize_hex_color(style_payload.get("background"), "", allow_alpha=True) if style_payload.get("background") else "",
+        "textTransform": str(style_payload.get("textTransform", "")).strip() if style_payload.get("textTransform") in ("none", "uppercase") else "",
+        "fontWeight": str(style_payload.get("fontWeight", "")).strip() if style_payload.get("fontWeight") in ("normal", "bold") else "",
     }
 
     return {
@@ -409,6 +411,8 @@ def normalize_style(raw_style: object) -> dict[str, object]:
         "shadowColor": resolved["shadowColor"],
         "fontSize": resolved["fontSize"],
         "background": resolved["background"],
+        "textTransform": resolved["textTransform"],
+        "fontWeight": resolved["fontWeight"],
         "resolved": resolved,
     }
 
@@ -620,6 +624,10 @@ def render_style_props(style: dict[str, object], full: bool = False) -> list[str
     bg = resolved.get("background", "")
     if bg:
         lines.append(f'    background: {mac_string_literal(str(bg))}')
+    if resolved.get("textTransform") == "none":
+        lines.append('    textTransform: "none"')
+    if resolved.get("fontWeight") == "normal":
+        lines.append('    fontWeight: "normal"')
 
     return lines
 

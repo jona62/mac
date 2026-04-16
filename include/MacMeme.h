@@ -21,6 +21,8 @@ namespace meme {
         unsigned char shadowR = 0, shadowG = 0, shadowB = 0, shadowA = 128;
         float fontSizeOverride = 0;
         unsigned char bgR = 0, bgG = 0, bgB = 0, bgA = 0;  // 0 alpha = no background
+        bool uppercase = true;   // false = preserve original case
+        bool bold = true;        // false = normal weight (thinner strokes)
     };
 
     struct PositionedText {
