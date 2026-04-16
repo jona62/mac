@@ -26,7 +26,8 @@ MAC_BINARY = ROOT_DIR / "build" / "mac"
 
 MAX_REQUEST_BYTES = 256 * 1024
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024   # 5 MB max image upload
-MAX_UPLOADS = 50                      # max uploaded images retained
+MAX_UPLOADS = 30                      # max uploaded images retained
+MAX_UPLOAD_AGE = 60 * 60 * 4          # 4 hour TTL for uploads
 MAX_SCENE_COUNT = 24
 MAX_FILE_AGE_SECONDS = 60 * 60       # 1 hour TTL (was 24h — disk fills fast with GIFs)
 MAX_GENERATED_FILES = 50             # 50 files max (was 200 — ~25MB ceiling)
@@ -996,17 +997,24 @@ def get_uploaded_templates() -> list[dict[str, str]]:
 
 
 def cleanup_uploads_dir() -> None:
-    """Keep only the newest MAX_UPLOADS files."""
+    """Delete expired uploads and keep only the newest MAX_UPLOADS."""
     if not UPLOADS_DIR.is_dir():
         return
+    now = time.time()
     files = []
     for p in UPLOADS_DIR.iterdir():
         if not p.is_file():
             continue
         try:
-            files.append((p.stat().st_mtime, p))
+            stat = p.stat()
         except FileNotFoundError:
             continue
+        # Delete uploads older than TTL
+        if now - stat.st_mtime > MAX_UPLOAD_AGE:
+            p.unlink(missing_ok=True)
+            continue
+        files.append((stat.st_mtime, p))
+    # Cap total count
     if len(files) <= MAX_UPLOADS:
         return
     files.sort(key=lambda item: item[0], reverse=True)
@@ -1357,6 +1365,7 @@ class GifStudioHandler(BaseHTTPRequestHandler):
         try:
             payload = read_json_body(self)
             cleanup_generated_dir()
+            cleanup_uploads_dir()
             raw_script = payload.get("rawScript")
             if raw_script and isinstance(raw_script, str) and raw_script.strip():
                 response = run_raw_script(raw_script)
@@ -1403,7 +1412,9 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
     cleanup_generated_dir()
+    cleanup_uploads_dir()
 
     server = FastThreadingHTTPServer((args.host, args.port), GifStudioHandler)
     print(f"Mac Studio running at http://{args.host}:{args.port}")
