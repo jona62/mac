@@ -363,17 +363,26 @@ function renderInspector() {
 }
 
 function renderStage() {
-  const hasAsset = Boolean(state.stageAssetUrl);
-  $("stagePlaceholder").hidden = hasAsset;
-
   let img = $("stageImage");
-  if (hasAsset) {
-    if (img.hidden || img.dataset.assetUrl !== state.stageAssetUrl) {
+  // Determine what to show: rendered preview, or template placeholder
+  let displayUrl = state.stageAssetUrl;
+  if (!displayUrl) {
+    const slot = selectedSlot();
+    if (slot) {
+      const tmpl = templateById(slot.templateId);
+      if (tmpl && tmpl.previewUrl) displayUrl = tmpl.previewUrl;
+    }
+  }
+  const showImg = Boolean(displayUrl);
+  $("stagePlaceholder").hidden = showImg;
+
+  if (showImg) {
+    if (img.hidden || img.dataset.assetUrl !== displayUrl) {
       const newImg = document.createElement("img");
       newImg.id = "stageImage";
       newImg.alt = "Studio preview";
-      newImg.src = state.stageAssetUrl;
-      newImg.dataset.assetUrl = state.stageAssetUrl;
+      newImg.src = displayUrl;
+      newImg.dataset.assetUrl = displayUrl;
       img.replaceWith(newImg);
       img = newImg;
     } else {
