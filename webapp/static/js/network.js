@@ -50,8 +50,11 @@ function markLegacyBackendIfNeeded(errorMessage) {
 
 function schedulePreview(delay = 320, immediateMessage = false) {
   clearTimeout(state.previewTimer);
+  // Only auto-render if preview is currently showing (user hasn't stopped it)
+  if (!immediateMessage && !state.stageAssetUrl) return;
   if (immediateMessage) {
-    setStatus("Rendering preview…", "", "normal");
+    const label = state.scenes.length > 1 ? "Rendering GIF…" : "Rendering preview…";
+    setStatus(label, "", "normal");
     renderStatus();
   }
   state.previewTimer = window.setTimeout(() => requestPreview(), delay);
@@ -68,8 +71,9 @@ async function requestPreview() {
   const controller = new AbortController();
   state.previewAbortController = controller;
 
-  // Preview always renders a single scene still — Export produces the full GIF
-  const payload = buildPayload({ previewSceneIndex: state.selectedSceneIndex });
+  // Single scene: render still. Multi-scene: render full animated GIF with transitions.
+  const isMulti = state.scenes.length > 1;
+  const payload = buildPayload(isMulti ? {} : { previewSceneIndex: state.selectedSceneIndex });
   const requestId = ++state.previewSeq;
   state.isPreviewing = true;
   setStatus("Rendering selected scene…", "The stage preview is always a still PNG, even for GIF documents.", "normal");
@@ -89,7 +93,9 @@ async function requestPreview() {
     state.script = data.script || state.script;
     state.stageMode = "preview";
     state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;
-    state.stageLabel = `Scene ${state.selectedSceneIndex + 1} preview`;
+    state.stageLabel = isMulti
+      ? `${state.scenes.length}-scene GIF`
+      : `Scene ${state.selectedSceneIndex + 1}`;
     const summary = data.summary || {};
     setStatus(
       "Preview ready.",

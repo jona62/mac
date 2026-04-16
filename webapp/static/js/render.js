@@ -408,19 +408,19 @@ function renderStage() {
     }
   }
 
-  // Button: Preview (renders) / Stop (clears back to editing) / Rendering…
+  // Button: Start (renders) / Stop (back to editing) / Rendering…
   $("refreshPreviewBtn").disabled = state.isPreviewing;
   if (state.isPreviewing) {
     $("refreshPreviewBtn").textContent = "Rendering…";
   } else if (hasRendered) {
-    $("refreshPreviewBtn").textContent = compact ? "Stop" : "Stop Preview";
+    $("refreshPreviewBtn").textContent = compact ? "Stop" : "Stop";
   } else {
-    $("refreshPreviewBtn").textContent = compact ? "Preview" : "Preview";
+    $("refreshPreviewBtn").textContent = compact ? "Start" : "Start";
   }
 
   $("stageLabel").textContent = hasRendered
     ? state.stageLabel
-    : "Editing — click Preview to render";
+    : "";
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
 
