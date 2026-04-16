@@ -248,6 +248,8 @@ function bindStaticControls() {
 
   $("stageFrame").addEventListener("click", (e) => {
     if (e.target.closest(".pos-label, .pos-editor")) return;
+    // Don't create text layers when a rendered preview is showing
+    if (state.stageAssetUrl) return;
     if (state.editingTextLayerId) {
       stopTextLayerEditing();
       return;
