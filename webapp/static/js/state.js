@@ -55,7 +55,7 @@ const state = {
   textLayerSeq: 1,
   previewTimer: 0,
   previewSeq: 0,
-  previewMode: "paused",
+  previewMode: "live",
   previewAbortController: null,
   stageMode: "preview",
   stageAssetUrl: "",

@@ -8,6 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   populateSelectOptions();
   renderAll();
   if (state.backendCompatibility === "studio") {
-    schedulePreview(80, false, true);
+    schedulePreview(80);
   }
 });

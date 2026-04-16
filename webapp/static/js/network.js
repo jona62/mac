@@ -48,23 +48,21 @@ function markLegacyBackendIfNeeded(errorMessage) {
   return false;
 }
 
-function schedulePreview(delay = 320, immediateMessage = false, force = false) {
+function schedulePreview(delay = 320, immediateMessage = false) {
   clearTimeout(state.previewTimer);
-  if (!force && state.previewMode !== "live") return;
   if (immediateMessage) {
     setStatus("Rendering selected scene…", "Generating a still preview for the active scene.", "normal");
     renderStatus();
   }
-  state.previewTimer = window.setTimeout(() => requestPreview(force), delay);
+  state.previewTimer = window.setTimeout(() => requestPreview(), delay);
 }
 
-async function requestPreview(force = false) {
+async function requestPreview() {
   if (state.backendCompatibility !== "studio") {
     applyLegacyBackendWarning();
     renderAll();
     return;
   }
-  if (!force && state.previewMode !== "live") return;
 
   if (state.previewAbortController) state.previewAbortController.abort();
   const controller = new AbortController();

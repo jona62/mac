@@ -300,7 +300,7 @@ function bindStaticControls() {
   });
 
   $("refreshPreviewBtn").addEventListener("click", () => {
-    schedulePreview(20, true, true);
+    schedulePreview(20, true);
   });
   $("exportBtn").addEventListener("click", exportDocument);
 
