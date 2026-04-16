@@ -300,7 +300,15 @@ function bindStaticControls() {
   });
 
   $("refreshPreviewBtn").addEventListener("click", () => {
-    schedulePreview(20, true);
+    if (state.stageAssetUrl) {
+      // Stop: clear rendered output, go back to editing mode
+      state.stageAssetUrl = "";
+      state.stageLabel = "";
+      renderAll();
+    } else {
+      // Preview: render the current scene
+      schedulePreview(20, true);
+    }
   });
   $("exportBtn").addEventListener("click", exportDocument);
 

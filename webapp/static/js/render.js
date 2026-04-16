@@ -138,8 +138,8 @@ function renderPosOverlay() {
   const img = $("stageImage");
   if (!overlay) return;
 
-  // Overlay is only for future drag-to-edit mode — always hidden during normal use
-  overlay.innerHTML = ""; return;
+  // Show overlay only in editing mode (no rendered preview showing)
+  if (state.isPreviewing || state.stageAssetUrl) { overlay.innerHTML = ""; return; }
 
   const slot = selectedSlot();
   const layers = slot ? (slot.textLayers || []) : [];
@@ -364,40 +364,63 @@ function renderInspector() {
 
 function renderStage() {
   let img = $("stageImage");
-  // Determine what to show: rendered preview, or template placeholder
-  let displayUrl = state.stageAssetUrl;
-  if (!displayUrl) {
-    const slot = selectedSlot();
-    if (slot) {
-      const tmpl = templateById(slot.templateId);
-      if (tmpl && tmpl.previewUrl) displayUrl = tmpl.previewUrl;
-    }
-  }
-  const showImg = Boolean(displayUrl);
-  $("stagePlaceholder").hidden = showImg;
+  const hasRendered = Boolean(state.stageAssetUrl);
+  const compact = window.innerWidth < 800;
 
-  if (showImg) {
-    if (img.hidden || img.dataset.assetUrl !== displayUrl) {
+  // Two states:
+  // 1. Previewing: show rendered output, hide overlay
+  // 2. Editing: show template image + overlay labels
+  if (hasRendered) {
+    // Show rendered preview
+    $("stagePlaceholder").hidden = true;
+    if (img.hidden || img.dataset.assetUrl !== state.stageAssetUrl) {
       const newImg = document.createElement("img");
       newImg.id = "stageImage";
       newImg.alt = "Studio preview";
-      newImg.src = displayUrl;
-      newImg.dataset.assetUrl = displayUrl;
+      newImg.src = state.stageAssetUrl;
+      newImg.dataset.assetUrl = state.stageAssetUrl;
       img.replaceWith(newImg);
       img = newImg;
     } else {
       img.hidden = false;
     }
   } else {
-    img.hidden = true;
+    // Show template placeholder
+    const slot = selectedSlot();
+    const tmpl = slot ? templateById(slot.templateId) : null;
+    const templateUrl = tmpl && tmpl.previewUrl ? tmpl.previewUrl : "";
+    if (templateUrl) {
+      $("stagePlaceholder").hidden = true;
+      if (img.hidden || img.dataset.assetUrl !== templateUrl) {
+        const newImg = document.createElement("img");
+        newImg.id = "stageImage";
+        newImg.alt = "Template preview";
+        newImg.src = templateUrl;
+        newImg.dataset.assetUrl = templateUrl;
+        img.replaceWith(newImg);
+        img = newImg;
+      } else {
+        img.hidden = false;
+      }
+    } else {
+      $("stagePlaceholder").hidden = false;
+      img.hidden = true;
+    }
   }
 
-  const compact = window.innerWidth < 800;
-  $("stageLabel").textContent = hasAsset ? state.stageLabel : "Click Preview to render";
+  // Button: Preview (renders) / Stop (clears back to editing) / Rendering…
   $("refreshPreviewBtn").disabled = state.isPreviewing;
-  $("refreshPreviewBtn").textContent = state.isPreviewing
-    ? "Rendering…"
-    : (compact ? "Refresh" : "Refresh Preview");
+  if (state.isPreviewing) {
+    $("refreshPreviewBtn").textContent = "Rendering…";
+  } else if (hasRendered) {
+    $("refreshPreviewBtn").textContent = compact ? "Stop" : "Stop Preview";
+  } else {
+    $("refreshPreviewBtn").textContent = compact ? "Preview" : "Preview";
+  }
+
+  $("stageLabel").textContent = hasRendered
+    ? state.stageLabel
+    : "Editing — click Preview to render";
   $("exportBtn").disabled = state.isExporting;
   $("exportBtn").textContent = state.isExporting ? "Exporting…" : (compact ? "Download" : "Export & Download");
 
