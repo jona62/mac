@@ -3,7 +3,13 @@
 
 document.addEventListener("DOMContentLoaded", async () => {
   bindStaticControls();
-  await loadMetadata();
+  try {
+    await loadMetadata();
+  } catch (e) {
+    setStatus("Failed to connect to server.", "Check that the server is running.", "error");
+    renderStatus();
+    return;
+  }
   applyDocument(buildDefaultDocument(), { silent: true });
   populateSelectOptions();
   renderAll();

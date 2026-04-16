@@ -534,7 +534,8 @@ def normalize_scene(raw_scene: object) -> dict[str, object]:
                 continue
             entry = {"id": eid}
             if item.get("param") is not None and EFFECT_DEF_LOOKUP[eid]["param"]:
-                entry["param"] = float(item["param"])
+                defn = EFFECT_DEF_LOOKUP[eid]
+                entry["param"] = max(defn.get("min", 0), min(defn.get("max", 100), float(item["param"])))
             custom_effects.append(entry)
 
     return {

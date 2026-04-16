@@ -1,9 +1,14 @@
 // Mac Studio — Network: preview, export, metadata loading
 
+async function safeJson(res) {
+  try { return await res.json(); }
+  catch (_) { throw new Error(`Server error (${res.status})`); }
+}
+
 async function loadMetadata() {
   try {
     const res = await fetch("/api/templates");
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Could not load studio metadata.");
     state.metadata.templates = data.templates || [];
     state.metadata.effects = data.effects || [];
@@ -70,6 +75,8 @@ async function requestPreview() {
   if (state.previewAbortController) state.previewAbortController.abort();
   const controller = new AbortController();
   state.previewAbortController = controller;
+  // Auto-timeout after 30s
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   // Single scene: render still. Multi-scene: render full animated GIF with transitions.
   const isMulti = state.scenes.length > 1;
@@ -86,7 +93,7 @@ async function requestPreview() {
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (requestId !== state.previewSeq) return;
     if (!res.ok) throw new Error(data.error || "Preview render failed.");
 
@@ -114,6 +121,7 @@ async function requestPreview() {
       setStatus(error.message, "Preview failed. Fix the document or try starting preview again.", "error");
     }
   } finally {
+    clearTimeout(timeout);
     if (requestId === state.previewSeq) {
       state.isPreviewing = false;
       if (state.previewAbortController === controller) state.previewAbortController = null;
@@ -139,7 +147,7 @@ async function exportDocument() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(buildPayload()),
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Export failed.");
 
     state.lastExport = data;

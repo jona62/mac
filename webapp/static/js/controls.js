@@ -599,7 +599,7 @@ async function onImageUpload(e) {
   renderStatus();
   try {
     const res = await fetch("/api/upload", { method: "POST", body: form });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Upload failed.");
     state.metadata.templates.push({
       id: data.templateId, name: data.name, description: "User upload",
@@ -633,7 +633,7 @@ async function onDeleteUpload(templateId) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ templateId }),
     });
-    const data = await res.json();
+    const data = await safeJson(res);
     if (!res.ok) throw new Error(data.error || "Delete failed.");
     state.metadata.templates = state.metadata.templates.filter((t) => t.id !== templateId);
     renderAll();
@@ -855,7 +855,7 @@ function bindScriptEditor() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rawScript: script }),
       });
-      const data = await res.json();
+      const data = await safeJson(res);
       if (!res.ok) throw new Error(data.error || "Apply failed.");
       state.lastExport = data;
       state.stageAssetUrl = `${data.previewUrl}?v=${Date.now()}`;

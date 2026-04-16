@@ -105,8 +105,17 @@ function normalizeHex(value, fallback, allowAlpha = false) {
 
 function setStatus(line, meta, kind = "normal") { state.status = { line, meta, kind }; }
 
-function selectedScene() { return state.scenes[state.selectedSceneIndex]; }
-function selectedSlot() { const s = selectedScene(); return s ? s.slots[state.selectedSlotIndex] || null : null; }
+function selectedScene() {
+  if (!state.scenes.length) return null;
+  state.selectedSceneIndex = Math.min(state.selectedSceneIndex, state.scenes.length - 1);
+  return state.scenes[state.selectedSceneIndex];
+}
+function selectedSlot() {
+  const s = selectedScene();
+  if (!s || !s.slots || !s.slots.length) return null;
+  state.selectedSlotIndex = Math.min(state.selectedSlotIndex, s.slots.length - 1);
+  return s.slots[state.selectedSlotIndex] || null;
+}
 function nextTextLayerId() {
   const id = `text-layer-${state.textLayerSeq}`;
   state.textLayerSeq += 1;
