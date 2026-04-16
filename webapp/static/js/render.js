@@ -136,10 +136,10 @@ function renderTextLayerEditor() {
 function renderPosOverlay() {
   const overlay = $("posOverlay");
   const img = $("stageImage");
-  if (!overlay || !img || img.hidden || state.isPreviewing) {
-    if (overlay) overlay.innerHTML = "";
-    return;
-  }
+  if (!overlay) return;
+
+  // Hide overlay while actively rendering preview
+  if (state.isPreviewing) { overlay.innerHTML = ""; return; }
 
   const slot = selectedSlot();
   const layers = slot ? (slot.textLayers || []) : [];
@@ -149,12 +149,14 @@ function renderPosOverlay() {
   }
 
   const slotRect = selectedSlotCanvasRect();
-  const imgRect = img.getBoundingClientRect();
   const stageRect = overlay.parentElement.getBoundingClientRect();
-  const offX = imgRect.left - stageRect.left;
-  const offY = imgRect.top - stageRect.top;
-  const scaleX = imgRect.width / state.canvas.width;
-  const scaleY = imgRect.height / state.canvas.height;
+  // Use image rect when visible, fall back to stage rect when editing without preview
+  const hasImg = img && !img.hidden && img.naturalWidth > 0;
+  const refRect = hasImg ? img.getBoundingClientRect() : stageRect;
+  const offX = refRect.left - stageRect.left;
+  const offY = refRect.top - stageRect.top;
+  const scaleX = refRect.width / state.canvas.width;
+  const scaleY = refRect.height / state.canvas.height;
   const style = slot.style || {};
 
   overlay.innerHTML = layers.map((layer) => {

@@ -448,8 +448,10 @@ function setPreviewMode(mode, options = {}) {
       state.previewAbortController = null;
     }
     state.isPreviewing = false;
+    state.stageAssetUrl = "";
+    state.stageLabel = "Editing — start preview to render";
     if (options.message !== false) {
-      setStatus("Preview paused.", "The stage is frozen until you start live preview again.", "normal");
+      setStatus("Preview stopped.", "Edit text on the canvas. Start preview to render.", "normal");
     }
   } else if (options.message !== false) {
     setStatus("Live preview on.", "Edits will re-render the selected scene as a still.", "normal");
