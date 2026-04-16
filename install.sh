@@ -32,10 +32,17 @@ case "$OS" in
         ;;
 esac
 
-echo "Installing Mac language ($TARGET)..."
+# Check for existing installation
+if [ -f "$BIN_DIR/mac" ]; then
+    echo "Updating Mac language ($TARGET)..."
+else
+    echo "Installing Mac language ($TARGET)..."
+fi
 
-# Get latest release URL
-LATEST=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep "browser_download_url.*$TARGET" | cut -d '"' -f 4)
+# Get latest release info
+RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest")
+LATEST=$(echo "$RELEASE_JSON" | grep "browser_download_url.*$TARGET" | cut -d '"' -f 4)
+VERSION=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | cut -d '"' -f 4)
 
 if [ -z "$LATEST" ]; then
     echo "No release found for $TARGET."
@@ -43,13 +50,15 @@ if [ -z "$LATEST" ]; then
     exit 1
 fi
 
-# Download and extract
+echo "Version: $VERSION"
 echo "Downloading $LATEST..."
+
+# Download and extract
 TMPDIR=$(mktemp -d)
 curl -fsSL "$LATEST" -o "$TMPDIR/mac.tar.gz"
 tar xzf "$TMPDIR/mac.tar.gz" -C "$TMPDIR"
 
-# Install
+# Install (replaces existing)
 rm -rf "$INSTALL_DIR"
 mv "$TMPDIR/$TARGET" "$INSTALL_DIR"
 rm -rf "$TMPDIR"
@@ -59,7 +68,7 @@ mkdir -p "$BIN_DIR"
 ln -sf "$INSTALL_DIR/mac" "$BIN_DIR/mac"
 
 echo ""
-echo "Mac installed to $INSTALL_DIR"
+echo "Mac $VERSION installed to $INSTALL_DIR"
 echo "Binary linked at $BIN_DIR/mac"
 echo ""
 
@@ -72,5 +81,5 @@ fi
 
 echo "Run 'mac' to start the REPL, or 'mac script.mac' to run a file."
 echo ""
-echo "  |> print \"Hello, Mac!\";"
+echo "  |> print \"Hello, Mac!\""
 echo "  Hello, Mac!"
