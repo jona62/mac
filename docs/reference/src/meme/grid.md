@@ -77,10 +77,9 @@ grid 1x2 {
 `grid` produces a frame type (Meme), which means it can be used inside:
 - Other grids
 - GIF frames
-- Timeline keyframes
 - Effect pipelines
 
-But it cannot directly contain sequence types (Gif, Timeline).
+But it cannot directly contain sequence types (Gif).
 
 ## See Also
 

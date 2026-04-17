@@ -59,11 +59,10 @@ m.save("png", "hello.png");
 | `text(position, str)` | `Meme` | Add text at position (chainable) |
 | `resize(size)` | `Meme` | Create resized copy |
 | `save(format, path)` | `nil` | Save to file |
-| `__add__(duration)` | `Frame` | Create animation Frame |
 
 ## Gif
 
-Animated GIF builder (alternative to `gif { }` blocks).
+Animated GIF builder (alternative to `gif { }` blocks). Supports transitions via `_tl` for animated transitions between frames.
 
 ```
 var g = Gif();
@@ -76,30 +75,9 @@ g.save("output.gif");
 |--------|---------|-------------|
 | `init()` | `Gif` | Constructor |
 | `frame(meme, duration)` | `Gif` | Add frame (chainable) |
+| `transition(type, duration)` | `Gif` | Add transition between frames (chainable) |
 | `save(path)` | `nil` | Save as animated GIF |
 | `__add__(frame)` | `Gif` | Add Frame object |
-
-## Timeline
-
-Animation with transitions (alternative to `timeline { }` blocks).
-
-```
-var t = Timeline();
-t.frame(@blank "Start", Duration(2000));
-t.transition("crossfade", Duration(500));
-t.frame(@blank "End", Duration(2000));
-t.save("timeline.gif");
-```
-
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `init()` | `Timeline` | Constructor |
-| `frame(meme, duration)` | `Timeline` | Add keyframe (chainable) |
-| `transition(type, duration)` | `Timeline` | Add transition (chainable) |
-| `loop(count)` | `Timeline` | Set loop count (0 = infinite) |
-| `render(path)` | `nil` | Render to GIF |
-| `save(path)` | `nil` | Alias for render |
-| `__add__(frame)` | `Timeline` | Add Frame |
 
 ## Helper Classes
 
@@ -132,16 +110,7 @@ var t = Template("two_panel");
 var custom = Template("path/to/image.png");
 ```
 
-### Frame
-
-A meme + duration pair for animation.
-
-```
-var f = Frame(@blank "Hello", Duration(500));
-```
-
 ## See Also
 
 - [Meme Literals](../meme/meme_literal.md) -- `@template` shorthand
 - [GIF Animation](../meme/gif.md) -- `gif { }` block syntax
-- [Timeline](../meme/timeline.md) -- `timeline { }` block syntax

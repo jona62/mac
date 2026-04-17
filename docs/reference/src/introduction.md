@@ -1,6 +1,6 @@
 # Mac Language Reference
 
-**Mac** (Meme as Code) is a programming language where memes are first-class citizens. It combines a general-purpose scripting language with a built-in rendering pipeline for creating memes, GIFs, and animated timelines.
+**Mac** (Meme as Code) is a programming language where memes are first-class citizens. It combines a general-purpose scripting language with a built-in rendering pipeline for creating memes and animated GIFs.
 
 ## Quick Example
 
@@ -28,8 +28,7 @@ style bold_red { color: "#FF0000", fontWeight: "bold" }
 | Meme literals | `@template "text"` creates renderable meme objects |
 | Effects | `blur(5)`, `sepia`, `grayscale` — composable image transforms |
 | Grid layout | `grid 2x2 { ... }` for multi-panel compositions |
-| GIF animation | `gif { ... }` with per-frame timing |
-| Timeline | `timeline { ... }` with transitions and easing curves |
+| GIF animation | `gif { ... }` with per-frame timing, transitions, and easing curves |
 | Save operator | `expr => "file.png"` writes output to disk |
 
 ## Version

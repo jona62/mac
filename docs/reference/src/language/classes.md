@@ -129,4 +129,4 @@ class Secret {
 
 ## See Also
 
-- [Prelude Classes](../stdlib/prelude_classes.md) -- built-in Size, Duration, Meme, Gif, Timeline
+- [Prelude Classes](../stdlib/prelude_classes.md) -- built-in Size, Duration, Meme, Gif

@@ -52,8 +52,7 @@ See [Arrays](./arrays.md) and [Maps](./maps.md) for details.
 | Type | Produced by | Description |
 |------|------------|-------------|
 | `Meme` | `@template "text"` | Renderable meme image |
-| `Gif` | `gif { ... }` | Animated GIF |
-| `Timeline` | `timeline { ... }` | Timeline animation with transitions |
+| `Gif` | `gif { ... }` | Animated GIF (supports transitions) |
 | `RenderSurface` | Effects pipeline | In-memory pixel buffer |
 
 ## Type Checking

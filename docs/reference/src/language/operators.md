@@ -67,7 +67,7 @@ var transform = sepia >> blur(3) >> border(2);
 
 ## Save
 
-The fat arrow `=>` saves a meme, GIF, or timeline to a file.
+The fat arrow `=>` saves a meme or GIF to a file.
 
 ```
 @blank "Hello" => "hello.png";

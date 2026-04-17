@@ -2,7 +2,7 @@
 
 ## Save Operator
 
-The `=>` operator saves a meme, GIF, or timeline to a file.
+The `=>` operator saves a meme or GIF to a file.
 
 ```
 expression => "filename.ext"
@@ -59,4 +59,3 @@ This appears in REPL, file execution, and piped modes without interfering with s
 
 - [Meme Literals](./meme_literal.md)
 - [GIF Animation](./gif.md)
-- [Timeline](./timeline.md)

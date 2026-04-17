@@ -112,4 +112,4 @@ See [Effects](../meme/effects.md) for the full effect reference.
 
 | Function | Signature | Returns | Description |
 |----------|-----------|---------|-------------|
-| `save` | `save(target, path)` | `bool` | Save meme/GIF/timeline to file |
+| `save` | `save(target, path)` | `bool` | Save meme/GIF to file |
