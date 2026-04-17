@@ -9,7 +9,7 @@ var y = 7;
 print x * y;
 
 // Strings
-var greeting = "Welcome to " + "Mac!";
+val greeting = "Welcome to " + "Mac!";
 print greeting;
 
 // Functions
@@ -31,9 +31,9 @@ class Dog {
 print Dog("Rex").speak();
 
 // Arrays and maps
-var nums = [1, 2, 3, 4, 5];
+val nums = [1, 2, 3, 4, 5];
 print nums;
-var config = { name: "Mac", version: 1 };
+val config = { name: "Mac", version: 1 };
 print config;
 
 // Control flow

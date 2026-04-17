@@ -2,14 +2,14 @@
 // The Meme and Gif classes for dynamic construction.
 
 // Create a meme with the builder pattern
-var t = Template("two_panel");
-var m = Meme(t)
+val t = Template("two_panel");
+val m = Meme(t)
     .text(Top, "When you write Java")
     .text(Bottom, "vs when you write Mac");
 m.save(PNG, "classic_meme.png");
 
 // Resize before saving
-var small = m.resize(Size(300, 300));
+val small = m.resize(Size(300, 300));
 small.save(PNG, "classic_small.png");
 
 // Build a GIF frame by frame

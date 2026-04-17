@@ -6,19 +6,19 @@ class Vec {
     __eq__(other) { return this.x == other.x and this.y == other.y; }
     __neg__() { return Vec(-this.x, -this.y); }
 }
-var a = Vec(1, 2);
-var b = Vec(3, 4);
-var c = a + b;
+val a = Vec(1, 2);
+val b = Vec(3, 4);
+val c = a + b;
 print c.x;              // expect: 4
 print c.y;              // expect: 6
-var d = a - b;
+val d = a - b;
 print d.x;              // expect: -2
-var e = a * 3;
+val e = a * 3;
 print e.x;              // expect: 3
 print e.y;              // expect: 6
 print a == Vec(1, 2);   // expect: true
 print a == b;           // expect: false
-var f = -a;
+val f = -a;
 print f.x;              // expect: -1
 print f.y;              // expect: -2
 print 1 + 2;            // expect: 3

@@ -15,11 +15,11 @@ print type(neon);                    // expect: map
 print type(bold);                    // expect: map
 
 // Style applied to meme literal
-var m = @blank neon "Styled";
+val m = @blank neon "Styled";
 print type(m);                       // expect: instance
 
 // Style applied to block meme
-var m2 = @two_panel bold {
+val m2 = @two_panel bold {
     top: "Hello"
     bottom: "World"
 };

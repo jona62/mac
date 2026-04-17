@@ -24,7 +24,7 @@
 // Save: => auto-detects format from extension
 
 // Save a meme to a variable, then export
-var m = @two_panel {
+val m = @two_panel {
     top: "Before Mac"
     bottom: "After Mac"
 };

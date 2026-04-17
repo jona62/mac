@@ -1,12 +1,12 @@
 // Basic variable interpolation
-var name = "Mac";
+val name = "Mac";
 print "Hello, {name}!";              // expect: Hello, Mac!
 
 // Expression interpolation
 print "2 + 2 = {2 + 2}";            // expect: 2 + 2 = 4
 
 // Variable in interpolation
-var x = 10;
+val x = 10;
 print "x is {x}";                   // expect: x is 10
 
 // Function call in interpolation

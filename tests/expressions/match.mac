@@ -1,5 +1,5 @@
 // Basic value matching
-var x = match 42 {
+val x = match 42 {
     0 -> "zero"
     42 -> "forty-two"
     _ -> "other"
@@ -7,7 +7,7 @@ var x = match 42 {
 print x;                              // expect: forty-two
 
 // String matching
-var greeting = match "hello" {
+val greeting = match "hello" {
     "hi" -> "informal"
     "hello" -> "formal"
     _ -> "unknown"
@@ -15,7 +15,7 @@ var greeting = match "hello" {
 print greeting;                       // expect: formal
 
 // Wildcard
-var y = match 999 {
+val y = match 999 {
     1 -> "one"
     2 -> "two"
     _ -> "many"
@@ -23,22 +23,22 @@ var y = match 999 {
 print y;                              // expect: many
 
 // No match returns nil
-var z = match "x" {
+val z = match "x" {
     "a" -> 1
     "b" -> 2
 };
 print z;                              // expect: nil
 
 // Match with expressions in patterns
-var n = 5;
-var result = match n {
+val n = 5;
+val result = match n {
     2 + 3 -> "five"
     _ -> "not five"
 };
 print result;                         // expect: five
 
 // Match on type()
-var t = match type(42) {
+val t = match type(42) {
     "number" -> "num"
     "string" -> "str"
     _ -> "other"
@@ -46,15 +46,15 @@ var t = match type(42) {
 print t;                              // expect: num
 
 // Boolean matching
-var b = match true {
+val b = match true {
     false -> "no"
     true -> "yes"
 };
 print b;                              // expect: yes
 
 // Match with string interpolation in result
-var score = 95;
-var grade = match score {
+val score = 95;
+val grade = match score {
     100 -> "Perfect!"
     _ -> "Score: {score}"
 };

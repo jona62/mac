@@ -17,6 +17,6 @@ print fib(10);            // expect: 55
 
 // No return value
 fun noReturn() {
-    var x = 1;
+    val x = 1;
 }
 print noReturn();         // expect: nil

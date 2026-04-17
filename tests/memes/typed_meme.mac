@@ -1,5 +1,5 @@
-var tmpl = Template("two_panel");
-var m = Meme(tmpl)
+val tmpl = Template("two_panel");
+val m = Meme(tmpl)
     .text(Top, "Writing Java")
     .text(Bottom, "Writing Mac");
 print m.topText;                 // expect: Writing Java
@@ -8,6 +8,6 @@ print m.bottomText;              // expect: Writing Mac
 m.save(PNG, "typed_meme.png");
 print "saved";                   // expect: saved
 
-var small = m.resize(Size(200, 200));
+val small = m.resize(Size(200, 200));
 small.save(JPG, "typed_small.jpg");
 print "resized";                 // expect: resized

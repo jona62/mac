@@ -1,13 +1,13 @@
 // WxH size in meme literals
-var m = @blank 400x300 "Sized";
+val m = @blank 400x300 "Sized";
 print type(m);                       // expect: instance
 
-var m2 = @two_panel 800x600 {
+val m2 = @two_panel 800x600 {
     top: "Wide"
     bottom: "Meme"
 };
 print type(m2);                      // expect: instance
 
 // Default size (no WxH)
-var m3 = @blank "Default";
+val m3 = @blank "Default";
 print type(m3);                      // expect: instance

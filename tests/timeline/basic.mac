@@ -1,5 +1,5 @@
 // Gif with transitions (unified — replaces timeline)
-var g = gif {
+val g = gif {
     @blank "frame 1" : 500ms
     --- crossfade 300ms ---
     @blank "frame 2" : 500ms
@@ -7,7 +7,7 @@ var g = gif {
 print type(g);              // expect: instance
 
 // Simple gif still works
-var g2 = gif {
+val g2 = gif {
     @blank "A" : 400ms
     @blank "B" : 400ms
 };

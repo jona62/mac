@@ -1,14 +1,14 @@
 // @template meme literal syntax
 
 // Named positions
-var m = @two_panel {
+val m = @two_panel {
     top: "Hello"
     bottom: "World"
 };
 print type(m);                   // expect: instance
 
 // One-liner (center text)
-var m2 = @blank "Just this";
+val m2 = @blank "Just this";
 print type(m2);                  // expect: instance
 
 // Access fields
@@ -18,14 +18,14 @@ print m2.centerText;             // expect: Just this
 print m2.bottomText;             // expect:
 
 // Dotted template name (category.name)
-var m3 = @meme.shrek_smirk {
+val m3 = @meme.shrek_smirk {
     top: "Dotted"
     bottom: "Template"
 };
 print type(m3);                  // expect: instance
 print m3.topText;                // expect: Dotted
 
-var m4 = @blank {
+val m4 = @blank {
     top: "North"
     center: "Middle"
     bottom: "South"

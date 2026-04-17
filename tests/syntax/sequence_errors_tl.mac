@@ -1,5 +1,5 @@
 // Gif with transitions inside grid should error
-var g = gif loop {
+val g = gif loop {
     @blank "A" : 500ms
     --- crossfade 150ms ---
     @blank "B" : 500ms

@@ -1,8 +1,8 @@
 // => save expression syntax
-var savedMeme = @blank "Saved with fat arrow" => "save_expr_meme.png";
+val savedMeme = @blank "Saved with fat arrow" => "save_expr_meme.png";
 print savedMeme;                // expect: true
 
-var savedGrid = grid 2x2 {
+val savedGrid = grid 2x2 {
     @blank "A"
     @blank "B"
     @blank "C"

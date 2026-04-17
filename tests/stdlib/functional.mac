@@ -1,10 +1,10 @@
-var a = [1, 2, 3, 4];
-var doubled = map(a, fun(x) { return x * 2; });
+val a = [1, 2, 3, 4];
+val doubled = map(a, fun(x) { return x * 2; });
 print doubled;              // expect: [2, 4, 6, 8]
 
-var evens = filter(a, fun(x) { return x % 2 == 0; });
+val evens = filter(a, fun(x) { return x % 2 == 0; });
 print evens;                // expect: [2, 4]
 
 // Chaining
-var result = map(filter([1,2,3,4,5], fun(x) { return x > 2; }), fun(x) { return x * 10; });
+val result = map(filter([1,2,3,4,5], fun(x) { return x > 2; }), fun(x) { return x * 10; });
 print result;               // expect: [30, 40, 50]

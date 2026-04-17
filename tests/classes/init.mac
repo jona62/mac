@@ -6,6 +6,6 @@ class Circle {
         return 3.14159 * this.radius * this.radius;
     }
 }
-var c = Circle(5);
+val c = Circle(5);
 print c.radius;           // expect: 5
 print c.area();           // expect: 78.5397

@@ -1,5 +1,5 @@
 // gif block syntax
-var g = gif loop {
+val g = gif loop {
     @blank "3" : 250ms
     @blank "2" : 250ms
     @blank "1" : 1s

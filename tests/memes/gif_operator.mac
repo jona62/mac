@@ -1,8 +1,8 @@
 // Gif class with .frame() method
-var t = Template("blank");
-var m1 = Meme(t).text(Top, "Frame 1");
-var m2 = Meme(t).text(Top, "Frame 2");
-var d = Duration(300);
+val t = Template("blank");
+val m1 = Meme(t).text(Top, "Frame 1");
+val m2 = Meme(t).text(Top, "Frame 2");
+val d = Duration(300);
 
 var g = Gif();
 g.frame(m1, d);

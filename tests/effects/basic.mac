@@ -16,7 +16,7 @@ print type(sharpen);        // expect: function
 print type(vignette);       // expect: function
 
 // Compose effects
-var fx = blur(3) >> sepia;
+val fx = blur(3) >> sepia;
 print type(fx);             // expect: function
 
 // deepfry preset exists and is callable

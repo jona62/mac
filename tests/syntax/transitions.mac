@@ -1,5 +1,5 @@
 // Transition syntax inside gif blocks
-var g = gif {
+val g = gif {
     @blank "A" : 1s
     --- crossfade 200ms ease ---
     @blank "B" : 1s

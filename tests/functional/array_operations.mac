@@ -9,12 +9,12 @@ print dropWhile([], (x) -> true);                       // expect: []
 print dropWhile([1, 2, 3], (x) -> x < 10);             // expect: []
 
 // partition
-var [evens, odds] = partition([1, 2, 3, 4, 5], (x) -> x % 2 == 0);
+val [evens, odds] = partition([1, 2, 3, 4, 5], (x) -> x % 2 == 0);
 print evens;                                            // expect: [2, 4]
 print odds;                                             // expect: [1, 3, 5]
 
 // groupBy
-var grouped = groupBy(["apple", "avocado", "banana", "blueberry"], (s) -> substr(s, 0, 1));
+val grouped = groupBy(["apple", "avocado", "banana", "blueberry"], (s) -> substr(s, 0, 1));
 print grouped["a"];                                     // expect: [apple, avocado]
 print grouped["b"];                                     // expect: [banana, blueberry]
 

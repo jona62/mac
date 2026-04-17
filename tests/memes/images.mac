@@ -1,9 +1,9 @@
 // Meme image generation with typed API
-var tmpl = Template("two_panel");
-var m = Meme(tmpl).text(Top, "Writing Java").text(Bottom, "Writing Mac");
+val tmpl = Template("two_panel");
+val m = Meme(tmpl).text(Top, "Writing Java").text(Bottom, "Writing Mac");
 m.save(PNG, "test_meme.png");
 print "png saved";          // expect: png saved
 
-var small = m.resize(Size(200, 200));
+val small = m.resize(Size(200, 200));
 small.save(JPG, "test_small.jpg");
 print "jpg saved";          // expect: jpg saved

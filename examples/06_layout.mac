@@ -6,8 +6,8 @@ effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
 effect vintage = sepia >> brightness(0.9);
 
 // Side by side with beside()
-var left = @blank "Before";
-var right = @blank "After";
+val left = @blank "Before";
+val right = @blank "After";
 beside(left, right) |> save("side_by_side.png");
 
 // Vertical stack
@@ -22,8 +22,8 @@ grid 2x2 {
 } |> pad(5) |> border(2) => "effects_grid.png";
 
 // Grid from data
-var labels = ["A", "B", "C", "D", "E", "F"];
-var items = labels |> map(l -> @blank l);
+val labels = ["A", "B", "C", "D", "E", "F"];
+val items = labels |> map(l -> @blank l);
 toGrid(items, 3, 2) |> pad(3) |> save("data_grid.png");
 
 print "Layouts saved to output/";

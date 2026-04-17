@@ -41,9 +41,9 @@ class Position {
     init(name) { this.name = name; }
     __eq__(other) { return this.name == other.name; }
 }
-var Top = Position("top");
-var Bottom = Position("bottom");
-var Center = Position("center");
+val Top = Position("top");
+val Bottom = Position("bottom");
+val Center = Position("center");
 
 // Image output format.
 // Use the constants PNG, JPG, or GIF.
@@ -51,9 +51,9 @@ class Format {
     init(name) { this.name = name; }
     __eq__(other) { return this.name == other.name; }
 }
-var PNG = Format("png");
-var JPG = Format("jpg");
-var GIF = Format("gif");
+val PNG = Format("png");
+val JPG = Format("jpg");
+val GIF = Format("gif");
 
 // Meme template image.
 // Pass a built-in name (two_panel, three_panel, bottom_text, blank)
@@ -155,7 +155,7 @@ class Gif {
 }
 
 // Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)
-var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
+val deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
 
 // Built-in enum types
 enum Result { Ok(value), Error(message) }

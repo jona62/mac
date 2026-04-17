@@ -59,7 +59,7 @@ gif loop {
 
 // ── Developer Week Arc ──────────────────────────────────
 
-var days = [
+val days = [
     ["MONDAY",    "Fresh deploy, clean slate"],
     ["TUESDAY",   "Minor refactor, no big deal"],
     ["WEDNESDAY", "Why is CI failing?"],
@@ -67,12 +67,12 @@ var days = [
     ["FRIDAY",    "Ship it anyway"]
 ];
 
-var day_memes = days |> map(d -> @two_panel {
+val day_memes = days |> map(d -> @two_panel {
     top: d[0]
     bottom: d[1]
 });
 
-var week = day_memes |> reduce(
+val week = day_memes |> reduce(
     (g, m) -> g.frame(m, Duration(700)), Gif());
 week.save("dev_week.gif");
 
@@ -108,19 +108,19 @@ grid 2x2 {
 
 // ── Data-Driven Pipeline ────────────────────────────────
 
-var quotes = [
+val quotes = [
     ["Debugging", "print('here')"],
     ["Testing",   "works on my machine"],
     ["Deploying", "YOLO"],
     ["Monitoring", "This is fine"]
 ];
 
-var memes = quotes |> map(q -> @two_panel {
+val memes = quotes |> map(q -> @two_panel {
     top: q[0]
     bottom: q[1]
 });
 
-var lifecycle = memes |> reduce(
+val lifecycle = memes |> reduce(
     (g, m) -> g.frame(m, Duration(3000)), Gif());
 lifecycle.save("dev_lifecycle.gif");
 

@@ -6,12 +6,12 @@ print substr("hello world", 0, 5); // expect: hello
 print "hello world" |> substr(0, 5); // expect: hello
 
 // Multi-line pipe
-var result = "hello"
+val result = "hello"
   |> len;
 print result;                       // expect: 5
 
 // Compose
-var double_sqrt = sqrt >> sqrt;
+val double_sqrt = sqrt >> sqrt;
 print 256 |> double_sqrt;          // expect: 4
 
 // Compose with pipe

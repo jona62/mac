@@ -3,6 +3,6 @@ class Greeter {
         return "Hello, " + name + "!";
     }
 }
-var g = Greeter();
+val g = Greeter();
 print g.greet("Mac");     // expect: Hello, Mac!
 print Greeter;            // expect: Greeter

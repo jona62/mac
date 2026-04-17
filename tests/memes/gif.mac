@@ -1,9 +1,9 @@
 // GIF creation with typed API
-var tmpl = Template("two_panel");
-var m1 = Meme(tmpl).text(Top, "Frame 1");
-var m2 = Meme(tmpl).text(Top, "Frame 2");
+val tmpl = Template("two_panel");
+val m1 = Meme(tmpl).text(Top, "Frame 1");
+val m2 = Meme(tmpl).text(Top, "Frame 2");
 
-var g = Gif()
+val g = Gif()
     .frame(m1, Duration(300))
     .frame(m2, Duration(300));
 print g.frameCount;              // expect: 2

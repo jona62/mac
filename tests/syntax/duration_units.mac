@@ -1,13 +1,13 @@
 // Duration units: ms and s
-var d1 = Duration(400);
+val d1 = Duration(400);
 print d1.ms;                         // expect: 400
 
-var d2 = Duration(2000);
+val d2 = Duration(2000);
 print d2.ms;                         // expect: 2000
 
 // Duration in gif blocks uses ms/s suffixes (parsed at compile time)
 // Verify gif block parses without error
-var g = gif {
+val g = gif {
     @blank "A" : 400ms
     @blank "B" : 1s
 };

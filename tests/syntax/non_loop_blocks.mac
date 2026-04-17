@@ -1,11 +1,11 @@
 // gif blocks WITHOUT loop keyword
-var g = gif {
+val g = gif {
     @blank "One" : 300ms
     @blank "Two" : 300ms
 };
 print type(g);                  // expect: instance
 
-var g2 = gif {
+val g2 = gif {
     @blank "A" : 500ms
     --- crossfade 150ms ---
     @blank "B" : 500ms

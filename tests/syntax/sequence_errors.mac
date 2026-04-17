@@ -1,7 +1,7 @@
 // Sequence types cannot be used as frames
 // Gif and Timeline are sequence types — they produce frame sequences, not pixels
 
-var g = gif loop {
+val g = gif loop {
     @blank "1" : 250ms
     @blank "2" : 250ms
 };

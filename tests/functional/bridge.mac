@@ -1,18 +1,18 @@
-var t = Template("two_panel");
-var memes = [
+val t = Template("two_panel");
+val memes = [
   Meme(t).text(Top, "Frame 1"),
   Meme(t).text(Top, "Frame 2"),
   Meme(t).text(Top, "Frame 3")
 ];
-var g = memes |> animate(Duration(300));
+val g = memes |> animate(Duration(300));
 print type(g);     // expect: gif
 
-var memes2 = [
+val memes2 = [
   Meme(t).text(Top, "A"),
   Meme(t).text(Top, "B"),
   Meme(t).text(Top, "C"),
   Meme(t).text(Top, "D")
 ];
-var gridResult = memes2 |> toGrid(2, 2);
+val gridResult = memes2 |> toGrid(2, 2);
 print type(gridResult);   // expect: map
 print "done";             // expect: done

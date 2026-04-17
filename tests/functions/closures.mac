@@ -1,5 +1,5 @@
 fun outer() {
-    var x = "outside";
+    val x = "outside";
     fun inner() {
         print x;
     }
@@ -16,6 +16,6 @@ fun makeCounter() {
     }
     return count;
 }
-var c = makeCounter();
+val c = makeCounter();
 print c();                // expect: 1
 print c();                // expect: 2

@@ -1,13 +1,13 @@
 // each() — side-effect iteration
-var items = [1, 2, 3];
+val items = [1, 2, 3];
 var total = 0;
 each(items, fun(x) { total = total + x; });
 print total;                    // expect: 6
 
 // flatMap — map then flatten
-var nested = [[1, 2], [3, 4], [5]];
-var flat = flatMap(nested, fun(x) { return x; });
+val nested = [[1, 2], [3, 4], [5]];
+val flat = flatMap(nested, fun(x) { return x; });
 print flat;                     // expect: [1, 2, 3, 4, 5]
 
-var doubled = flatMap([1, 2, 3], fun(x) { return [x, x * 10]; });
+val doubled = flatMap([1, 2, 3], fun(x) { return [x, x * 10]; });
 print doubled;                  // expect: [1, 10, 2, 20, 3, 30]

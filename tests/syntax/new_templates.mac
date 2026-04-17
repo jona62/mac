@@ -1,33 +1,33 @@
 // New built-in templates
-var t1 = Template("wide");
+val t1 = Template("wide");
 print type(t1);                      // expect: instance
 
-var t2 = Template("tall");
+val t2 = Template("tall");
 print type(t2);                      // expect: instance
 
-var t3 = Template("square");
+val t3 = Template("square");
 print type(t3);                      // expect: instance
 
-var t4 = Template("dark");
+val t4 = Template("dark");
 print type(t4);                      // expect: instance
 
-var t5 = Template("four_panel");
+val t5 = Template("four_panel");
 print type(t5);                      // expect: instance
 
-var t6 = Template("caption_bar");
+val t6 = Template("caption_bar");
 print type(t6);                      // expect: instance
 
 // Custom template from file path
-var t7 = Template("assets/templates/blank.png");
+val t7 = Template("assets/templates/blank.png");
 print type(t7);                      // expect: instance
 
 // @template with new templates
-var m = @wide { top: "Wide" };
+val m = @wide { top: "Wide" };
 print type(m);                       // expect: instance
 
-var m2 = @dark "Dark mode";
+val m2 = @dark "Dark mode";
 print type(m2);                      // expect: instance
 
 // @"path" custom template syntax
-var m3 = @"assets/templates/blank.png" "Custom path";
+val m3 = @"assets/templates/blank.png" "Custom path";
 print type(m3);                      // expect: instance

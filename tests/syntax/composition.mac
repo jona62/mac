@@ -2,20 +2,20 @@
 // Frame types (Meme, Grid, effects) compose freely
 
 // Grid inside grid
-var inner = grid 2x1 {
+val inner = grid 2x1 {
     @blank "A"
     @blank "B"
 };
 print type(inner);              // expect: map
 
-var outer = grid 1x2 {
+val outer = grid 1x2 {
     inner
     inner
 };
 print type(outer);              // expect: map
 
 // Grid inside gif
-var g = gif loop {
+val g = gif loop {
     grid 2x2 {
         @blank "1"
         @blank "2"
@@ -27,7 +27,7 @@ var g = gif loop {
 print type(g);                  // expect: instance
 
 // Grid inside gif with transitions
-var tl = gif loop {
+val tl = gif loop {
     grid 1x2 {
         @blank "Left"
         @blank "Right"

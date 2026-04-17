@@ -1,5 +1,5 @@
 // gif and grid block syntax
-var tl = gif loop {
+val tl = gif loop {
     @blank "Act 1" : 500ms
     --- crossfade 150ms ---
     @blank "Act 2" : 1s
@@ -7,7 +7,7 @@ var tl = gif loop {
 
 print type(tl);                 // expect: instance
 
-var gridResult = grid 2x2 {
+val gridResult = grid 2x2 {
     @blank "Top Left"
     @blank "Top Right"
     @blank "Bottom Left"

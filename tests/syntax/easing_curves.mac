@@ -1,5 +1,5 @@
 // All easing curves in gif transitions
-var tl = gif loop {
+val tl = gif loop {
     @blank "Linear" : 300ms
     --- crossfade 100ms ---
     @blank "Ease" : 300ms

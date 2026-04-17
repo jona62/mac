@@ -6,11 +6,11 @@ m.year = 2026;
 print m.year;                   // expect: 2026
 
 // Empty map
-var empty = {};
+val empty = {};
 print empty;                    // expect: {}
 
 // Map iteration
-var config = {host: "localhost", port: 8080};
+val config = {host: "localhost", port: 8080};
 for (var key in config) print key;
 // expect: host
 // expect: port
