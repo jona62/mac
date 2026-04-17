@@ -15,13 +15,25 @@ namespace analyzer {
 
     inline std::string J(const std::string& s) {
         std::string o = "\"";
-        for (char c : s) {
-            if (c == '"') o += "\\\"";
-            else if (c == '\\') o += "\\\\";
-            else if (c == '\n') o += "\\n";
-            else if (c == '\r') o += "\\r";
-            else if (c == '\t') o += "\\t";
-            else o += c;
+        for (unsigned char c : s) {
+            switch (c) {
+                case '"':  o += "\\\""; break;
+                case '\\': o += "\\\\"; break;
+                case '\b': o += "\\b"; break;
+                case '\f': o += "\\f"; break;
+                case '\n': o += "\\n"; break;
+                case '\r': o += "\\r"; break;
+                case '\t': o += "\\t"; break;
+                default:
+                    if (c < 0x20) {
+                        // JSON requires \u00XX for control characters
+                        char buf[8];
+                        std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+                        o += buf;
+                    } else {
+                        o += static_cast<char>(c);
+                    }
+            }
         }
         return o + "\"";
     }
