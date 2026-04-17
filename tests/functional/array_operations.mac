@@ -1,0 +1,33 @@
+// takeWhile
+print takeWhile([1, 2, 3, 4, 1], (x) -> x < 3);      // expect: [1, 2]
+print takeWhile([], (x) -> true);                       // expect: []
+print takeWhile([5, 1, 2], (x) -> x < 3);              // expect: []
+
+// dropWhile
+print dropWhile([1, 2, 3, 4, 1], (x) -> x < 3);       // expect: [3, 4, 1]
+print dropWhile([], (x) -> true);                       // expect: []
+print dropWhile([1, 2, 3], (x) -> x < 10);             // expect: []
+
+// partition
+var [evens, odds] = partition([1, 2, 3, 4, 5], (x) -> x % 2 == 0);
+print evens;                                            // expect: [2, 4]
+print odds;                                             // expect: [1, 3, 5]
+
+// groupBy
+var grouped = groupBy(["apple", "avocado", "banana", "blueberry"], (s) -> substr(s, 0, 1));
+print grouped["a"];                                     // expect: [apple, avocado]
+print grouped["b"];                                     // expect: [banana, blueberry]
+
+// unique
+print unique([1, 2, 2, 3, 1, 3]);                      // expect: [1, 2, 3]
+print unique([]);                                        // expect: []
+print unique(["a", "b", "a"]);                           // expect: [a, b]
+
+// chunk
+print chunk([1, 2, 3, 4, 5], 2);                        // expect: [[1, 2], [3, 4], [5]]
+print chunk([1, 2, 3], 3);                               // expect: [[1, 2, 3]]
+print chunk([], 2);                                      // expect: []
+
+// scan
+print scan([1, 2, 3, 4], (acc, x) -> acc + x, 0);       // expect: [1, 3, 6, 10]
+print scan(["a", "b", "c"], (acc, x) -> acc + x, "");    // expect: [a, ab, abc]
