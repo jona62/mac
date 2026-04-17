@@ -1,0 +1,39 @@
+// Basic variable interpolation
+var name = "Mac";
+print "Hello, {name}!";              // expect: Hello, Mac!
+
+// Expression interpolation
+print "2 + 2 = {2 + 2}";            // expect: 2 + 2 = 4
+
+// Variable in interpolation
+var x = 10;
+print "x is {x}";                   // expect: x is 10
+
+// Function call in interpolation
+print "{upper(name)} language";      // expect: MAC language
+
+// No interpolation (plain string)
+print "no interpolation here";       // expect: no interpolation here
+
+// Escaped braces
+print "escaped \{braces}";          // expect: escaped {braces}
+
+// Empty interpolation
+print "empty {} test";              // expect: empty  test
+
+// Multiple interpolations
+print "{1 + 2} + {3 + 4} = {1+2+3+4}"; // expect: 3 + 7 = 10
+
+// Boolean and nil interpolation
+print "bool: {true}";               // expect: bool: true
+print "nil: {nil}";                 // expect: nil: nil
+
+// Number auto-stringify via +
+print "num: " + 42;                 // expect: num: 42
+
+// Interpolation at start and end
+print "{name}";                     // expect: Mac
+print "{name}!";                    // expect: Mac!
+
+// Adjacent interpolations
+print "{name}{name}";               // expect: MacMac
