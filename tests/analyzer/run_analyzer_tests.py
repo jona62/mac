@@ -749,7 +749,8 @@ def normalize_snapshot(data: dict) -> dict:
                 "foldingRanges", "semanticTokens", "paramHints",
                 "chainHints", "signatures", "classes"):
         out[cat] = [i for i in data.get(cat, []) if i.get("source") == "user"]
-    out["templates"] = data.get("templates", [])
+    # Sort templates by name — directory_iterator order varies across platforms
+    out["templates"] = sorted(data.get("templates", []), key=lambda t: t.get("name", ""))
     return out
 
 

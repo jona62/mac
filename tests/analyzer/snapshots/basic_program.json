@@ -175,22 +175,7 @@
     {
       "category": "",
       "description": "Built-in template",
-      "name": "square"
-    },
-    {
-      "category": "",
-      "description": "Built-in template",
-      "name": "tall"
-    },
-    {
-      "category": "",
-      "description": "Built-in template",
-      "name": "four_panel"
-    },
-    {
-      "category": "",
-      "description": "Built-in template",
-      "name": "caption_bar"
+      "name": "blank"
     },
     {
       "category": "",
@@ -200,12 +185,7 @@
     {
       "category": "",
       "description": "Built-in template",
-      "name": "wide"
-    },
-    {
-      "category": "",
-      "description": "Built-in template",
-      "name": "three_panel"
+      "name": "caption_bar"
     },
     {
       "category": "",
@@ -215,22 +195,12 @@
     {
       "category": "",
       "description": "Built-in template",
-      "name": "blank"
-    },
-    {
-      "category": "",
-      "description": "Built-in template",
-      "name": "two_panel"
+      "name": "four_panel"
     },
     {
       "category": "meme",
       "description": "Meme image",
-      "name": "meme.kid_crying"
-    },
-    {
-      "category": "meme",
-      "description": "Meme image",
-      "name": "meme.jordan_crying"
+      "name": "meme.girl_side_eye"
     },
     {
       "category": "meme",
@@ -240,12 +210,22 @@
     {
       "category": "meme",
       "description": "Meme image",
-      "name": "meme.king_bach_stare"
+      "name": "meme.idk_about_that"
     },
     {
       "category": "meme",
       "description": "Meme image",
-      "name": "meme.idk_about_that"
+      "name": "meme.jordan_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.kid_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.king_bach_stare"
     },
     {
       "category": "meme",
@@ -260,12 +240,32 @@
     {
       "category": "meme",
       "description": "Meme image",
-      "name": "meme.girl_side_eye"
+      "name": "meme.window_despair"
     },
     {
-      "category": "meme",
-      "description": "Meme image",
-      "name": "meme.window_despair"
+      "category": "",
+      "description": "Built-in template",
+      "name": "square"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "tall"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "three_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "two_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "wide"
     }
   ]
 }
