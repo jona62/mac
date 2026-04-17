@@ -65,18 +65,8 @@ class Template {
     }
 }
 
-// A single animation frame pairing a Meme with a Duration.
-// Created by Meme + Duration.
-class Frame {
-    init(memeObj, duration) {
-        this.meme = memeObj;
-        this.duration = duration;
-    }
-}
-
 // Meme builder. Chain .text() to add captions,
 // .save() to export, or pipe through effects with |>.
-// Meme + Duration creates a Frame for animation.
 class Meme {
     init(template) {
         this.template = template;
@@ -128,19 +118,15 @@ class Meme {
         m._style = this._style;
         return m;
     }
-
-    // Meme + Duration = Frame
-    __add__(other) {
-        return Frame(this, other);
-    }
 }
 
 // Animated GIF builder. Chain .frame() to add frames,
-// .save() to export. Gif + Frame adds a frame.
-// For transitions between frames, use Timeline instead.
+// .save() to export. Use --- transitions in gif blocks
+// for timeline-style animated GIFs.
 class Gif {
     init() {
         this._gif = nil;
+        this._tl = nil;
         this._frames = [];
         this.frameCount = 0;
     }
@@ -158,78 +144,16 @@ class Gif {
 
     // Render all frames and save as an animated GIF.
     save(path) {
-        if (this._gif != nil) {
+        if (this._tl != nil) {
+            _timeline_render(this._tl, path);
+        } else if (this._gif != nil) {
             _gif_save_raw(this._gif, path);
         } else {
             _gif_save(this._frames, path);
         }
-    }
-
-    // Gif + Frame = Gif (adds the frame)
-    __add__(other) {
-        this.frame(other.meme, other.duration);
-        return this;
     }
 }
 
 // Composed effect: saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1)
 var deepfry = saturate(3.0) >> contrast(2.0) >> jpeg(10) >> noise(0.1);
 
-// Transition type constants for Timeline.
-var crossfade = "crossfade";
-var slideLeft = "slideLeft";
-var slideRight = "slideRight";
-var slideUp = "slideUp";
-var slideDown = "slideDown";
-var wipe = "wipe";
-var fadeBlack = "fadeBlack";
-var zoom = "zoom";
-
-// Animation timeline with transitions between keyframes.
-// Chain .frame() and .transition() to build the sequence,
-// then .render() or .save() to export.
-// Timeline + Frame adds a keyframe.
-class Timeline {
-    init() {
-        this._tl = timeline();
-    }
-
-    // Add a keyframe with hold duration.
-    // Returns this — chainable.
-    frame(memeObj, duration) {
-        _timeline_keyframe(this._tl, memeObj);
-        _timeline_hold(this._tl, duration.ms);
-        return this;
-    }
-
-    // Set transition to the next keyframe.
-    // Types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe
-    transition(transType, duration) {
-        _timeline_transition(this._tl, duration.ms, transType);
-        return this;
-    }
-
-    // Set loop count. 0 = infinite.
-    loop(count) {
-        _timeline_loop(this._tl, count);
-        return this;
-    }
-
-    // Render timeline to an animated GIF.
-    render(path) {
-        _timeline_render(this._tl, path);
-        return this;
-    }
-
-    // Alias for render().
-    save(path) {
-        _timeline_render(this._tl, path);
-        return this;
-    }
-
-    // Timeline + Frame = Timeline (adds keyframe)
-    __add__(other) {
-        this.frame(other.meme, other.duration);
-        return this;
-    }
-}
