@@ -23,11 +23,33 @@ var neg = -7;
 
 ### Strings
 
-Strings are delimited by double quotes. Escape sequences are supported within strings.
+Strings are delimited by double quotes.
 
 ```
 var greeting = "Hello, World!";
-var multiline = "line one\nline two";
+```
+
+#### String Interpolation
+
+Any double-quoted string can embed expressions inside `{` and `}`. The expression is evaluated at runtime and its result is converted to a string and concatenated in place.
+
+```
+var name = "Mac";
+print "Hello, {name}!";           // Hello, Mac!
+print "2 + 2 = {2 + 2}";         // 2 + 2 = 4
+print "{upper(name)} LANG";       // MAC LANG
+```
+
+To include a literal `{` in a string, escape it with a backslash:
+
+```
+print "literal \{brace}";         // literal {brace}
+```
+
+The `+` operator also auto-converts non-string values to strings when the other operand is a string:
+
+```
+print "count: " + 42;             // count: 42
 ```
 
 ### String Templates
