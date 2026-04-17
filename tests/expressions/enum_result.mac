@@ -1,0 +1,39 @@
+// Result pattern
+fun divide(a, b) {
+    if (b == 0) return Result.Error("division by zero");
+    return Result.Ok(a / b);
+}
+
+val r1 = match divide(10, 2) {
+    Result.Ok(v) -> "result: {v}"
+    Result.Error(e) -> "error: {e}"
+};
+print r1;                             // expect: result: 5
+
+val r2 = match divide(10, 0) {
+    Result.Ok(v) -> "result: {v}"
+    Result.Error(e) -> "error: {e}"
+};
+print r2;                             // expect: error: division by zero
+
+// Option pattern
+fun find_first(arr, pred) {
+    for (var item in arr) {
+        if (pred(item)) return Option.Some(item);
+    }
+    return Option.None;
+}
+
+val found = match find_first([1, 2, 3, 4], (x) -> x > 2) {
+    Option.Some(v) -> "found: {v}"
+    Option.None -> "not found"
+};
+print found;                          // expect: found: 3
+
+val missing = match find_first([1, 2], (x) -> x > 10) {
+    Option.Some(v) -> "found: {v}"
+    Option.None -> "not found"
+};
+print missing;                        // expect: not found
+
+print "enum result ok";               // expect: enum result ok

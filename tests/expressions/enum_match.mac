@@ -1,0 +1,44 @@
+// Match simple enum
+enum Color { Red, Green, Blue }
+val label = match Color.Red {
+    Color.Red -> "danger"
+    Color.Green -> "go"
+    Color.Blue -> "info"
+};
+print label;                          // expect: danger
+
+// Match data enum
+enum Result { Ok(value), Error(message) }
+val msg = match Result.Ok(42) {
+    Result.Ok(v) -> "got {v}"
+    Result.Error(e) -> "err: {e}"
+};
+print msg;                            // expect: got 42
+
+val msg2 = match Result.Error("not found") {
+    Result.Ok(v) -> "got {v}"
+    Result.Error(e) -> "err: {e}"
+};
+print msg2;                           // expect: err: not found
+
+// Wildcard
+val x = match Color.Blue {
+    Color.Red -> "red"
+    _ -> "other"
+};
+print x;                              // expect: other
+
+// Multi-field
+enum Pair { Of(first, second) }
+val desc = match Pair.Of("hello", 42) {
+    Pair.Of(a, b) -> "{a} = {b}"
+};
+print desc;                           // expect: hello = 42
+
+// No match returns nil
+val y = match Color.Blue {
+    Color.Red -> "red"
+};
+print y;                              // expect: nil
+
+print "enum match ok";                // expect: enum match ok

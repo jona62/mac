@@ -1,0 +1,19 @@
+// Basic enum
+enum Color { Red, Green, Blue }
+print Color.Red;                      // expect: Red
+print Color.Green;                    // expect: Green
+print Color.Blue;                     // expect: Blue
+print type(Color.Red);                // expect: Color
+print Color.Red == Color.Red;         // expect: true
+print Color.Red == Color.Blue;        // expect: false
+
+// Data enum
+enum Shape { Circle(radius), Rect(width, height), Point }
+var c = Shape.Circle(5);
+var r = Shape.Rect(3, 4);
+print c;                              // expect: Circle(5)
+print r;                              // expect: Rect(3, 4)
+print Shape.Point;                    // expect: Point
+print type(c);                        // expect: Shape
+
+print "enum basic ok";                // expect: enum basic ok
