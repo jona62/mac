@@ -332,32 +332,20 @@ namespace expr {
     };
 
     // gif [loop] { @tmpl "text" : 400ms, ... }
+    // Supports optional --- transition --- syntax between entries
     template <typename T>
     class GifBlockExpr : public Expr<T> {
     public:
-        struct Frame { shared_ptr<Expr<T>> meme; double durationMs; };
-        GifBlockExpr(Token keyword, bool loop, std::vector<Frame> frames, Token loopToken = Token())
-            : keyword(keyword), loop(loop), frames(std::move(frames)), loopToken(loopToken) {}
-        T visit(shared_ptr<Visitor<T>> visitor) override {
-            return visitor->visitGifBlockExpr(this);
-        }
-        Token keyword;
-        bool loop;
-        std::vector<Frame> frames;
-        Token loopToken;
-    };
-
-    // timeline [loop] { @tmpl "text" : 2s --- crossfade 150ms --- ... }
-    template <typename T>
-    class TimelineBlockExpr : public Expr<T> {
-    public:
-        struct TFrame { shared_ptr<Expr<T>> meme; double durationMs; };
         struct Transition { std::string type; double durationMs; std::string easing; };
-        struct Entry { TFrame frame; std::shared_ptr<Transition> transition; }; // transition to NEXT frame
-        TimelineBlockExpr(Token keyword, bool loop, std::vector<Entry> entries, Token loopToken = Token())
+        struct Entry {
+            shared_ptr<Expr<T>> meme;
+            double durationMs;
+            std::shared_ptr<Transition> transition; // transition to NEXT frame, nullptr if none
+        };
+        GifBlockExpr(Token keyword, bool loop, std::vector<Entry> entries, Token loopToken = Token())
             : keyword(keyword), loop(loop), entries(std::move(entries)), loopToken(loopToken) {}
         T visit(shared_ptr<Visitor<T>> visitor) override {
-            return visitor->visitTimelineBlockExpr(this);
+            return visitor->visitGifBlockExpr(this);
         }
         Token keyword;
         bool loop;
@@ -404,7 +392,6 @@ namespace expr {
         virtual T visitMemeLiteralExpr(MemeLiteralExpr<T>* expr) = 0;
         virtual T visitSaveExpr(SaveExpr<T>* expr) = 0;
         virtual T visitGifBlockExpr(GifBlockExpr<T>* expr) = 0;
-        virtual T visitTimelineBlockExpr(TimelineBlockExpr<T>* expr) = 0;
         virtual T visitGridBlockExpr(GridBlockExpr<T>* expr) = 0;
         virtual ~Visitor() = default;
     };
