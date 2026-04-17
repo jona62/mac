@@ -21,11 +21,3 @@ print type(fx);             // expect: function
 
 // deepfry preset exists and is callable
 print type(deepfry);        // expect: function
-
-// Transition constants exist
-print crossfade;            // expect: crossfade
-print slideLeft;            // expect: slideLeft
-print slideRight;           // expect: slideRight
-print slideUp;              // expect: slideUp
-print slideDown;            // expect: slideDown
-print wipe;                 // expect: wipe

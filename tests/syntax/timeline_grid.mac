@@ -1,5 +1,5 @@
-// timeline and grid block syntax
-var tl = timeline loop {
+// gif and grid block syntax
+var tl = gif loop {
     @blank "Act 1" : 500ms
     --- crossfade 150ms ---
     @blank "Act 2" : 1s

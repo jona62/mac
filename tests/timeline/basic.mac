@@ -1,24 +1,16 @@
-// Timeline as a class
-var tl = Timeline();
-print type(tl);             // expect: instance
+// Gif with transitions (unified — replaces timeline)
+var g = gif {
+    @blank "frame 1" : 500ms
+    --- crossfade 300ms ---
+    @blank "frame 2" : 500ms
+};
+print type(g);              // expect: instance
 
-// Method chaining
-var t = Template("assets/templates/blank.png");
-var m1 = Meme(t).text(Top, "frame 1");
-var m2 = Meme(t).text(Top, "frame 2");
+// Simple gif still works
+var g2 = gif {
+    @blank "A" : 400ms
+    @blank "B" : 400ms
+};
+print type(g2);             // expect: instance
 
-var tl2 = Timeline()
-    .frame(m1, Duration(500))
-    .transition(crossfade, Duration(300))
-    .frame(m2, Duration(500))
-    .loop(0);
-print type(tl2);            // expect: instance
-
-// Operator overloading: Timeline + Frame
-var tl3 = Timeline();
-var f1 = m1 + Duration(400);
-var f2 = m2 + Duration(400);
-tl3 = tl3 + f1 + f2;
-print type(tl3);            // expect: instance
-
-print "timeline ok";        // expect: timeline ok
+print "gif transitions ok"; // expect: gif transitions ok

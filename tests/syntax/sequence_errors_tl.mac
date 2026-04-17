@@ -1,9 +1,9 @@
-// Timeline inside grid should error
-var tl = timeline loop {
+// Gif with transitions inside grid should error
+var g = gif loop {
     @blank "A" : 500ms
     --- crossfade 150ms ---
     @blank "B" : 500ms
 };
 
-grid 2x1 { tl @blank "ok" } => "fail.png";
-// expect runtime error: Cannot use Timeline as a frame
+grid 2x1 { g @blank "ok" } => "fail.png";
+// expect runtime error: Cannot use Gif as a frame

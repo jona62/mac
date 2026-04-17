@@ -1,20 +1,11 @@
-// Transition types and easing
-// Verify all transition constants exist
-print crossfade;                     // expect: crossfade
-print slideLeft;                     // expect: slideLeft
-print slideRight;                    // expect: slideRight
-print slideUp;                       // expect: slideUp
-print slideDown;                     // expect: slideDown
-print wipe;                          // expect: wipe
-print fadeBlack;                     // expect: fadeBlack
-print zoom;                          // expect: zoom
-
-// Timeline with easing parses without error
-var tl = timeline {
+// Transition syntax inside gif blocks
+var g = gif {
     @blank "A" : 1s
     --- crossfade 200ms ease ---
     @blank "B" : 1s
     --- fadeBlack 300ms easeOut ---
     @blank "C" : 1s
 };
-print type(tl);                      // expect: instance
+print type(g);              // expect: instance
+
+print "transitions ok";     // expect: transitions ok

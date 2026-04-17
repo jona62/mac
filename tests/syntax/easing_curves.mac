@@ -1,5 +1,5 @@
-// All easing curves in timeline transitions
-var tl = timeline loop {
+// All easing curves in gif transitions
+var tl = gif loop {
     @blank "Linear" : 300ms
     --- crossfade 100ms ---
     @blank "Ease" : 300ms

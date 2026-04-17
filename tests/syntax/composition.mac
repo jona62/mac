@@ -26,8 +26,8 @@ var g = gif loop {
 };
 print type(g);                  // expect: instance
 
-// Grid inside timeline
-var tl = timeline loop {
+// Grid inside gif with transitions
+var tl = gif loop {
     grid 1x2 {
         @blank "Left"
         @blank "Right"
