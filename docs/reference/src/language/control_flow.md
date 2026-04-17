@@ -55,10 +55,85 @@ Iterate over arrays or maps:
 
 ```
 var items = ["a", "b", "c"];
-for item in items {
+for (var item in items) {
     print item;
 }
 // Output: a  b  c
+```
+
+### for-in Destructuring
+
+When iterating over arrays of arrays, you can destructure each element directly in the loop variable:
+
+```
+for (var [i, val] in enumerate(["a", "b", "c"])) {
+    print "{i}: {val}";
+}
+// Output: 0: a  1: b  2: c
+```
+
+```
+for (var [name, score] in zip(["Alice", "Bob"], [95, 87])) {
+    print "{name}: {score}";
+}
+// Output: Alice: 95  Bob: 87
+```
+
+This is equivalent to accessing each element by index inside the loop body but more concise.
+
+## match
+
+A `match` expression evaluates a value against a series of patterns and returns the result of the matching arm. It can be used anywhere an expression is valid.
+
+```
+var label = match score {
+    100 -> "Perfect"
+    0 -> "Zero"
+    _ -> "Other"
+};
+```
+
+Each arm is a pattern followed by `->` and a result expression. The `_` wildcard matches any value. If no arm matches and there is no wildcard, the result is `nil`.
+
+```
+var x = match 42 {
+    0 -> "zero"
+    42 -> "forty-two"
+    _ -> "other"
+};
+print x;
+// Output: forty-two
+```
+
+Patterns are compared using `==`. Any expression can be used as a pattern:
+
+```
+var n = 5;
+var result = match n {
+    2 + 3 -> "five"
+    _ -> "not five"
+};
+// Output: five
+```
+
+Match works with any value type -- numbers, strings, booleans, and function return values:
+
+```
+var icon = match type(value) {
+    "number" -> "#"
+    "string" -> "abc"
+    _ -> "?"
+};
+```
+
+Since `match` is an expression, it can be used inline:
+
+```
+print match 1 + 1 {
+    2 -> "correct"
+    _ -> "wrong"
+};
+// Output: correct
 ```
 
 ## break
