@@ -171,6 +171,9 @@ namespace runner {
             }
             if (line.empty() && !continuation) continue;
 
+            // Add each line to history individually so up-arrow recalls one line at a time
+            if (!line.empty()) linenoiseHistoryAdd(line.c_str());
+
             if (!buffer.empty()) buffer += "\n";
             buffer += line;
 
@@ -195,8 +198,6 @@ namespace runner {
                 auto trimBuf = buffer;
                 while (!trimBuf.empty() && std::isspace(static_cast<unsigned char>(trimBuf.back()))) trimBuf.pop_back();
                 if (!trimBuf.empty() && trimBuf.back() != ';' && trimBuf.back() != '}') buffer += ";";
-                // Add to history (skip empty)
-                if (!trimBuf.empty()) linenoiseHistoryAdd(trimBuf.c_str());
                 rt.run(buffer);
                 buffer.clear();
             }
