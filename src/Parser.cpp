@@ -399,7 +399,7 @@ shared_ptr<Expr<T>> Parser::primary() {
     // Contextual keyword blocks: gif, timeline, grid — must check BEFORE generic identifier
     if (peek().type == TokenType::IDENTIFIER) {
         auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && (*s == "gif" || *s == "timeline" || *s == "grid")) {
+        if (s && (*s == "gif" || *s == "grid")) {
             if (current + 1 < tokens.size()) {
                 auto nextType = tokens[current + 1].type;
                 auto* nextStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
@@ -409,7 +409,6 @@ shared_ptr<Expr<T>> Parser::primary() {
                 if (isBlock) {
                     advance();
                     if (*s == "gif") return gifBlock<T>();
-                    if (*s == "timeline") return timelineBlock<T>();
                     if (*s == "grid") return gridBlock<T>();
                 }
             }
@@ -829,7 +828,7 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
     throw ParseError(peek(), "Expected '{' or text after @template.");
 }
 
-// gif [loop] { @tmpl "text" : 400ms, ... }
+// gif [loop] { @tmpl "text" : 400ms, --- crossfade 150ms --- ... }
 template <typename T>
 shared_ptr<Expr<T>> Parser::gifBlock() {
     Token keyword = previous();
@@ -844,52 +843,25 @@ shared_ptr<Expr<T>> Parser::gifBlock() {
 
     consume(TokenType::LEFT_BRACE, "Expected '{' after gif.");
 
-    std::vector<typename expr::GifBlockExpr<T>::Frame> frames;
+    std::vector<typename expr::GifBlockExpr<T>::Entry> entries;
     while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
-        auto meme = expression<T>(); // parse the meme expression (could be @literal or variable)
-        consume(TokenType::COLON, "Expected ':' after meme in gif frame.");
-        double ms = parseDuration();
-        frames.push_back({meme, ms});
-    }
-    consume(TokenType::RIGHT_BRACE, "Expected '}' after gif block.");
-
-    return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(frames), loopToken);
-}
-
-// timeline [loop] { @tmpl { ... } : 2s --- crossfade 150ms --- ... }
-template <typename T>
-shared_ptr<Expr<T>> Parser::timelineBlock() {
-    Token keyword = previous();
-    bool loop = false;
-    Token loopToken;
-
-    if (peek().type == TokenType::IDENTIFIER) {
-        auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && *s == "loop") { advance(); loop = true; loopToken = previous(); }
-    }
-
-    consume(TokenType::LEFT_BRACE, "Expected '{' after timeline.");
-
-    std::vector<typename expr::TimelineBlockExpr<T>::Entry> entries;
-    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
-        // Check for transition: --- type duration ---
+        // Check for transition: --- type duration [easing] ---
         if (match(TokenType::TRIPLE_DASH)) {
             consume(TokenType::IDENTIFIER, "Expected transition type after '---'.");
             std::string transType = std::get<std::string>(previous().lexeme);
             double transMs = parseDuration();
-            // Optional easing: ease, easeIn, easeOut, easeInOut
             std::string easing = "linear";
             if (peek().type == TokenType::IDENTIFIER) {
                 auto* s = std::get_if<std::string>(&peek().lexeme);
-                if (s && (*s == "ease" || *s == "easeIn" || *s == "easeOut" || *s == "easeInOut")) {
+                if (s && (*s == "ease" || *s == "easeIn" || *s == "easeOut"
+                          || *s == "easeInOut" || *s == "bounce" || *s == "linear")) {
                     advance();
                     easing = *s;
                 }
             }
             consume(TokenType::TRIPLE_DASH, "Expected '---' after transition.");
-            // Attach transition to the previous entry
             if (!entries.empty()) {
-                auto trans = std::make_shared<typename expr::TimelineBlockExpr<T>::Transition>();
+                auto trans = std::make_shared<typename expr::GifBlockExpr<T>::Transition>();
                 trans->type = transType;
                 trans->durationMs = transMs;
                 trans->easing = easing;
@@ -898,15 +870,14 @@ shared_ptr<Expr<T>> Parser::timelineBlock() {
             continue;
         }
 
-        // Parse frame: memeExpr : duration
         auto meme = expression<T>();
-        consume(TokenType::COLON, "Expected ':' after meme in timeline frame.");
+        consume(TokenType::COLON, "Expected ':' after meme in gif frame.");
         double ms = parseDuration();
-        entries.push_back({{meme, ms}, nullptr});
+        entries.push_back({meme, ms, nullptr});
     }
-    consume(TokenType::RIGHT_BRACE, "Expected '}' after timeline block.");
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after gif block.");
 
-    return make_shared<expr::TimelineBlockExpr<T>>(keyword, loop, std::move(entries), loopToken);
+    return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(entries), loopToken);
 }
 
 // grid NxM { entries }
@@ -998,7 +969,6 @@ template shared_ptr<Expr<MV>> Parser::pipe<MV>();
 template shared_ptr<Expr<MV>> Parser::expression<MV>();
 template shared_ptr<Expr<MV>> Parser::memeLiteral<MV>();
 template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
-template shared_ptr<Expr<MV>> Parser::timelineBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::styleDeclaration<MV>();

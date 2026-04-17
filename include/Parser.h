@@ -100,8 +100,6 @@ namespace parser {
         template <typename T>
         shared_ptr<Expr<T>> gifBlock();
         template <typename T>
-        shared_ptr<Expr<T>> timelineBlock();
-        template <typename T>
         shared_ptr<Expr<T>> gridBlock();
         template <typename T>
         shared_ptr<stmt::Stmt<T>> effectDeclaration();
