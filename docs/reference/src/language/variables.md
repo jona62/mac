@@ -43,6 +43,27 @@ var x = 1;
 print x;                  // 2
 ```
 
+## Array Destructuring
+
+Unpack array elements into individual variables using a destructuring pattern.
+
+```
+var [a, b, c] = [1, 2, 3];
+print a;                  // 1
+print b;                  // 2
+print c;                  // 3
+```
+
+This works with any expression that evaluates to an array:
+
+```
+var [first, second] = split("hello-world", "-");
+print first;              // hello
+print second;             // world
+```
+
+Destructuring also works in `for-in` loops — see [Control Flow](control_flow.md#for-in-destructuring).
+
 ## Shadowing
 
 A new `var` declaration in an inner scope creates a separate variable that shadows the outer one.

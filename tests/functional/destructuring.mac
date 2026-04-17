@@ -1,0 +1,50 @@
+// Basic variable destructuring
+var [a, b] = [10, 20];
+print a;                          // expect: 10
+print b;                          // expect: 20
+
+// Three variables
+var [x, y, z] = [1, 2, 3];
+print x;                          // expect: 1
+print y;                          // expect: 2
+print z;                          // expect: 3
+
+// With a function that returns an array
+var [first, second] = split("hello-world", "-");
+print first;                      // expect: hello
+print second;                     // expect: world
+
+// Single element destructuring
+var [only] = [42];
+print only;                       // expect: 42
+
+// For-in with enumerate
+for (var [i, val] in enumerate(["a", "b", "c"])) {
+    print "{i}:{val}";
+}
+// expect: 0:a
+// expect: 1:b
+// expect: 2:c
+
+// For-in with zip
+for (var [name, age] in zip(["Alice", "Bob"], [30, 25])) {
+    print "{name} is {age}";
+}
+// expect: Alice is 30
+// expect: Bob is 25
+
+// Destructuring in a nested scope
+{
+    var [p, q] = [100, 200];
+    print p;                      // expect: 100
+    print q;                      // expect: 200
+}
+
+// Destructuring with expressions
+var arr = [[1, 2], [3, 4], [5, 6]];
+for (var [left, right] in arr) {
+    print left + right;
+}
+// expect: 3
+// expect: 7
+// expect: 11
