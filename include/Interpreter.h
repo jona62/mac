@@ -773,6 +773,23 @@ namespace interpreter {
             return gif;
         }
 
+        MacValue visitMatchExpr(expr::MatchExpr<MacValue>* expr) override {
+            auto subject = evaluate(expr->subject);
+
+            for (auto& arm : expr->arms) {
+                if (!arm.pattern) {
+                    // Wildcard — always matches
+                    return evaluate(arm.result);
+                }
+                auto pattern = evaluate(arm.pattern);
+                if (isEqual(subject, pattern)) {
+                    return evaluate(arm.result);
+                }
+            }
+
+            return std::monostate{}; // no match, return nil
+        }
+
         MacValue visitGridBlockExpr(expr::GridBlockExpr<MacValue>* expr) override {
             // Evaluate all entries into an array
             auto arr = std::make_shared<collection::MacArray>();

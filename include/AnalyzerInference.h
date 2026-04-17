@@ -136,6 +136,11 @@ namespace analyzer {
             if (op == "-" || op == "*" || op == "/" || op == "%") return "number";
         }
 
+        if (auto* p = dynamic_cast<expr::MatchExpr<MV>*>(e)) {
+            if (!p->arms.empty()) return inferType(p->arms[0].result.get());
+            return "unknown";
+        }
+
         // Mac v2 syntax nodes
         if (auto* p = dynamic_cast<expr::MemeLiteralExpr<MV>*>(e)) {
             if (p->width > 0 && p->height > 0)

@@ -131,6 +131,10 @@ namespace printer {
             return "<grid>";
         }
 
+        string visitMatchExpr(expr::MatchExpr<T>*) override {
+            return "<match>";
+        }
+
     private:
         template <typename... Exprs>
         string parenthesize(const std::string& name, shared_ptr<Exprs>... exprs) {

@@ -405,6 +405,18 @@ namespace analyzer {
                 analyzeExpr(entry.meme.get());
             }
         }
+        else if (auto* p = dynamic_cast<expr::MatchExpr<MV>*>(e)) {
+            analyzeExpr(p->subject.get());
+            for (auto& arm : p->arms) {
+                if (arm.pattern) analyzeExpr(arm.pattern.get());
+                analyzeExpr(arm.result.get());
+            }
+            if (p->keyword.line > 0 && currentSource == "user") {
+                result.semanticTokens.push_back({
+                    p->keyword.line, safeCol(p->keyword),
+                    5, "keyword", currentSource}); // "match" is 5 chars
+            }
+        }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);

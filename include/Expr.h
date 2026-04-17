@@ -353,6 +353,24 @@ namespace expr {
         Token loopToken;
     };
 
+    // match expr { pattern -> result, ... }
+    template <typename T>
+    class MatchExpr : public Expr<T> {
+    public:
+        struct Arm {
+            shared_ptr<Expr<T>> pattern;  // nullptr for wildcard _
+            shared_ptr<Expr<T>> result;
+        };
+        MatchExpr(Token keyword, shared_ptr<Expr<T>> subject, std::vector<Arm> arms)
+            : keyword(keyword), subject(std::move(subject)), arms(std::move(arms)) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitMatchExpr(this);
+        }
+        Token keyword;
+        shared_ptr<Expr<T>> subject;
+        std::vector<Arm> arms;
+    };
+
     // grid NxM { entries }
     template <typename T>
     class GridBlockExpr : public Expr<T> {
@@ -393,6 +411,7 @@ namespace expr {
         virtual T visitSaveExpr(SaveExpr<T>* expr) = 0;
         virtual T visitGifBlockExpr(GifBlockExpr<T>* expr) = 0;
         virtual T visitGridBlockExpr(GridBlockExpr<T>* expr) = 0;
+        virtual T visitMatchExpr(MatchExpr<T>* expr) = 0;
         virtual ~Visitor() = default;
     };
 }

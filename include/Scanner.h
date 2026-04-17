@@ -88,6 +88,7 @@ namespace scanner {
                 {"for", TokenType::FOR},
                 {"if", TokenType::IF},
                 {"in", TokenType::IN},
+                {"match", TokenType::MATCH},
                 {"nil", TokenType::NIL},
                 {"or", TokenType::OR},
                 {"print", TokenType::PRINT},

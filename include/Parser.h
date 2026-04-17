@@ -42,6 +42,8 @@ namespace parser {
         template <typename T>
         shared_ptr<stmt::Stmt<T>> varDeclaration();
         template <typename T>
+        std::vector<shared_ptr<stmt::Stmt<T>>> varDestructuring();
+        template <typename T>
         shared_ptr<stmt::Stmt<T>> functionDeclaration(const std::string& kind);
         template <typename T>
         shared_ptr<stmt::Stmt<T>> classDeclaration();
@@ -101,6 +103,8 @@ namespace parser {
         shared_ptr<Expr<T>> gifBlock();
         template <typename T>
         shared_ptr<Expr<T>> gridBlock();
+        template <typename T>
+        shared_ptr<Expr<T>> matchExpression();
         template <typename T>
         shared_ptr<stmt::Stmt<T>> effectDeclaration();
         template <typename T>

@@ -49,7 +49,7 @@ namespace token {
 
         // Keywords.
         AND, BREAK, CLASS, CONTINUE, EFFECT, ELSE, FALSE, FUN, FOR,
-        IF, IN, NIL, OR,
+        IF, IN, MATCH, NIL, OR,
         PRINT, RETURN, STYLE, SUPER, THIS, TRUE, VAR, WHILE,
 
         // End of file.
@@ -70,7 +70,7 @@ namespace token {
         "LESS", "LESS_EQUAL",
         "IDENTIFIER", "STRING", "INTERP_STRING", "NUMBER",
         "AND", "BREAK", "CLASS", "CONTINUE", "EFFECT", "ELSE", "FALSE", "FUN", "FOR",
-        "IF", "IN", "NIL", "OR",
+        "IF", "IN", "MATCH", "NIL", "OR",
         "PRINT", "RETURN", "STYLE", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
         "END_OF_FILE"
     };

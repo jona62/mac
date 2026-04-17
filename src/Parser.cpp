@@ -15,6 +15,8 @@ using std::make_shared;
 
 namespace parser {
 
+static int destructureCounter = 0;
+
 Parser::Parser(const std::vector<token::Token>& tokens) : tokens(tokens), current(0) {}
 
 Parser::~Parser() {}
@@ -25,6 +27,14 @@ template <typename T>
 std::vector<shared_ptr<stmt::Stmt<T>>> Parser::parse() {
     std::vector<shared_ptr<stmt::Stmt<T>>> statements;
     while (!isAtEnd()) {
+        // Array destructuring: var [a, b] = expr; — emits multiple flat VarStmts
+        if (peek().type == TokenType::VAR && current + 1 < tokens.size()
+            && tokens[current + 1].type == TokenType::LEFT_BRACKET) {
+            advance(); // consume VAR
+            auto stmts = varDestructuring<T>();
+            for (auto& s : stmts) statements.push_back(s);
+            continue;
+        }
         auto decl = declaration<T>();
         if (decl != nullptr) {
             statements.push_back(decl);
@@ -68,6 +78,45 @@ shared_ptr<stmt::Stmt<T>> Parser::varDeclaration() {
 
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
     return make_shared<stmt::VarStmt<T>>(name, initializer);
+}
+
+template <typename T>
+std::vector<shared_ptr<stmt::Stmt<T>>> Parser::varDestructuring() {
+    // Already consumed 'var', next token is '['
+    advance(); // consume '['
+    int line = previous().line;
+
+    std::vector<Token> names;
+    if (peek().type != TokenType::RIGHT_BRACKET) {
+        do {
+            consume(TokenType::IDENTIFIER, "Expected variable name in destructuring pattern.");
+            names.push_back(previous());
+        } while (match(TokenType::COMMA));
+    }
+    consume(TokenType::RIGHT_BRACKET, "Expected ']' after destructuring pattern.");
+    consume(TokenType::EQUAL, "Expected '=' after destructuring pattern.");
+    auto initializer = expression<T>();
+    consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
+
+    // Desugar into flat statements (no block, same scope):
+    //   var __destructure_N__ = expr;
+    //   var a = __destructure_N__[0];
+    //   var b = __destructure_N__[1]; ...
+    std::string tmpName = "__destructure_" + std::to_string(destructureCounter++) + "__";
+    Token tmpToken(TokenType::IDENTIFIER, tmpName, line);
+    Token bracketToken(TokenType::LEFT_BRACKET, std::string("["), line);
+
+    std::vector<shared_ptr<stmt::Stmt<T>>> stmts;
+    stmts.push_back(make_shared<stmt::VarStmt<T>>(tmpToken, initializer));
+
+    for (size_t i = 0; i < names.size(); i++) {
+        auto tmpVar = make_shared<expr::Variable<T>>(tmpToken);
+        auto index = make_shared<expr::Literal<T>>(token::TokenValue(static_cast<double>(i)));
+        auto indexGet = make_shared<expr::IndexGet<T>>(tmpVar, bracketToken, index);
+        stmts.push_back(make_shared<stmt::VarStmt<T>>(names[i], indexGet));
+    }
+
+    return stmts;
 }
 
 template <typename T>
@@ -181,8 +230,49 @@ template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::forStatement() {
     consume(TokenType::LEFT_PAREN, "Expected '(' after 'for'.");
 
-    // Check for for-in: for (var x in collection)
+    // Check for for-in: for (var x in collection) or for (var [a, b] in collection)
     if (match(TokenType::VAR)) {
+        // Array destructuring in for-in: for (var [a, b] in collection)
+        if (peek().type == TokenType::LEFT_BRACKET) {
+            advance(); // consume '['
+            int line = previous().line;
+
+            std::vector<Token> names;
+            if (peek().type != TokenType::RIGHT_BRACKET) {
+                do {
+                    consume(TokenType::IDENTIFIER, "Expected variable name in destructuring pattern.");
+                    names.push_back(previous());
+                } while (match(TokenType::COMMA));
+            }
+            consume(TokenType::RIGHT_BRACKET, "Expected ']' after destructuring pattern.");
+            consume(TokenType::IN, "Expected 'in' after destructuring pattern in for loop.");
+            auto iterable = expression<T>();
+            consume(TokenType::RIGHT_PAREN, "Expected ')' after for-in clause.");
+            auto body = statement<T>();
+
+            // Desugar: for (var [a, b] in collection) { body }
+            // becomes: for (var __destructure_N__ in collection) {
+            //              var a = __destructure_N__[0];
+            //              var b = __destructure_N__[1];
+            //              body
+            //          }
+            std::string tmpName = "__destructure_" + std::to_string(destructureCounter++) + "__";
+            Token tmpToken(TokenType::IDENTIFIER, tmpName, line);
+            Token bracketToken(TokenType::LEFT_BRACKET, std::string("["), line);
+
+            std::vector<shared_ptr<stmt::Stmt<T>>> bodyStmts;
+            for (size_t i = 0; i < names.size(); i++) {
+                auto tmpVar = make_shared<expr::Variable<T>>(tmpToken);
+                auto index = make_shared<expr::Literal<T>>(token::TokenValue(static_cast<double>(i)));
+                auto indexGet = make_shared<expr::IndexGet<T>>(tmpVar, bracketToken, index);
+                bodyStmts.push_back(make_shared<stmt::VarStmt<T>>(names[i], indexGet));
+            }
+            bodyStmts.push_back(body);
+
+            auto newBody = make_shared<stmt::BlockStmt<T>>(bodyStmts);
+            return make_shared<stmt::ForInStmt<T>>(tmpToken, iterable, newBody);
+        }
+
         consume(TokenType::IDENTIFIER, "Expected variable name.");
         Token varName = previous();
 
@@ -290,6 +380,14 @@ std::vector<shared_ptr<stmt::Stmt<T>>> Parser::block() {
     std::vector<shared_ptr<stmt::Stmt<T>>> statements;
 
     while (!isAtEnd() && peek().type != TokenType::RIGHT_BRACE) {
+        // Array destructuring: var [a, b] = expr; — emits multiple flat VarStmts
+        if (peek().type == TokenType::VAR && current + 1 < tokens.size()
+            && tokens[current + 1].type == TokenType::LEFT_BRACKET) {
+            advance(); // consume VAR
+            auto stmts = varDestructuring<T>();
+            for (auto& s : stmts) statements.push_back(s);
+            continue;
+        }
         auto decl = declaration<T>();
         if (decl != nullptr) {
             statements.push_back(decl);
@@ -420,6 +518,8 @@ shared_ptr<Expr<T>> Parser::primary() {
             }
         }
     }
+
+    if (match(TokenType::MATCH)) return matchExpression<T>();
 
     if (match(TokenType::IDENTIFIER)) return make_shared<expr::Variable<T>>(previous());
 
@@ -922,6 +1022,36 @@ shared_ptr<Expr<T>> Parser::gridBlock() {
 }
 
 template <typename T>
+shared_ptr<Expr<T>> Parser::matchExpression() {
+    Token keyword = previous();
+    auto subject = expression<T>();
+    consume(TokenType::LEFT_BRACE, "Expected '{' after match expression.");
+
+    std::vector<typename expr::MatchExpr<T>::Arm> arms;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        shared_ptr<Expr<T>> pattern = nullptr;
+        // Check for wildcard _
+        if (peek().type == TokenType::IDENTIFIER) {
+            auto* s = std::get_if<std::string>(&peek().lexeme);
+            if (s && *s == "_") {
+                advance(); // consume _
+                pattern = nullptr; // wildcard
+            } else {
+                pattern = expression<T>();
+            }
+        } else {
+            pattern = expression<T>();
+        }
+        consume(TokenType::ARROW, "Expected '->' after match pattern.");
+        auto result = expression<T>();
+        arms.push_back({pattern, result});
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after match arms.");
+
+    return make_shared<expr::MatchExpr<T>>(keyword, subject, std::move(arms));
+}
+
+template <typename T>
 shared_ptr<Expr<T>> Parser::parseInterpolatedString(const std::string& raw, const Token& tok) {
     shared_ptr<Expr<T>> result = nullptr;
     std::string segment;
@@ -1033,6 +1163,7 @@ using MV = interpreter::MacValue;
 template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::parse<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::declaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::varDeclaration<MV>();
+template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::varDestructuring<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::functionDeclaration<MV>(const std::string&);
 template shared_ptr<stmt::Stmt<MV>> Parser::classDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::statement<MV>();
@@ -1062,6 +1193,7 @@ template shared_ptr<Expr<MV>> Parser::expression<MV>();
 template shared_ptr<Expr<MV>> Parser::memeLiteral<MV>();
 template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
+template shared_ptr<Expr<MV>> Parser::matchExpression<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::styleDeclaration<MV>();
 template shared_ptr<Expr<MV>> Parser::parseInterpolatedString<MV>(const std::string&, const Token&);
