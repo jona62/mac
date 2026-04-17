@@ -23,6 +23,7 @@
 #include "MemeEffects.h"        // effects::* (blur, sepia, grayscale, etc.)
 #include "MemeLayout.h"         // layout::resizePixels, compositePixels
 #include "MacInstance.h"        // instance::MacInstance (property extraction)
+#include "MacEnum.h"            // enumeration::MacEnum (enum type check)
 
 namespace callable {
 
@@ -135,6 +136,9 @@ namespace callable {
             if (std::holds_alternative<std::shared_ptr<meme::MacMeme>>(val)) return std::string("meme");
             if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(val)) return std::string("gif");
             if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) return std::string("timeline");
+            if (std::holds_alternative<std::shared_ptr<enumeration::MacEnum>>(val)) {
+                return std::get<std::shared_ptr<enumeration::MacEnum>>(val)->def->name;
+            }
             return std::string("unknown");
         }
         int arity() override { return 1; }

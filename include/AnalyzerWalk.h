@@ -107,6 +107,12 @@ namespace analyzer {
             define(p->varName, "variable", elemType);
             analyzeStmt(p->body.get());
             endScope();
+        } else if (auto* p = dynamic_cast<stmt::EnumStmt<MV>*>(s)) {
+            if (p->keyword.line > 0 && currentSource == "user") {
+                int kc = safeCol(p->keyword);
+                result.semanticTokens.push_back({p->keyword.line, kc, 4, "keyword", currentSource});
+            }
+            define(p->name, "variable", "enum " + tokName(p->name));
         } else if (auto* p = dynamic_cast<stmt::EffectStmt<MV>*>(s)) {
             // Semantic token for 'effect' keyword
             if (p->keyword.line > 0 && currentSource == "user") {

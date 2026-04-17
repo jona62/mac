@@ -237,6 +237,10 @@ namespace resolver {
             endScope();
         }
 
+        void visitEnumStmt(stmt::EnumStmt<MV>* stm) override {
+            declare(stm->name);
+            define(stm->name);
+        }
         void visitBreakStmt(stmt::BreakStmt<MV>*) override {}
         void visitContinueStmt(stmt::ContinueStmt<MV>*) override {}
         void visitEffectStmt(stmt::EffectStmt<MV>* stm) override {

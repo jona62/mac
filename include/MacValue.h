@@ -25,6 +25,10 @@ namespace meme {
     class RenderSurface;
 }
 
+namespace enumeration {
+    class MacEnum;
+}
+
 namespace value {
     using MacValue = std::variant<std::string, double, bool, std::monostate,
                                   std::shared_ptr<callable::MacCallable>,
@@ -34,7 +38,8 @@ namespace value {
                                   std::shared_ptr<meme::RenderSurface>,
                                   std::shared_ptr<meme::MacMeme>,
                                   std::shared_ptr<meme::MacGif>,
-                                  std::shared_ptr<meme::MacTimeline>>;
+                                  std::shared_ptr<meme::MacTimeline>,
+                                  std::shared_ptr<enumeration::MacEnum>>;
 }
 
 #endif // MAC_VALUE_H

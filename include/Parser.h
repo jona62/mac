@@ -48,6 +48,8 @@ namespace parser {
         template <typename T>
         shared_ptr<stmt::Stmt<T>> classDeclaration();
         template <typename T>
+        shared_ptr<stmt::Stmt<T>> enumDeclaration();
+        template <typename T>
         shared_ptr<stmt::Stmt<T>> statement();
         template <typename T>
         shared_ptr<stmt::Stmt<T>> printStatement();

@@ -20,6 +20,7 @@
 #include "MacGif.h"             // meme::MacGif (GIF animation)
 #include "RenderSurface.h"      // meme::RenderSurface (pixel buffer)
 #include "NativeRegistry.h"     // native_registry::all() (builtin function defs)
+#include "MacEnum.h"            // enumeration::MacEnum, MacEnumDef (enum values)
 #include "Environment.h"        // environment::Environment (variable scopes)
 #include "RuntimeError.h"       // errors::RuntimeError
 #include "Return.h"             // errors::Return, BreakException, ContinueException
@@ -44,6 +45,29 @@ namespace callable {
     private:
         std::shared_ptr<MacCallable> first;
         std::shared_ptr<MacCallable> second;
+    };
+}
+
+namespace callable {
+    class EnumConstructor : public MacCallable {
+    public:
+        std::shared_ptr<enumeration::MacEnumDef> def;
+        std::string variant;
+        int fieldCount;
+
+        EnumConstructor(std::shared_ptr<enumeration::MacEnumDef> d, const std::string& v, int fc)
+            : def(d), variant(v), fieldCount(fc) {}
+
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            auto inst = std::make_shared<enumeration::MacEnum>();
+            inst->def = def;
+            inst->tag = variant;
+            inst->fieldValues = std::move(args);
+            return value::MacValue(inst);
+        }
+        int arity() override { return fieldCount; }
+        std::string toString() override { return "<" + def->name + "." + variant + ">"; }
     };
 }
 
@@ -461,6 +485,40 @@ namespace interpreter {
             env->define(std::get<std::string>(stmt->name.lexeme), value);
         }
 
+        void visitEnumStmt(stmt::EnumStmt<MacValue>* stmt) override {
+            auto def = std::make_shared<enumeration::MacEnumDef>();
+            def->name = std::get<std::string>(stmt->name.lexeme);
+
+            for (auto& variant : stmt->variants) {
+                enumeration::VariantDef vd;
+                vd.name = std::get<std::string>(variant.name.lexeme);
+                for (auto& field : variant.fields) {
+                    vd.fields.push_back(std::get<std::string>(field.lexeme));
+                }
+                def->variants.push_back(vd);
+            }
+
+            // Create a namespace map for Enum.Variant access
+            auto nsMap = std::make_shared<collection::MacMap>();
+            for (auto& vd : def->variants) {
+                if (vd.fields.empty()) {
+                    // Simple variant — pre-built MacEnum instance
+                    auto inst = std::make_shared<enumeration::MacEnum>();
+                    inst->def = def;
+                    inst->tag = vd.name;
+                    nsMap->set(vd.name, MacValue(inst));
+                } else {
+                    // Data variant — callable constructor
+                    auto ctor = std::make_shared<callable::EnumConstructor>(
+                        def, vd.name, static_cast<int>(vd.fields.size()));
+                    nsMap->set(vd.name,
+                        MacValue(std::static_pointer_cast<callable::MacCallable>(ctor)));
+                }
+            }
+
+            env->define(def->name, MacValue(nsMap));
+        }
+
         MacValue visitArrayExpr(expr::ArrayExpr<MacValue>* expr) override {
             auto arr = std::make_shared<collection::MacArray>();
             for (auto& elem : expr->elements) {
@@ -781,6 +839,49 @@ namespace interpreter {
                     // Wildcard — always matches
                     return evaluate(arm.result);
                 }
+
+                // Enum variant matching
+                if (std::holds_alternative<shared_ptr<enumeration::MacEnum>>(subject)) {
+                    auto subEnum = std::get<shared_ptr<enumeration::MacEnum>>(subject);
+                    auto patternVal = evaluate(arm.pattern);
+
+                    // Simple variant match (pattern is a MacEnum)
+                    if (std::holds_alternative<shared_ptr<enumeration::MacEnum>>(patternVal)) {
+                        auto patEnum = std::get<shared_ptr<enumeration::MacEnum>>(patternVal);
+                        if (subEnum->def->name == patEnum->def->name &&
+                            subEnum->tag == patEnum->tag) {
+                            return evaluate(arm.result);
+                        }
+                        continue;
+                    }
+
+                    // Data variant match (pattern is an EnumConstructor callable)
+                    if (std::holds_alternative<shared_ptr<callable::MacCallable>>(patternVal)) {
+                        auto fn = std::get<shared_ptr<callable::MacCallable>>(patternVal);
+                        auto ctor = dynamic_cast<callable::EnumConstructor*>(fn.get());
+                        if (ctor && subEnum->def->name == ctor->def->name &&
+                            subEnum->tag == ctor->variant) {
+                            // Bind fields in globals (resolver doesn't know about
+                            // these bindings, so lookUpVariable falls back to globals)
+                            for (size_t i = 0; i < arm.bindings.size() &&
+                                 i < subEnum->fieldValues.size(); i++) {
+                                globals->define(std::get<std::string>(arm.bindings[i].lexeme),
+                                                subEnum->fieldValues[i]);
+                            }
+                            auto result = evaluate(arm.result);
+                            return result;
+                        }
+                        continue;
+                    }
+
+                    // Fall through: try regular equality match for non-enum patterns
+                    if (isEqual(subject, patternVal)) {
+                        return evaluate(arm.result);
+                    }
+                    continue;
+                }
+
+                // Non-enum: regular equality matching
                 auto pattern = evaluate(arm.pattern);
                 if (isEqual(subject, pattern)) {
                     return evaluate(arm.result);
@@ -889,6 +990,20 @@ namespace interpreter {
             if (std::holds_alternative<shared_ptr<meme::MacTimeline>>(value)) {
                 return std::get<shared_ptr<meme::MacTimeline>>(value)->toString();
             }
+            if (std::holds_alternative<shared_ptr<enumeration::MacEnum>>(value)) {
+                auto e = std::get<shared_ptr<enumeration::MacEnum>>(value);
+                std::ostringstream ss;
+                ss << e->tag;
+                if (!e->fieldValues.empty()) {
+                    ss << "(";
+                    for (size_t i = 0; i < e->fieldValues.size(); i++) {
+                        if (i > 0) ss << ", ";
+                        ss << stringify(e->fieldValues[i]);
+                    }
+                    ss << ")";
+                }
+                return ss.str();
+            }
             return std::get<string>(value);
         }
 
@@ -912,6 +1027,19 @@ namespace interpreter {
         }
 
         bool isEqual(const MacValue& a, const MacValue& b) {
+            // Custom equality for enum values (compare by def name + tag + fields)
+            if (std::holds_alternative<shared_ptr<enumeration::MacEnum>>(a) &&
+                std::holds_alternative<shared_ptr<enumeration::MacEnum>>(b)) {
+                auto ea = std::get<shared_ptr<enumeration::MacEnum>>(a);
+                auto eb = std::get<shared_ptr<enumeration::MacEnum>>(b);
+                if (ea->def->name != eb->def->name) return false;
+                if (ea->tag != eb->tag) return false;
+                if (ea->fieldValues.size() != eb->fieldValues.size()) return false;
+                for (size_t i = 0; i < ea->fieldValues.size(); i++) {
+                    if (!isEqual(ea->fieldValues[i], eb->fieldValues[i])) return false;
+                }
+                return true;
+            }
             return a == b;
         }
 

@@ -59,6 +59,7 @@ shared_ptr<stmt::Stmt<T>> Parser::declaration() {
         }
         if (match(TokenType::VAR)) return varDeclaration<T>(false);
         if (match(TokenType::VAL)) return varDeclaration<T>(true);
+        if (match(TokenType::ENUM)) return enumDeclaration<T>();
         if (match(TokenType::EFFECT)) return effectDeclaration<T>();
         if (match(TokenType::STYLE)) return styleDeclaration<T>();
         return statement<T>();
@@ -170,6 +171,33 @@ shared_ptr<stmt::Stmt<T>> Parser::classDeclaration() {
 
     consume(TokenType::RIGHT_BRACE, "Expected '}' after class body.");
     return make_shared<stmt::ClassStmt<T>>(name, superclass, methods);
+}
+
+template <typename T>
+shared_ptr<stmt::Stmt<T>> Parser::enumDeclaration() {
+    Token keyword = previous();
+    consume(TokenType::IDENTIFIER, "Expected enum name.");
+    Token name = previous();
+    consume(TokenType::LEFT_BRACE, "Expected '{' after enum name.");
+
+    std::vector<typename stmt::EnumStmt<T>::Variant> variants;
+    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+        consume(TokenType::IDENTIFIER, "Expected variant name.");
+        Token variantName = previous();
+        std::vector<Token> fields;
+        if (match(TokenType::LEFT_PAREN)) {
+            do {
+                consume(TokenType::IDENTIFIER, "Expected field name.");
+                fields.push_back(previous());
+            } while (match(TokenType::COMMA));
+            consume(TokenType::RIGHT_PAREN, "Expected ')' after variant fields.");
+        }
+        variants.push_back({variantName, std::move(fields)});
+        match(TokenType::COMMA); // optional comma
+    }
+    consume(TokenType::RIGHT_BRACE, "Expected '}' after enum variants.");
+
+    return make_shared<stmt::EnumStmt<T>>(keyword, name, std::move(variants));
 }
 
 template <typename T>
@@ -1039,6 +1067,7 @@ shared_ptr<Expr<T>> Parser::matchExpression() {
     std::vector<typename expr::MatchExpr<T>::Arm> arms;
     while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
         shared_ptr<Expr<T>> pattern = nullptr;
+        std::vector<Token> bindings;
         // Check for wildcard _
         if (peek().type == TokenType::IDENTIFIER) {
             auto* s = std::get_if<std::string>(&peek().lexeme);
@@ -1051,9 +1080,27 @@ shared_ptr<Expr<T>> Parser::matchExpression() {
         } else {
             pattern = expression<T>();
         }
+
+        // Check for enum destructuring: if pattern is Call(Get(...), args)
+        // e.g. Result.Ok(v) parses as Call(Get(Variable(Result), Ok), [Variable(v)])
+        if (pattern) {
+            if (auto* callExpr = dynamic_cast<expr::Call<T>*>(pattern.get())) {
+                if (dynamic_cast<expr::Get<T>*>(callExpr->callee.get())) {
+                    // Extract binding names from the call arguments (they are Variable exprs)
+                    for (auto& arg : callExpr->arguments) {
+                        if (auto* varExpr = dynamic_cast<expr::Variable<T>*>(arg.get())) {
+                            bindings.push_back(varExpr->name);
+                        }
+                    }
+                    // Use the Get expression as the pattern (strip the call)
+                    pattern = callExpr->callee;
+                }
+            }
+        }
+
         consume(TokenType::ARROW, "Expected '->' after match pattern.");
         auto result = expression<T>();
-        arms.push_back({pattern, result});
+        arms.push_back({pattern, std::move(bindings), result});
     }
     consume(TokenType::RIGHT_BRACE, "Expected '}' after match arms.");
 
@@ -1204,6 +1251,7 @@ template shared_ptr<Expr<MV>> Parser::memeLiteral<MV>();
 template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::matchExpression<MV>();
+template shared_ptr<stmt::Stmt<MV>> Parser::enumDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::styleDeclaration<MV>();
 template shared_ptr<Expr<MV>> Parser::parseInterpolatedString<MV>(const std::string&, const Token&);

@@ -358,7 +358,8 @@ namespace expr {
     class MatchExpr : public Expr<T> {
     public:
         struct Arm {
-            shared_ptr<Expr<T>> pattern;  // nullptr for wildcard _
+            shared_ptr<Expr<T>> pattern;       // nullptr for wildcard _
+            std::vector<Token> bindings;        // field variable names for enum destructuring
             shared_ptr<Expr<T>> result;
         };
         MatchExpr(Token keyword, shared_ptr<Expr<T>> subject, std::vector<Arm> arms)

@@ -48,7 +48,7 @@ namespace token {
         IDENTIFIER, STRING, INTERP_STRING, NUMBER,
 
         // Keywords.
-        AND, BREAK, CLASS, CONTINUE, EFFECT, ELSE, FALSE, FUN, FOR,
+        AND, BREAK, CLASS, CONTINUE, EFFECT, ENUM, ELSE, FALSE, FUN, FOR,
         IF, IN, MATCH, NIL, OR,
         PRINT, RETURN, STYLE, SUPER, THIS, TRUE, VAL, VAR, WHILE,
 
@@ -69,7 +69,7 @@ namespace token {
         "GREATER", "GREATER_EQUAL",
         "LESS", "LESS_EQUAL",
         "IDENTIFIER", "STRING", "INTERP_STRING", "NUMBER",
-        "AND", "BREAK", "CLASS", "CONTINUE", "EFFECT", "ELSE", "FALSE", "FUN", "FOR",
+        "AND", "BREAK", "CLASS", "CONTINUE", "EFFECT", "ENUM", "ELSE", "FALSE", "FUN", "FOR",
         "IF", "IN", "MATCH", "NIL", "OR",
         "PRINT", "RETURN", "STYLE", "SUPER", "THIS", "TRUE", "VAL", "VAR", "WHILE",
         "END_OF_FILE"

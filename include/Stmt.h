@@ -202,6 +202,24 @@ namespace stmt {
         std::vector<std::pair<token::Token, std::shared_ptr<expr::Expr<T>>>> properties;
     };
 
+    // enum Name { Variant1, Variant2(field1, field2), ... }
+    template <typename T>
+    class EnumStmt : public Stmt<T> {
+    public:
+        struct Variant {
+            token::Token name;
+            std::vector<token::Token> fields;
+        };
+        EnumStmt(token::Token keyword, token::Token name, std::vector<Variant> variants)
+            : keyword(keyword), name(name), variants(std::move(variants)) {}
+        void accept(shared_ptr<StmtVisitor<T>> visitor) override {
+            visitor->visitEnumStmt(this);
+        }
+        token::Token keyword;
+        token::Token name;
+        std::vector<Variant> variants;
+    };
+
     // effect name = compose_expr;
     template <typename T>
     class EffectStmt : public Stmt<T> {
@@ -231,6 +249,7 @@ namespace stmt {
         virtual void visitForInStmt(ForInStmt<T>* stmt) = 0;
         virtual void visitBreakStmt(BreakStmt<T>* stmt) = 0;
         virtual void visitContinueStmt(ContinueStmt<T>* stmt) = 0;
+        virtual void visitEnumStmt(EnumStmt<T>* stmt) = 0;
         virtual void visitEffectStmt(EffectStmt<T>* stmt) = 0;
         virtual void visitStyleStmt(StyleStmt<T>* stmt) = 0;
         virtual ~StmtVisitor() = default;

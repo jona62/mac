@@ -82,6 +82,7 @@ namespace scanner {
                 {"class", TokenType::CLASS},
                 {"continue", TokenType::CONTINUE},
                 {"effect", TokenType::EFFECT},
+                {"enum", TokenType::ENUM},
                 {"else", TokenType::ELSE},
                 {"false", TokenType::FALSE},
                 {"fun", TokenType::FUN},
