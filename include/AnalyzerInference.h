@@ -143,7 +143,6 @@ namespace analyzer {
             return "Meme";
         }
         if (dynamic_cast<expr::GifBlockExpr<MV>*>(e)) return "Gif";
-        if (dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) return "Timeline";
         if (dynamic_cast<expr::GridBlockExpr<MV>*>(e)) return "Meme";
         if (auto* p = dynamic_cast<expr::SaveExpr<MV>*>(e)) return "bool";
 

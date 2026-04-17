@@ -391,7 +391,7 @@ namespace analyzer {
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
                 std::string desc = p->loop ? "Looping GIF block" : "GIF block";
-                desc += " — " + std::to_string(p->frames.size()) + " frames";
+                desc += " — " + std::to_string(p->entries.size()) + " frames";
                 result.symbols.push_back({kw, "keyword", "Gif", desc, currentSource,
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
                 // Semantic token for 'loop' keyword
@@ -400,30 +400,9 @@ namespace analyzer {
                     result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
                 }
             }
-            for (auto& frame : p->frames) {
-                checkFrameType(frame.meme.get(), "gif");
-                analyzeExpr(frame.meme.get());
-            }
-        }
-        else if (auto* p = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
-            if (p->keyword.line > 0 && currentSource == "user") {
-                auto kw = tokName(p->keyword);
-                int kc = safeCol(p->keyword);
-                result.semanticTokens.push_back({p->keyword.line, kc,
-                    static_cast<int>(kw.size()), "keyword", currentSource});
-                std::string desc = p->loop ? "Looping timeline" : "Timeline";
-                desc += " — " + std::to_string(p->entries.size()) + " keyframes";
-                result.symbols.push_back({kw, "keyword", "Timeline", desc, currentSource,
-                    "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
-                // Semantic token for 'loop' keyword
-                if (p->loop && p->loopToken.line > 0) {
-                    int lc = safeCol(p->loopToken);
-                    result.semanticTokens.push_back({p->loopToken.line, lc, 4, "keyword", currentSource});
-                }
-            }
             for (auto& entry : p->entries) {
-                checkFrameType(entry.frame.meme.get(), "timeline");
-                analyzeExpr(entry.frame.meme.get());
+                checkFrameType(entry.meme.get(), "gif");
+                analyzeExpr(entry.meme.get());
             }
         }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
@@ -444,11 +423,11 @@ namespace analyzer {
         }
     }
 
-    // Check if an expression used as a frame entry is a sequence type (Gif/Timeline)
+    // Check if an expression used as a frame entry is a sequence type (Gif)
     inline void MacAnalyzer::checkFrameType(expr::Expr<MV>* e, const std::string& container) {
         if (!e || currentSource != "user") return;
         auto type = inferType(e);
-        if (type == "Gif" || type == "Timeline") {
+        if (type == "Gif") {
             int line = 0, col = 1, endCol = 2;
             if (auto* v = dynamic_cast<expr::Variable<MV>*>(e)) {
                 line = v->name.line;
@@ -458,16 +437,11 @@ namespace analyzer {
                 line = g->keyword.line;
                 col = safeCol(g->keyword);
                 endCol = col + static_cast<int>(tokName(g->keyword).size());
-            } else if (auto* t = dynamic_cast<expr::TimelineBlockExpr<MV>*>(e)) {
-                line = t->keyword.line;
-                col = safeCol(t->keyword);
-                endCol = col + static_cast<int>(tokName(t->keyword).size());
             }
             if (line > 0) {
                 result.diagnostics.push_back({line, col, endCol,
                     type + " is a sequence type and cannot be used as a frame inside '" +
-                    container + "'. Wrap the " + container + " in a '" +
-                    (type == "Gif" ? "gif" : "timeline") + "' block instead.",
+                    container + "'. Wrap the " + container + " in a 'gif' block instead.",
                     "error", currentSource});
             }
         }

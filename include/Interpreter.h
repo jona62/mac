@@ -751,7 +751,6 @@ namespace interpreter {
                 int durationMs = static_cast<int>(entry.durationMs);
                 rawGif->addFrame(callable::getRenderSurface(meme), durationMs);
             }
-            if (expr->loop) rawGif->setLoop(0);
 
             auto gifClass = env->get(token::Token(token::TokenType::IDENTIFIER,
                 token::TokenValue(std::string("Gif")), 0));

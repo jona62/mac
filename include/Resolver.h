@@ -157,11 +157,9 @@ namespace resolver {
             return std::monostate{};
         }
         MV visitGifBlockExpr(expr::GifBlockExpr<MV>* expr) override {
-            for (auto& f : expr->frames) resolveExpr(f.meme);
-            return std::monostate{};
-        }
-        MV visitTimelineBlockExpr(expr::TimelineBlockExpr<MV>* expr) override {
-            for (auto& e : expr->entries) resolveExpr(e.frame.meme);
+            for (auto& entry : expr->entries) {
+                resolveExpr(entry.meme);
+            }
             return std::monostate{};
         }
         MV visitGridBlockExpr(expr::GridBlockExpr<MV>* expr) override {

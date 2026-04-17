@@ -115,6 +115,22 @@ namespace printer {
             return "(" + expr->left->visit(this->shared_from_this()) + " >> " + expr->right->visit(this->shared_from_this()) + ")";
         }
 
+        string visitMemeLiteralExpr(expr::MemeLiteralExpr<T>*) override {
+            return "<meme>";
+        }
+
+        string visitSaveExpr(expr::SaveExpr<T>* expr) override {
+            return "(=> " + expr->value->visit(this->shared_from_this()) + " " + expr->path->visit(this->shared_from_this()) + ")";
+        }
+
+        string visitGifBlockExpr(expr::GifBlockExpr<T>*) override {
+            return "<gif>";
+        }
+
+        string visitGridBlockExpr(expr::GridBlockExpr<T>*) override {
+            return "<grid>";
+        }
+
     private:
         template <typename... Exprs>
         string parenthesize(const std::string& name, shared_ptr<Exprs>... exprs) {
