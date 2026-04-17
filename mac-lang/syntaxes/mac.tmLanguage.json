@@ -38,6 +38,16 @@
         {
           "name": "constant.character.escape.mac",
           "match": "\\\\."
+        },
+        {
+          "name": "meta.interpolation.mac",
+          "begin": "(?<!\\\\)\\{",
+          "end": "\\}",
+          "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.mac" } },
+          "endCaptures": { "0": { "name": "punctuation.section.interpolation.end.mac" } },
+          "patterns": [
+            { "include": "source.mac" }
+          ]
         }
       ]
     },
@@ -85,7 +95,7 @@
     },
     "block-keywords": {
       "name": "keyword.control.block.mac",
-      "match": "\\b(gif|timeline|grid|loop)\\b(?=\\s+[{\\w\\d])"
+      "match": "\\b(gif|grid|loop)\\b(?=\\s+[{\\w\\d])"
     },
     "transition-separator": {
       "name": "punctuation.separator.transition.mac",
@@ -109,7 +119,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(val|var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue)\\b"
+      "match": "\\b(val|var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|match)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",
@@ -137,11 +147,11 @@
     },
     "stdlib-types": {
       "name": "support.class.mac",
-      "match": "\\b(Template|Meme|Gif|Timeline|Frame|Size|Duration|Position|Format)\\b"
+      "match": "\\b(Template|Meme|Gif|Size|Duration|Position|Format)\\b"
     },
     "stdlib-constants": {
       "name": "support.constant.mac",
-      "match": "\\b(Top|Bottom|Center|PNG|JPG|GIF|crossfade|slideLeft|slideRight|slideUp|slideDown|wipe|deepfry)\\b"
+      "match": "\\b(Top|Bottom|Center|PNG|JPG|GIF)\\b"
     },
     "dunder-methods": {
       "name": "support.function.magic.mac",

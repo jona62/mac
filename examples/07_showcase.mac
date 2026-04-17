@@ -76,14 +76,14 @@ var week = day_memes |> reduce(
     (g, m) -> g.frame(m, Duration(700)), Gif());
 week.save("dev_week.gif");
 
-// ── Cinematic Timeline with Easing ──────────────────────
+// ── Cinematic GIF with Transitions and Easing ──────────
 
-timeline loop {
+gif loop {
     @two_panel cinematic {
         top: "Act 1: The Setup"
         bottom: "git init"
     } : 3s
-    --- crossfade 300ms ease ---
+    --- crossfade 300ms easeInOut ---
     @two_panel cinematic {
         top: "Act 2: The Conflict"
         bottom: "merge conflict in package.json"
@@ -120,9 +120,8 @@ var memes = quotes |> map(q -> @two_panel {
     bottom: q[1]
 });
 
-var tl = memes |> reduce((tl, m) -> tl
-    .frame(m, Duration(3000))
-    .transition(crossfade, Duration(200)), Timeline());
-tl.loop(0).render("dev_lifecycle.gif");
+var lifecycle = memes |> reduce(
+    (g, m) -> g.frame(m, Duration(3000)), Gif());
+lifecycle.save("dev_lifecycle.gif");
 
 print "Showcase complete! Check ~/mac/output/";

@@ -1,11 +1,17 @@
 // 05 — Functional Programming
-// Pipes, arrows, higher-order functions, and reduce.
+// Pipes, arrows, higher-order functions, destructuring,
+// string interpolation, pattern matching, and partial application.
 
 // Arrow functions
-var double = x -> x * 2;
-var add = (a, b) -> a + b;
+val double = x -> x * 2;
+val add = (a, b) -> a + b;
 print double(5);
 print add(3, 4);
+
+// String interpolation
+val name = "Mac";
+print "Hello, {name}!";
+print "double(5) = {double(5)}";
 
 // Pipe operator — chain transformations
 print [1, 2, 3, 4, 5]
@@ -20,19 +26,45 @@ print "a,b,c" |> split(",") |> map(upper) |> join(" - ");
 // Reduce — fold into a single value
 print [1, 2, 3, 4, 5] |> reduce((sum, n) -> sum + n, 0);
 
-// Zip + map — combine two arrays
-var names = ["Alice", "Bob", "Charlie"];
-var scores = [95, 87, 92];
-var pairs = zip(names, scores);
-print pairs;
+// Destructuring with zip
+val names = ["Alice", "Bob", "Charlie"];
+val scores = [95, 87, 92];
+for (var [person, score] in zip(names, scores)) {
+    print "{person}: {score}";
+}
 
-// Enumerate
-print ["a", "b", "c"] |> enumerate;
+// Enumerate with destructuring
+for (var [i, item] in enumerate(names)) {
+    print "{i}. {item}";
+}
+
+// Pattern matching
+val grade = (score) -> match score {
+    100 -> "Perfect"
+    _ -> "Score: {score}"
+};
+print grade(100);
+print grade(87);
+
+// Partial application
+val multiply = (a, b) -> a * b;
+val triple = partial(multiply, 3);
+print triple(10);
+
+// Partial + map
+print [1, 2, 3, 4, 5] |> map(partial(multiply, 10));
+
+// New array operations
+print [1, 2, 3, 4, 5] |> takeWhile(x -> x < 4);
+print [1, 2, 3, 4, 5] |> partition(x -> x % 2 == 0);
+print [1, 1, 2, 2, 3] |> unique;
+print [1, 2, 3, 4, 5] |> chunk(2);
+print [1, 2, 3, 4] |> scan((acc, x) -> acc + x, 0);
+
+// Compose — build pipelines for later
+val pipeline = (x -> x * 2) >> (x -> x + 1) >> (x -> x * x);
+print pipeline(3);
 
 // Range
 print range(5);
 print range(1, 10, 2);
-
-// Compose — build pipelines for later
-var pipeline = (x -> x * 2) >> (x -> x + 1) >> (x -> x * x);
-print pipeline(3);

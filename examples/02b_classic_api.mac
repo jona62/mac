@@ -1,6 +1,5 @@
 // 02b — Classic Builder API
-// The original Meme/Gif/Timeline classes still work.
-// Use them when you need more control or dynamic construction.
+// The Meme and Gif classes for dynamic construction.
 
 // Create a meme with the builder pattern
 var t = Template("two_panel");
@@ -20,25 +19,9 @@ g.frame(Meme(t).text(Top, "Frame 2"), Duration(500));
 g.frame(Meme(t).text(Top, "Frame 3"), Duration(500));
 g.save("classic_gif.gif");
 
-// Operator overloading: Meme + Duration = Frame, Gif + Frame = Gif
-var f1 = Meme(t).text(Top, "A") + Duration(400);
-var f2 = Meme(t).text(Top, "B") + Duration(400);
-var composed = Gif() + f1 + f2;
-composed.save("classic_composed.gif");
-
-// Timeline with method chaining
-Timeline()
-    .frame(Meme(t).text(Top, "Scene 1"), Duration(2000))
-    .transition(crossfade, Duration(150))
-    .frame(Meme(t).text(Top, "Scene 2"), Duration(2000))
-    .transition(slideLeft, Duration(150))
-    .frame(Meme(t).text(Top, "Scene 3"), Duration(2000))
-    .loop(0)
-    .render("classic_timeline.gif");
-
 // Dynamic construction with loops
+val labels = ["uno", "dos", "tres", "cuatro", "cinco"];
 var frames = Gif();
-var labels = ["uno", "dos", "tres", "cuatro", "cinco"];
 for (var i = 0; i < len(labels); i = i + 1) {
     frames.frame(
         Meme(Template("blank")).text(Center, labels[i]),
@@ -47,13 +30,16 @@ for (var i = 0; i < len(labels); i = i + 1) {
 }
 frames.save("classic_loop.gif");
 
-// Reduce into a Timeline
-var memes = ["alpha", "beta", "gamma"]
+// Reduce into a GIF with transitions using block syntax
+val memes = ["alpha", "beta", "gamma"]
     |> map(s -> Meme(Template("blank")).text(Center, s));
 
-var tl = memes |> reduce((tl, m) -> tl
-    .frame(m, Duration(2000))
-    .transition(crossfade, Duration(200)), Timeline());
-tl.loop(0).render("classic_reduce.gif");
+gif loop {
+    @blank "{memes[0]}" : 2s
+    --- crossfade 200ms ---
+    @blank "{memes[1]}" : 2s
+    --- crossfade 200ms ---
+    @blank "{memes[2]}" : 2s
+} => "classic_transitions.gif";
 
 print "Classic API examples saved to output/";

@@ -1,5 +1,5 @@
 // 04 — Animation
-// Build GIFs and timelines with block syntax.
+// Build GIFs with block syntax. Add transitions between frames.
 
 // Simple countdown GIF — sized for social media
 gif loop {
@@ -16,9 +16,9 @@ gif loop {
     @two_panel { top: "FRIDAY"    bottom: "Ship it!" } : 800ms
 } => "week.gif";
 
-// Timeline with transitions between frames
-// Use --- type duration --- between frames
-timeline loop {
+// GIF with transitions between frames
+// Use --- type duration [easing] --- between entries
+gif loop {
     @two_panel {
         top: "Act 1"
         bottom: "The setup"
@@ -35,6 +35,7 @@ timeline loop {
     } : 3s
 } => "story.gif";
 
-// Transition types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe
+// Transition types: crossfade, slideLeft, slideRight, slideUp, slideDown, wipe, fadeBlack, zoom
+// Easing curves: linear, easeIn, easeOut, easeInOut, bounce
 
 print "Animations saved to output/";
