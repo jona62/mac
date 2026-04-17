@@ -2,29 +2,29 @@
 
 ## Setup
 
-See [docs/BUILDING.md](docs/BUILDING.md) for build prerequisites and instructions.
-
 ```bash
 git clone https://github.com/jona62/mac.git
 cd mac
 cmake -S . -B build && cmake --build build
-bash tests/run_tests.sh  # should pass all 57 tests
+bash tests/run_tests.sh                        # 69 runtime tests
+python3 tests/analyzer/run_analyzer_tests.py   # 41 analyzer tests
 ```
 
-## Project Layout
+Requires CMake 3.20+ and a C++23 compiler. See the [language reference](docs/reference/) for full documentation (`cd docs/reference && mdbook serve`).
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full architecture overview.
+## Project Layout
 
 - `src/` — C++ source files (entry point in `main.cpp`)
 - `include/` — C++ headers (most implementation lives here due to templates)
 - `stdlib/prelude.mac` — Standard library loaded before user code
-- `tests/` — 57 tests across 20 categories
-- `examples/` — 9 progressive examples (01-07 + 02b, 03b)
+- `tests/` — Runtime tests (`run_tests.sh`) and analyzer tests (`analyzer/`)
 - `mac-lang/` — VS Code extension + LSP (thin adapter over `mac --analyze`)
 - `webapp/` — Web GIF studio (Python)
-- `.claude/skills/` — Claude Code agent skill for Mac language
+- `docs/reference/` — mdBook language reference
 
 ## Writing Tests
+
+### Runtime Tests
 
 Tests are `.mac` files with `// expect:` annotations:
 
@@ -34,9 +34,17 @@ print "hi" |> upper;       // expect: HI
 print type(@blank "x");    // expect: instance
 ```
 
-Place tests in `tests/<category>/`. Categories include: arrays, classes, control_flow, effects, expressions, extensions, functional, functions, lambdas, layout, maps, memes, operators, pipes, scoping, statements, stdlib, syntax, timeline.
+Place tests in `tests/<category>/`.
 
-Run the full suite: `bash tests/run_tests.sh`
+Run: `bash tests/run_tests.sh`
+
+### Analyzer Tests
+
+Python tests that verify `--analyze` JSON output (symbols, references, diagnostics, type inference, etc.). Includes snapshot regression tests.
+
+Run: `python3 tests/analyzer/run_analyzer_tests.py`
+
+Update snapshots after intentional changes: `python3 tests/analyzer/run_analyzer_tests.py --update`
 
 ## Adding a Native Function
 
@@ -81,8 +89,9 @@ The analyzer and LSP pick up the function automatically from `NativeRegistry.h`.
 
 1. Create a branch from `main`
 2. Make changes
-3. `bash tests/run_tests.sh` — all 57 tests must pass
-4. `cd mac-lang && npx tsc --noEmit` — LSP must typecheck
-5. Commit and open a PR against `main`
+3. `bash tests/run_tests.sh` — all runtime tests must pass
+4. `python3 tests/analyzer/run_analyzer_tests.py` — all analyzer tests must pass
+5. `cd mac-lang && npx tsc --noEmit` — LSP must typecheck
+6. Commit and open a PR against `main`
 
-CI runs tests on Ubuntu + macOS, plus LSP typechecking.
+CI runs runtime + analyzer tests on Ubuntu and macOS, plus LSP typechecking.

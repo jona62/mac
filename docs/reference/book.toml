@@ -1,0 +1,11 @@
+[book]
+title = "Mac Language Reference"
+authors = ["jona62"]
+language = "en"
+src = "src"
+
+[output.html]
+default-theme = "ayu"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/jona62/mac"
+additional-css = ["theme/custom.css"]

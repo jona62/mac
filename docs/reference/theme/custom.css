@@ -1,0 +1,48 @@
+/* cppreference-inspired dense style */
+
+:root {
+    --sidebar-width: 240px;
+}
+
+.content {
+    max-width: 900px;
+}
+
+/* Syntax boxes */
+.content pre {
+    border-left: 3px solid #4a9eff;
+    border-radius: 0;
+}
+
+/* Dense tables */
+.content table {
+    font-size: 0.9em;
+    width: 100%;
+}
+
+.content table th {
+    font-weight: 600;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.content table td code {
+    font-size: 0.95em;
+    background: none;
+    padding: 0;
+}
+
+/* Section headers */
+.content h2 {
+    border-bottom: 1px solid var(--table-border-color);
+    padding-bottom: 0.3em;
+    margin-top: 2em;
+}
+
+/* "Since v0.x.x" badges */
+.since {
+    font-size: 0.75em;
+    color: #888;
+    font-style: italic;
+    float: right;
+}
