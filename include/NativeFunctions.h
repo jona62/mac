@@ -1853,6 +1853,52 @@ namespace callable {
         std::string toString() override { return "<native fn>"; }
     };
 
+    // --- Partial Application ---
+
+    class PartiallyApplied : public MacCallable {
+    public:
+        PartiallyApplied(std::shared_ptr<MacCallable> fn, std::vector<value::MacValue> bound)
+            : fn(fn), bound(std::move(bound)) {}
+
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter> interp,
+                             std::vector<value::MacValue> args) override {
+            std::vector<value::MacValue> allArgs = bound;
+            allArgs.insert(allArgs.end(), args.begin(), args.end());
+            return fn->call(interp, allArgs);
+        }
+
+        int arity() override {
+            int orig = fn->arity();
+            if (orig < 0) return -1;  // variadic
+            return orig - static_cast<int>(bound.size());
+        }
+
+        std::string toString() override { return "<partial fn>"; }
+
+    private:
+        std::shared_ptr<MacCallable> fn;
+        std::vector<value::MacValue> bound;
+    };
+
+    class PartialApplyFunction : public MacCallable {
+    public:
+        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
+                             std::vector<value::MacValue> args) override {
+            if (args.size() < 2) {
+                throw std::runtime_error("partial() requires at least a function and one argument.");
+            }
+            if (!std::holds_alternative<std::shared_ptr<MacCallable>>(args[0])) {
+                throw std::runtime_error("partial() first argument must be a function.");
+            }
+            auto fn = std::get<std::shared_ptr<MacCallable>>(args[0]);
+            std::vector<value::MacValue> bound(args.begin() + 1, args.end());
+            auto partial = std::make_shared<PartiallyApplied>(fn, std::move(bound));
+            return value::MacValue(std::static_pointer_cast<MacCallable>(partial));
+        }
+        int arity() override { return -1; }  // variadic: at least 2 args
+        std::string toString() override { return "<native fn>"; }
+    };
+
 } // namespace callable
 
 #endif // NATIVE_FUNCTIONS_H

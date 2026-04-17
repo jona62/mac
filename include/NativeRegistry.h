@@ -244,6 +244,10 @@ namespace native_registry {
                 {{{"target", "path"}, "bool", "Save a Meme, Gif, Timeline, or rendered result to disk."}},
                 [] { return std::make_shared<callable::SaveFunction>(); }},
 
+            {"partial", NativeVisibility::Public, "fun(*)", "Create a partially applied function.",
+                {{{"fn", "...args"}, "function", "Bind arguments to a function, returning a new function with fewer parameters."}},
+                [] { return std::make_shared<callable::PartialApplyFunction>(); }},
+
             {"_resolve_template", NativeVisibility::Internal, "fun(1)", "Internal template resolver.",
                 {{{"nameOrPath"}, "string", "Resolve a template id or file path."}},
                 [] { return std::make_shared<callable::ResolveTemplateFunction>(); }},

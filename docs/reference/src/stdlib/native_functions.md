@@ -80,6 +80,12 @@ Built-in functions available in every Mac program without imports.
 | `range` | `range(start, end)` | `[number]` | `[start, ..., end-1]` |
 | `range` | `range(start, end, step)` | `[number]` | With custom step |
 
+## Functional Utilities
+
+| Function | Signature | Returns | Description |
+|----------|-----------|---------|-------------|
+| `partial` | `partial(fn, ...args)` | `function` | Bind arguments to a function, returning a new function with fewer parameters |
+
 ## User Input
 
 | Function | Signature | Returns | Description |
