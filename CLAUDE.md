@@ -2,12 +2,13 @@
 
 ## Project Overview
 
-Mac (Meme as Code) is a C++23 tree-walk interpreter where memes are first-class citizens. The project has four components:
+Mac (Meme as Code) is a C++23 tree-walk interpreter where memes are first-class citizens. The project has three components:
 
 - **Interpreter** — C++ in `src/` and `include/`
 - **VS Code Extension + LSP** — TypeScript in `mac-lang/`
-- **Web GIF Studio** — Python backend + JS frontend in `webapp/`
 - **Language Reference** — mdBook in `docs/reference/`
+
+The Web GIF Studio lives in a separate repo: [mac-studio-meme/studio](https://github.com/mac-studio-meme/studio)
 
 ## Build
 
@@ -65,12 +66,6 @@ The analyzer and LSP pick up native functions automatically from the registry.
 - [ ] **Registration** (`include/MacMeme.h`) — add to `templateMap()`
 - [ ] **Docs** — add to `docs/reference/src/stdlib/templates.md`
 
-### Webapp Changes
-
-- [ ] **Backend** (`webapp/server.py`) — API/script generation changes
-- [ ] **Frontend** (`webapp/static/`) — UI changes
-- [ ] **Syntax highlighting** (`webapp/static/js/highlight.js`) — new keywords
-
 ### Prelude Changes
 
 - [ ] **Stdlib** (`stdlib/prelude.mac`) — class/function changes
@@ -90,7 +85,7 @@ Version lives in the `VERSION` file (single source of truth). CMake injects it a
 2. Commit
 3. `git tag v<version> && git push origin v<version>`
 4. CI builds binaries (macOS arm64, macOS x86_64, Linux x86_64), publishes GitHub Release
-5. Deploy runs automatically on push to main (webapp + docs at macstudio.meme and docs.macstudio.meme)
+5. Docs deploy runs automatically on push to main (docs.macstudio.meme)
 
 ## Architecture Notes
 
@@ -128,5 +123,4 @@ Version lives in the `VERSION` file (single source of truth). CMake injects it a
 | `include/AnalyzerTypes.h` | Analysis output structs + JSON serialization |
 | `stdlib/prelude.mac` | Standard library (loaded before user code) |
 | `docs/reference/` | mdBook language reference |
-| `webapp/server.py` | Web GIF studio backend |
 | `VERSION` | Version source of truth |
