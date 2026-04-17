@@ -11,6 +11,7 @@
     { "include": "#effect-declaration" },
     { "include": "#style-declaration" },
     { "include": "#class-declaration" },
+    { "include": "#enum-declaration" },
     { "include": "#function-declaration" },
     { "include": "#block-keywords" },
     { "include": "#transition-separator" },
@@ -119,7 +120,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(val|var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue|match)\\b"
+      "match": "\\b(val|var|fun|effect|style|class|enum|for|while|if|else|return|print|in|break|continue|match)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",
@@ -130,6 +131,13 @@
       "captures": {
         "1": { "name": "keyword.control.mac" },
         "2": { "name": "entity.name.type.class.mac" }
+      }
+    },
+    "enum-declaration": {
+      "match": "\\b(enum)\\s+([A-Za-z_]\\w*)",
+      "captures": {
+        "1": { "name": "keyword.control.mac" },
+        "2": { "name": "entity.name.type.enum.mac" }
       }
     },
     "function-declaration": {

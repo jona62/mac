@@ -136,6 +136,32 @@ print match 1 + 1 {
 // Output: correct
 ```
 
+### Enum Destructuring
+
+Match can destructure [enum](./enums.md) variants and bind their fields to local variables:
+
+```
+enum Result { Ok(value), Error(message) }
+
+val msg = match Result.Ok(42) {
+    Result.Ok(v) -> "got {v}"
+    Result.Error(e) -> "err: {e}"
+};
+// Output: got 42
+```
+
+Simple enum variants match by identity:
+
+```
+enum Color { Red, Green, Blue }
+val label = match Color.Red {
+    Color.Red -> "danger"
+    Color.Green -> "go"
+    _ -> "other"
+};
+// Output: danger
+```
+
 ## break
 
 Exit the innermost loop immediately.

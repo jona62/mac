@@ -69,6 +69,14 @@ var img = @"assets/photo.png";
 
 See [Arrays](./arrays.md) and [Maps](./maps.md) for details.
 
+## Enum Types
+
+| Type | Example | Description |
+|------|---------|-------------|
+| `enum` | `enum Color { Red, Green, Blue }` | User-defined tagged union with optional data |
+
+Enum variants are accessed via `EnumName.Variant`. Data variants are constructed like function calls: `Shape.Circle(5)`. See [Enums](./enums.md) for details.
+
 ## Meme Types
 
 | Type | Produced by | Description |

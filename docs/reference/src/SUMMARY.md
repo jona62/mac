@@ -13,6 +13,7 @@
 - [Classes](./language/classes.md)
 - [Arrays](./language/arrays.md)
 - [Maps](./language/maps.md)
+- [Enums](./language/enums.md)
 
 # Meme as Code
 
