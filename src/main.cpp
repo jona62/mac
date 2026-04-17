@@ -1,6 +1,6 @@
-#include <cstring>
-#include <iostream>
-#include "MacRunner.h"
+#include <cstring>                  // strcmp
+#include <iostream>             // cout, endl
+#include "MacRunner.h"              // runner::Runtime, getBinaryDir, runFile, runPrompt, analyzeFile
 
 using namespace std;
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
     // --version
     if (argc == 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0)) {
-        cout << "Mac v0.1.1" << endl;
+        cout << "Mac v" << MAC_VERSION << endl;
         return 0;
     }
 

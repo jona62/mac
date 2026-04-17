@@ -19,8 +19,8 @@ FAIL=0
 TOTAL=0
 BUILD_DIR="$PROJECT_DIR/build"
 
-# Find all .mac files in test subdirectories (skip old phase*.mac files in tests root)
-for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" | sort); do
+# Find all .mac files in test subdirectories (skip analyzer/ which has its own runner)
+for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/analyzer/*" | sort); do
     TOTAL=$((TOTAL + 1))
     rel_path="${test_file#$SCRIPT_DIR/}"
 

@@ -20,6 +20,7 @@ jobs:
       - run: cmake -S . -B build
       - run: cmake --build build
       - run: bash tests/run_tests.sh
+      - run: python3 tests/analyzer/run_analyzer_tests.py
 
   lint-lsp:
     name: Typecheck LSP
@@ -47,6 +48,22 @@ jobs:
           script: bash ~/deploy.sh
 
   # ── Lane 3: Release builds (only on tags, parallel) ───
+  check-version:
+    name: Validate version
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag must match VERSION file
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          FILE=$(cat VERSION | tr -d '[:space:]')
+          if [ "$TAG" != "$FILE" ]; then
+            echo "::error::Tag v$TAG does not match VERSION file ($FILE)"
+            exit 1
+          fi
+          echo "Version $FILE confirmed"
+
   test-macos:
     name: Test (macOS)
     if: startsWith(github.ref, 'refs/tags/v')
@@ -56,10 +73,11 @@ jobs:
       - run: cmake -S . -B build
       - run: cmake --build build
       - run: bash tests/run_tests.sh
+      - run: python3 tests/analyzer/run_analyzer_tests.py
 
   release:
     name: Build (${{ matrix.target }})
-    needs: [test-linux, test-macos, lint-lsp]
+    needs: [test-linux, test-macos, lint-lsp, check-version]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -73,6 +91,7 @@ jobs:
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --config Release
       - run: bash tests/run_tests.sh
+      - run: python3 tests/analyzer/run_analyzer_tests.py
       - name: Package
         run: |
           mkdir -p dist/${{ matrix.target }}

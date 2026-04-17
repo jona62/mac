@@ -1,0 +1,672 @@
+{
+  "chainHints": [
+    {
+      "endCol": 15,
+      "line": 11,
+      "source": "user",
+      "type": "string"
+    }
+  ],
+  "classes": [
+    {
+      "col": 7,
+      "description": "",
+      "endCol": 13,
+      "line": 2,
+      "members": [
+        {
+          "col": 23,
+          "description": "",
+          "endCol": 27,
+          "kind": "field",
+          "line": 3,
+          "name": "name",
+          "params": [],
+          "returnType": "",
+          "source": "user",
+          "type": "unknown",
+          "visibility": "public"
+        },
+        {
+          "col": 5,
+          "description": "",
+          "endCol": 9,
+          "kind": "constructor",
+          "line": 3,
+          "name": "init",
+          "params": [
+            "name"
+          ],
+          "returnType": "Animal",
+          "source": "user",
+          "type": "fun(1)",
+          "visibility": "public"
+        },
+        {
+          "col": 5,
+          "description": "",
+          "endCol": 10,
+          "kind": "method",
+          "line": 4,
+          "name": "speak",
+          "params": [],
+          "returnType": "unknown",
+          "source": "user",
+          "type": "fun(0)",
+          "visibility": "public"
+        }
+      ],
+      "name": "Animal",
+      "source": "user",
+      "superclass": "",
+      "visibility": "public"
+    },
+    {
+      "col": 7,
+      "description": "",
+      "endCol": 10,
+      "line": 6,
+      "members": [
+        {
+          "col": 5,
+          "description": "",
+          "endCol": 9,
+          "kind": "constructor",
+          "line": 7,
+          "name": "init",
+          "params": [
+            "name"
+          ],
+          "returnType": "Dog",
+          "source": "user",
+          "type": "fun(1)",
+          "visibility": "public"
+        },
+        {
+          "col": 5,
+          "description": "",
+          "endCol": 9,
+          "kind": "method",
+          "line": 8,
+          "name": "bark",
+          "params": [],
+          "returnType": "string",
+          "source": "user",
+          "type": "fun(0)",
+          "visibility": "public"
+        }
+      ],
+      "name": "Dog",
+      "source": "user",
+      "superclass": "Animal",
+      "visibility": "public"
+    }
+  ],
+  "diagnostics": [],
+  "foldingRanges": [
+    {
+      "endLine": 5,
+      "source": "user",
+      "startLine": 2
+    },
+    {
+      "endLine": 9,
+      "source": "user",
+      "startLine": 6
+    }
+  ],
+  "paramHints": [],
+  "properties": [
+    {
+      "col": 27,
+      "defCol": 23,
+      "defEndCol": 27,
+      "defLine": 3,
+      "defSource": "user",
+      "description": "",
+      "endCol": 31,
+      "kind": "field",
+      "line": 4,
+      "name": "name",
+      "ownerType": "Animal",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    },
+    {
+      "col": 24,
+      "defCol": 5,
+      "defEndCol": 9,
+      "defLine": 3,
+      "defSource": "user",
+      "description": "",
+      "endCol": 28,
+      "kind": "constructor",
+      "line": 7,
+      "name": "init",
+      "ownerType": "Animal",
+      "source": "user",
+      "type": "Animal",
+      "visibility": "public"
+    },
+    {
+      "col": 26,
+      "defCol": 23,
+      "defEndCol": 27,
+      "defLine": 3,
+      "defSource": "user",
+      "description": "",
+      "endCol": 30,
+      "kind": "field",
+      "line": 8,
+      "name": "name",
+      "ownerType": "Dog",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    },
+    {
+      "col": 9,
+      "defCol": 5,
+      "defEndCol": 9,
+      "defLine": 8,
+      "defSource": "user",
+      "description": "",
+      "endCol": 13,
+      "kind": "method",
+      "line": 11,
+      "name": "bark",
+      "ownerType": "Dog",
+      "source": "user",
+      "type": "string",
+      "visibility": "public"
+    },
+    {
+      "col": 9,
+      "defCol": 5,
+      "defEndCol": 10,
+      "defLine": 4,
+      "defSource": "user",
+      "description": "",
+      "endCol": 14,
+      "kind": "method",
+      "line": 12,
+      "name": "speak",
+      "ownerType": "Dog",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    }
+  ],
+  "references": [
+    {
+      "col": 30,
+      "defCol": 10,
+      "defEndCol": 14,
+      "defLine": 3,
+      "defName": "name",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 34,
+      "line": 3,
+      "source": "user"
+    },
+    {
+      "col": 13,
+      "defCol": 7,
+      "defEndCol": 13,
+      "defLine": 2,
+      "defName": "Animal",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 19,
+      "line": 6,
+      "source": "user"
+    },
+    {
+      "col": 29,
+      "defCol": 10,
+      "defEndCol": 14,
+      "defLine": 7,
+      "defName": "name",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 33,
+      "line": 7,
+      "source": "user"
+    },
+    {
+      "col": 9,
+      "defCol": 7,
+      "defEndCol": 10,
+      "defLine": 6,
+      "defName": "Dog",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 12,
+      "line": 10,
+      "source": "user"
+    },
+    {
+      "col": 7,
+      "defCol": 5,
+      "defEndCol": 6,
+      "defLine": 10,
+      "defName": "d",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 8,
+      "line": 11,
+      "source": "user"
+    },
+    {
+      "col": 7,
+      "defCol": 5,
+      "defEndCol": 6,
+      "defLine": 10,
+      "defName": "d",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 8,
+      "line": 12,
+      "source": "user"
+    }
+  ],
+  "semanticTokens": [
+    {
+      "col": 7,
+      "length": 6,
+      "line": 2,
+      "source": "user",
+      "tokenType": "class"
+    },
+    {
+      "col": 5,
+      "length": 4,
+      "line": 3,
+      "source": "user",
+      "tokenType": "method"
+    },
+    {
+      "col": 10,
+      "length": 4,
+      "line": 3,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 30,
+      "length": 4,
+      "line": 3,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 23,
+      "length": 4,
+      "line": 3,
+      "source": "user",
+      "tokenType": "property"
+    },
+    {
+      "col": 5,
+      "length": 5,
+      "line": 4,
+      "source": "user",
+      "tokenType": "method"
+    },
+    {
+      "col": 7,
+      "length": 3,
+      "line": 6,
+      "source": "user",
+      "tokenType": "class"
+    },
+    {
+      "col": 13,
+      "length": 6,
+      "line": 6,
+      "source": "user",
+      "tokenType": "class"
+    },
+    {
+      "col": 5,
+      "length": 4,
+      "line": 7,
+      "source": "user",
+      "tokenType": "method"
+    },
+    {
+      "col": 10,
+      "length": 4,
+      "line": 7,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 29,
+      "length": 4,
+      "line": 7,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 5,
+      "length": 4,
+      "line": 8,
+      "source": "user",
+      "tokenType": "method"
+    },
+    {
+      "col": 5,
+      "length": 1,
+      "line": 10,
+      "source": "user",
+      "tokenType": "variable"
+    },
+    {
+      "col": 9,
+      "length": 3,
+      "line": 10,
+      "source": "user",
+      "tokenType": "class"
+    },
+    {
+      "col": 7,
+      "length": 1,
+      "line": 11,
+      "source": "user",
+      "tokenType": "variable"
+    },
+    {
+      "col": 7,
+      "length": 1,
+      "line": 12,
+      "source": "user",
+      "tokenType": "variable"
+    }
+  ],
+  "signatures": [
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "constructor",
+      "line": 3,
+      "name": "init",
+      "ownerType": "Animal",
+      "params": [
+        "name"
+      ],
+      "returnType": "Animal",
+      "source": "user",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 10,
+      "kind": "method",
+      "line": 4,
+      "name": "speak",
+      "ownerType": "Animal",
+      "params": [],
+      "returnType": "unknown",
+      "source": "user",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "constructor",
+      "line": 7,
+      "name": "init",
+      "ownerType": "Dog",
+      "params": [
+        "name"
+      ],
+      "returnType": "Dog",
+      "source": "user",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "method",
+      "line": 8,
+      "name": "bark",
+      "ownerType": "Dog",
+      "params": [],
+      "returnType": "string",
+      "source": "user",
+      "visibility": "public"
+    }
+  ],
+  "symbols": [
+    {
+      "col": 7,
+      "description": "",
+      "endCol": 13,
+      "kind": "class",
+      "line": 2,
+      "name": "Animal",
+      "ownerType": "",
+      "source": "user",
+      "type": "class Animal",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "method",
+      "line": 3,
+      "name": "init",
+      "ownerType": "Animal",
+      "source": "user",
+      "type": "fun(1)",
+      "visibility": "public"
+    },
+    {
+      "col": 10,
+      "description": "",
+      "endCol": 14,
+      "kind": "parameter",
+      "line": 3,
+      "name": "name",
+      "ownerType": "",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    },
+    {
+      "col": 23,
+      "description": "",
+      "endCol": 27,
+      "kind": "field",
+      "line": 3,
+      "name": "name",
+      "ownerType": "Animal",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 10,
+      "kind": "method",
+      "line": 4,
+      "name": "speak",
+      "ownerType": "Animal",
+      "source": "user",
+      "type": "fun(0)",
+      "visibility": "public"
+    },
+    {
+      "col": 7,
+      "description": "",
+      "endCol": 10,
+      "kind": "class",
+      "line": 6,
+      "name": "Dog",
+      "ownerType": "",
+      "source": "user",
+      "type": "class Dog",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "method",
+      "line": 7,
+      "name": "init",
+      "ownerType": "Dog",
+      "source": "user",
+      "type": "fun(1)",
+      "visibility": "public"
+    },
+    {
+      "col": 10,
+      "description": "",
+      "endCol": 14,
+      "kind": "parameter",
+      "line": 7,
+      "name": "name",
+      "ownerType": "",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 9,
+      "kind": "method",
+      "line": 8,
+      "name": "bark",
+      "ownerType": "Dog",
+      "source": "user",
+      "type": "fun(0)",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 6,
+      "kind": "variable",
+      "line": 10,
+      "name": "d",
+      "ownerType": "",
+      "source": "user",
+      "type": "Dog",
+      "visibility": "public"
+    }
+  ],
+  "templates": [
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "square"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "tall"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "four_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "caption_bar"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "bottom_text"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "wide"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "three_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "dark"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "blank"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "two_panel"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.kid_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.jordan_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.guy_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.king_bach_stare"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.idk_about_that"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.shrek_side_eye"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.shrek_smirk"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.girl_side_eye"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.window_despair"
+    }
+  ]
+}

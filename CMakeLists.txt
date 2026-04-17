@@ -5,6 +5,11 @@ project(Mac)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Read version from VERSION file
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" MAC_VERSION)
+string(STRIP "${MAC_VERSION}" MAC_VERSION)
+add_compile_definitions(MAC_VERSION="${MAC_VERSION}")
+
 # Include the directories where the header files are located
 include_directories(include)
 

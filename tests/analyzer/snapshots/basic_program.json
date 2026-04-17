@@ -1,0 +1,271 @@
+{
+  "chainHints": [],
+  "classes": [],
+  "diagnostics": [],
+  "foldingRanges": [],
+  "paramHints": [
+    {
+      "col": 14,
+      "line": 5,
+      "name": "n",
+      "source": "user"
+    }
+  ],
+  "properties": [],
+  "references": [
+    {
+      "col": 24,
+      "defCol": 12,
+      "defEndCol": 13,
+      "defLine": 4,
+      "defName": "n",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 25,
+      "line": 4,
+      "source": "user"
+    },
+    {
+      "col": 7,
+      "defCol": 5,
+      "defEndCol": 11,
+      "defLine": 4,
+      "defName": "double",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 13,
+      "line": 5,
+      "source": "user"
+    },
+    {
+      "col": 14,
+      "defCol": 5,
+      "defEndCol": 6,
+      "defLine": 2,
+      "defName": "x",
+      "defOwnerType": "",
+      "defSource": "user",
+      "defVisibility": "public",
+      "endCol": 15,
+      "line": 5,
+      "source": "user"
+    }
+  ],
+  "semanticTokens": [
+    {
+      "col": 5,
+      "length": 1,
+      "line": 2,
+      "source": "user",
+      "tokenType": "variable"
+    },
+    {
+      "col": 5,
+      "length": 8,
+      "line": 3,
+      "source": "user",
+      "tokenType": "variable"
+    },
+    {
+      "col": 5,
+      "length": 6,
+      "line": 4,
+      "source": "user",
+      "tokenType": "function"
+    },
+    {
+      "col": 12,
+      "length": 1,
+      "line": 4,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 24,
+      "length": 1,
+      "line": 4,
+      "source": "user",
+      "tokenType": "parameter"
+    },
+    {
+      "col": 7,
+      "length": 6,
+      "line": 5,
+      "source": "user",
+      "tokenType": "function"
+    },
+    {
+      "col": 14,
+      "length": 1,
+      "line": 5,
+      "source": "user",
+      "tokenType": "variable"
+    }
+  ],
+  "signatures": [
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 11,
+      "kind": "function",
+      "line": 4,
+      "name": "double",
+      "ownerType": "",
+      "params": [
+        "n"
+      ],
+      "returnType": "number",
+      "source": "user",
+      "visibility": "public"
+    }
+  ],
+  "symbols": [
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 6,
+      "kind": "variable",
+      "line": 2,
+      "name": "x",
+      "ownerType": "",
+      "source": "user",
+      "type": "number",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 13,
+      "kind": "variable",
+      "line": 3,
+      "name": "greeting",
+      "ownerType": "",
+      "source": "user",
+      "type": "string",
+      "visibility": "public"
+    },
+    {
+      "col": 5,
+      "description": "",
+      "endCol": 11,
+      "kind": "function",
+      "line": 4,
+      "name": "double",
+      "ownerType": "",
+      "source": "user",
+      "type": "fun(1)",
+      "visibility": "public"
+    },
+    {
+      "col": 12,
+      "description": "",
+      "endCol": 13,
+      "kind": "parameter",
+      "line": 4,
+      "name": "n",
+      "ownerType": "",
+      "source": "user",
+      "type": "unknown",
+      "visibility": "public"
+    }
+  ],
+  "templates": [
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "square"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "tall"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "four_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "caption_bar"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "bottom_text"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "wide"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "three_panel"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "dark"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "blank"
+    },
+    {
+      "category": "",
+      "description": "Built-in template",
+      "name": "two_panel"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.kid_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.jordan_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.guy_crying"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.king_bach_stare"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.idk_about_that"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.shrek_side_eye"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.shrek_smirk"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.girl_side_eye"
+    },
+    {
+      "category": "meme",
+      "description": "Meme image",
+      "name": "meme.window_despair"
+    }
+  ]
+}
