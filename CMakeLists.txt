@@ -15,6 +15,7 @@ set(SOURCES
     src/Parser.cpp # Parser implementation is in src/Parser.cpp
     src/Interpreter.cpp # Interpreter implementation is in src/Interpreter.cpp
     src/stb_impl.cpp # stb library implementations
+    src/linenoise.c  # Line editing library (arrow keys, history)
 )
 
 # Create the executable

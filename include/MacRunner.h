@@ -14,6 +14,10 @@
 #include "Resolver.h"
 #include "MacAnalyzer.h"
 #include "NativeFunctions.h"
+
+extern "C" {
+#include "linenoise.h"
+}
 #include "MacMeme.h"
 
 #ifdef __APPLE__
@@ -137,16 +141,34 @@ namespace runner {
             return;
         }
 
-        // Interactive mode: line-by-line with multi-line support
+        // Interactive mode with linenoise — arrow keys, history, Ctrl-C
+        std::string historyPath;
+        if (const char* home = std::getenv("HOME")) {
+            historyPath = std::string(home) + "/.mac_history";
+            linenoiseHistoryLoad(historyPath.c_str());
+        }
+        linenoiseSetMultiLine(1);
+
         std::string buffer;
         int braceDepth = 0, bracketDepth = 0, parenDepth = 0;
-        do {
+
+        while (true) {
             bool continuation = braceDepth > 0 || bracketDepth > 0 || parenDepth > 0;
-            std::cout << (continuation ? ".. " : "|> ");
-            std::string line;
-            if (!std::getline(std::cin, line)) break;
+            const char* prompt = continuation ? ".. " : "|> ";
+
+            char* raw = linenoise(prompt);
+            if (!raw) break; // EOF or Ctrl-D
+
+            std::string line(raw);
+            linenoiseFree(raw);
             line.erase(line.find_last_not_of(" \n\r\t") + 1);
+
             if (line == "exit" && !continuation) break;
+            if (line == "clear" && !continuation) {
+                linenoiseClearScreen();
+                continue;
+            }
+            if (line.empty() && !continuation) continue;
 
             if (!buffer.empty()) buffer += "\n";
             buffer += line;
@@ -172,10 +194,18 @@ namespace runner {
                 auto trimBuf = buffer;
                 while (!trimBuf.empty() && std::isspace(static_cast<unsigned char>(trimBuf.back()))) trimBuf.pop_back();
                 if (!trimBuf.empty() && trimBuf.back() != ';' && trimBuf.back() != '}') buffer += ";";
+                // Add to history (skip empty)
+                if (!trimBuf.empty()) linenoiseHistoryAdd(trimBuf.c_str());
                 rt.run(buffer);
                 buffer.clear();
             }
-        } while (true);
+        }
+
+        // Save history
+        if (!historyPath.empty()) {
+            linenoiseHistorySetMaxLen(500);
+            linenoiseHistorySave(historyPath.c_str());
+        }
     }
 
     // Run --analyze mode for LSP
