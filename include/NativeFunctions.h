@@ -44,6 +44,14 @@ namespace callable {
         return getOutputDir() + "/" + path;
     }
 
+    static value::MacValue savedResult(bool ok, const std::string& path) {
+        if (ok) {
+            auto abs = std::filesystem::absolute(path).string();
+            std::cerr << "\033[2m  Saved " << abs << "\033[0m" << std::endl;
+        }
+        return ok;
+    }
+
     // --- Time ---
 
     class ClockFunction : public MacCallable {
@@ -290,7 +298,7 @@ namespace callable {
             m->imagePath = templatePath;
             m->width = width;
             m->height = height;
-            return m->save(outputPath);
+            return savedResult(m->save(outputPath), outputPath);
         }
         int arity() override { return 7; }
         std::string toString() override { return "<native fn>"; }
@@ -325,7 +333,7 @@ namespace callable {
                     dur
                 );
             }
-            return gif->save(outputPath);
+            return savedResult(gif->save(outputPath), outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
@@ -338,7 +346,7 @@ namespace callable {
                              std::vector<value::MacValue> args) override {
             auto gif = std::get<std::shared_ptr<meme::MacGif>>(args[0]);
             auto outputPath = toOutputPath(std::get<std::string>(args[1]));
-            return gif->save(outputPath);
+            return savedResult(gif->save(outputPath), outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
@@ -834,7 +842,9 @@ namespace callable {
             auto surface = std::holds_alternative<std::string>(args[0])
                 ? loadSurfaceFromPath(std::get<std::string>(args[0]))
                 : getRenderSurface(args[0]);
-            return meme::MemeRenderer::saveImage(surface->pixels, surface->width, surface->height, outputPath);
+            return savedResult(
+                meme::MemeRenderer::saveImage(surface->pixels, surface->width, surface->height, outputPath),
+                outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
@@ -1172,7 +1182,7 @@ namespace callable {
                              std::vector<value::MacValue> args) override {
             auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
             auto outputPath = toOutputPath(std::get<std::string>(args[1]));
-            return tl->save(outputPath);
+            return savedResult(tl->save(outputPath), outputPath);
         }
         int arity() override { return 2; }
         std::string toString() override { return "<native fn>"; }
@@ -1698,21 +1708,21 @@ namespace callable {
             // Timeline → stream directly to GIF encoder
             if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(target)) {
                 auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(target);
-                return tl->save(outputPath);
+                return savedResult(tl->save(outputPath), outputPath);
             }
 
             // Gif → save as animated GIF
             if (std::holds_alternative<std::shared_ptr<meme::MacGif>>(target)) {
                 auto gif = std::get<std::shared_ptr<meme::MacGif>>(target);
-                return gif->save(outputPath);
+                return savedResult(gif->save(outputPath), outputPath);
             }
 
             // Rendered map (from effects/layout pipeline) → save in-memory surface
             if (std::holds_alternative<std::shared_ptr<collection::MacMap>>(target)) {
                 auto surface = getRenderSurface(target);
-                return meme::MemeRenderer::saveImage(
+                return savedResult(meme::MemeRenderer::saveImage(
                     surface->pixels, surface->width, surface->height, outputPath
-                );
+                ), outputPath);
             }
 
             // Mac class instance → dispatch by class type
@@ -1720,7 +1730,7 @@ namespace callable {
                 auto inst = std::get<std::shared_ptr<instance::MacInstance>>(target);
                 auto className = inst->getClass()->name;
 
-                // Gif/Timeline instances → call .save(path) method
+                // Gif/Timeline instances → delegate to .save() (prints internally)
                 if (className == "Gif" || className == "Timeline") {
                     token::Token saveTok(token::TokenType::IDENTIFIER,
                         token::TokenValue(std::string("save")), 0);
@@ -1739,15 +1749,15 @@ namespace callable {
                     auto surface = std::holds_alternative<std::string>(renderedVal)
                         ? loadSurfaceFromPath(std::get<std::string>(renderedVal))
                         : getRenderSurface(renderedVal);
-                    return meme::MemeRenderer::saveImage(
+                    return savedResult(meme::MemeRenderer::saveImage(
                         surface->pixels, surface->width, surface->height, outputPath
-                    );
+                    ), outputPath);
                 }
 
                 auto surface = getRenderSurface(target);
-                return meme::MemeRenderer::saveImage(
+                return savedResult(meme::MemeRenderer::saveImage(
                     surface->pixels, surface->width, surface->height, outputPath
-                );
+                ), outputPath);
             }
 
             throw std::runtime_error("save() expects a Meme, Gif, Timeline, or rendered result.");

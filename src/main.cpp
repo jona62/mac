@@ -1,6 +1,7 @@
 #include <cstring>                  // strcmp
 #include <iostream>             // cout, endl
 #include "MacRunner.h"              // runner::Runtime, getBinaryDir, runFile, runPrompt, analyzeFile
+#include "UpdateCheck.h"            // updateCheck::checkForUpdate
 
 using namespace std;
 
@@ -20,6 +21,7 @@ int main(int argc, char **argv) {
         string installDir = home + "/.mac";
         string binLink = home + "/.local/bin/mac";
         string outputDir = home + "/mac/output";
+        string historyFile = home + "/.mac_history";
 
         cout << "\033[1m\033[35m  Uninstalling Mac...\033[0m" << endl;
 
@@ -40,9 +42,28 @@ int main(int argc, char **argv) {
             return false;
         };
 
-        bool removed = removeDir(installDir) | removeFile(binLink) | removeDir(outputDir);
-        if (removed) cout << "\n  \033[1m\033[32mDone.\033[0m Mac has been uninstalled." << endl;
-        else cout << "  \033[33m!\033[0m Mac is not installed." << endl;
+        bool removed = removeDir(installDir) | removeFile(binLink);
+        if (!removed) {
+            cout << "  \033[33m!\033[0m Mac is not installed." << endl;
+            cout << endl;
+            return 0;
+        }
+
+        removeFile(historyFile);
+
+        // Ask before removing user-generated output
+        if (std::filesystem::exists(outputDir) && !std::filesystem::is_empty(outputDir)) {
+            cout << "\n  \033[33m?\033[0m Delete generated files in " << outputDir << "? [y/N] ";
+            string answer;
+            getline(cin, answer);
+            if (!answer.empty() && (answer[0] == 'y' || answer[0] == 'Y')) {
+                removeDir(outputDir);
+            } else {
+                cout << "  \033[2m-\033[0m Kept " << outputDir << endl;
+            }
+        }
+
+        cout << "\n  \033[1m\033[32mDone.\033[0m Mac has been uninstalled." << endl;
         cout << endl;
         return 0;
     }
@@ -60,6 +81,8 @@ int main(int argc, char **argv) {
         cout << "       mac --version" << endl;
         return 1;
     }
+
+    updateCheck::checkForUpdate();
 
     runner::Runtime rt;
     rt.loadPrelude(binaryDir);
