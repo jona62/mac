@@ -496,8 +496,8 @@ namespace callable {
         }
         if (std::holds_alternative<std::shared_ptr<meme::MacTimeline>>(val)) {
             throw std::runtime_error(
-                "Cannot use Timeline as a frame — Timeline is a sequence type. "
-                "Wrap the containing block in a 'timeline' instead.");
+                "Cannot use Gif as a frame — Gif is a sequence type. "
+                "Wrap the containing block in a 'gif' instead.");
         }
 
         if (std::holds_alternative<std::shared_ptr<meme::MacMeme>>(val)) {
@@ -519,11 +519,10 @@ namespace callable {
         auto inst = std::get<std::shared_ptr<instance::MacInstance>>(val);
 
         auto className = inst->getClass()->name;
-        if (className == "Gif" || className == "Timeline") {
+        if (className == "Gif") {
             throw std::runtime_error(
-                "Cannot use " + className + " as a frame — " + className +
-                " is a sequence type. Wrap the containing block in a '" +
-                (className == "Gif" ? "gif" : "timeline") + "' instead.");
+                "Cannot use Gif as a frame — Gif is a sequence type. "
+                "Wrap the containing block in a 'gif' instead.");
         }
 
         token::Token renderedTok(token::TokenType::IDENTIFIER, token::TokenValue(std::string("renderedPath")), 0);
@@ -1103,77 +1102,6 @@ namespace callable {
     // =======================================================================
     // Timeline Native Functions
     // =======================================================================
-
-    // timeline() -> MacTimeline
-    class TimelineCreateFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue>) override {
-            return value::MacValue(std::make_shared<meme::MacTimeline>());
-        }
-        int arity() override { return 0; }
-        std::string toString() override { return "<native fn>"; }
-    };
-
-    // _timeline_keyframe(timeline, meme) -> timeline
-    class TimelineKeyframeFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue> args) override {
-            auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            tl->addKeyframe(getRenderSurface(args[1]));
-            return value::MacValue(tl);
-        }
-        int arity() override { return 2; }
-        std::string toString() override { return "<native fn>"; }
-    };
-
-    // _timeline_transition(timeline, durationMs, transitionType) -> timeline
-    class TimelineTransitionFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue> args) override {
-            auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            int durationMs = static_cast<int>(std::get<double>(args[1]));
-            auto transType = std::get<std::string>(args[2]);
-            std::string easing = "linear";
-            if (args.size() > 3 && std::holds_alternative<std::string>(args[3])) {
-                easing = std::get<std::string>(args[3]);
-            }
-            tl->setTransition(durationMs, transType, easing);
-            return value::MacValue(tl);
-        }
-        int arity() override { return -1; } // variable arity: 3 or 4
-        std::string toString() override { return "<native fn>"; }
-    };
-
-    // _timeline_hold(timeline, durationMs) -> timeline
-    class TimelineHoldFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue> args) override {
-            auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            int durationMs = static_cast<int>(std::get<double>(args[1]));
-            tl->addHold(durationMs);
-            return value::MacValue(tl);
-        }
-        int arity() override { return 2; }
-        std::string toString() override { return "<native fn>"; }
-    };
-
-    // _timeline_loop(timeline, count) -> timeline
-    class TimelineLoopFunction : public MacCallable {
-    public:
-        value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
-                             std::vector<value::MacValue> args) override {
-            auto tl = std::get<std::shared_ptr<meme::MacTimeline>>(args[0]);
-            int count = static_cast<int>(std::get<double>(args[1]));
-            tl->setLoop(count);
-            return value::MacValue(tl);
-        }
-        int arity() override { return 2; }
-        std::string toString() override { return "<native fn>"; }
-    };
 
     // _timeline_render(timeline, outputPath) -> bool
     class TimelineRenderFunction : public MacCallable {
