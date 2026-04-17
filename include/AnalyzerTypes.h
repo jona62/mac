@@ -1,237 +1,175 @@
 #ifndef ANALYZER_TYPES_H
 #define ANALYZER_TYPES_H
 
-#include <sstream>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include "MacValue.h"
+#include <string>               // string
+#include <unordered_map>        // unordered_map (Scope symbol table)
+#include <vector>               // vector (result arrays)
+#include "MacValue.h"           // value::MacValue (MV type alias)
+#include "nlohmann/json.hpp"    // nlohmann::json (JSON serialization)
 
 namespace analyzer {
 
     using MV = value::MacValue;
-
-    // ── JSON helpers ──────────────────────────────────────────────
-
-    inline std::string J(const std::string& s) {
-        std::string o = "\"";
-        for (unsigned char c : s) {
-            switch (c) {
-                case '"':  o += "\\\""; break;
-                case '\\': o += "\\\\"; break;
-                case '\b': o += "\\b"; break;
-                case '\f': o += "\\f"; break;
-                case '\n': o += "\\n"; break;
-                case '\r': o += "\\r"; break;
-                case '\t': o += "\\t"; break;
-                default:
-                    if (c < 0x20) {
-                        // JSON requires \u00XX for control characters
-                        char buf[8];
-                        std::snprintf(buf, sizeof(buf), "\\u%04x", c);
-                        o += buf;
-                    } else {
-                        o += static_cast<char>(c);
-                    }
-            }
-        }
-        return o + "\"";
-    }
-
-    inline std::string jsonParams(const std::vector<std::string>& params) {
-        std::ostringstream o;
-        o << "[";
-        for (size_t i = 0; i < params.size(); i++) {
-            if (i) o << ",";
-            o << J(params[i]);
-        }
-        o << "]";
-        return o.str();
-    }
-
-    template <typename T>
-    inline std::string jsonArray(const std::vector<T>& items) {
-        std::ostringstream o;
-        o << "[";
-        for (size_t i = 0; i < items.size(); i++) {
-            if (i) o << ",";
-            o << items[i].toJson();
-        }
-        o << "]";
-        return o.str();
-    }
+    using json = nlohmann::json;
 
     // ── Structs ───────────────────────────────────────────────────
 
     struct SymbolDef {
         std::string name, kind, type, description, source, visibility, ownerType;
         int line, col, endCol;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"name\":" << J(name) << ",\"kind\":" << J(kind)
-              << ",\"type\":" << J(type) << ",\"description\":" << J(description)
-              << ",\"source\":" << J(source) << ",\"visibility\":" << J(visibility)
-              << ",\"ownerType\":" << J(ownerType) << ",\"line\":" << line
-              << ",\"col\":" << col << ",\"endCol\":" << endCol << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const SymbolDef& s) {
+        j = json{
+            {"name", s.name}, {"kind", s.kind}, {"type", s.type},
+            {"description", s.description}, {"source", s.source},
+            {"visibility", s.visibility}, {"ownerType", s.ownerType},
+            {"line", s.line}, {"col", s.col}, {"endCol", s.endCol}
+        };
+    }
 
     struct Reference {
         int line, col, endCol, defLine, defCol, defEndCol;
         std::string defName, source, defSource, defVisibility, defOwnerType;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"defLine\":" << defLine << ",\"defCol\":" << defCol
-              << ",\"defEndCol\":" << defEndCol << ",\"defName\":" << J(defName)
-              << ",\"source\":" << J(source) << ",\"defSource\":" << J(defSource)
-              << ",\"defVisibility\":" << J(defVisibility)
-              << ",\"defOwnerType\":" << J(defOwnerType) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const Reference& r) {
+        j = json{
+            {"line", r.line}, {"col", r.col}, {"endCol", r.endCol},
+            {"defLine", r.defLine}, {"defCol", r.defCol}, {"defEndCol", r.defEndCol},
+            {"defName", r.defName}, {"source", r.source}, {"defSource", r.defSource},
+            {"defVisibility", r.defVisibility}, {"defOwnerType", r.defOwnerType}
+        };
+    }
 
     struct Diagnostic {
         int line, col, endCol;
         std::string message, severity, source;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"message\":" << J(message) << ",\"severity\":" << J(severity)
-              << ",\"source\":" << J(source) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const Diagnostic& d) {
+        j = json{
+            {"line", d.line}, {"col", d.col}, {"endCol", d.endCol},
+            {"message", d.message}, {"severity", d.severity}, {"source", d.source}
+        };
+    }
 
     struct PropertyRef {
         int line, col, endCol, defLine, defCol, defEndCol;
         std::string name, ownerType, kind, type, description, source, defSource, visibility;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"defLine\":" << defLine << ",\"defCol\":" << defCol
-              << ",\"defEndCol\":" << defEndCol << ",\"name\":" << J(name)
-              << ",\"ownerType\":" << J(ownerType) << ",\"kind\":" << J(kind)
-              << ",\"type\":" << J(type) << ",\"description\":" << J(description)
-              << ",\"source\":" << J(source) << ",\"defSource\":" << J(defSource)
-              << ",\"visibility\":" << J(visibility) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const PropertyRef& p) {
+        j = json{
+            {"line", p.line}, {"col", p.col}, {"endCol", p.endCol},
+            {"defLine", p.defLine}, {"defCol", p.defCol}, {"defEndCol", p.defEndCol},
+            {"name", p.name}, {"ownerType", p.ownerType}, {"kind", p.kind},
+            {"type", p.type}, {"description", p.description}, {"source", p.source},
+            {"defSource", p.defSource}, {"visibility", p.visibility}
+        };
+    }
 
     struct FoldRange {
         int startLine, endLine;
         std::string source;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"startLine\":" << startLine << ",\"endLine\":" << endLine
-              << ",\"source\":" << J(source) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const FoldRange& f) {
+        j = json{
+            {"startLine", f.startLine}, {"endLine", f.endLine}, {"source", f.source}
+        };
+    }
 
     struct SemanticToken {
         int line, col, length;
         std::string tokenType, source;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"col\":" << col << ",\"length\":" << length
-              << ",\"tokenType\":" << J(tokenType) << ",\"source\":" << J(source) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const SemanticToken& t) {
+        j = json{
+            {"line", t.line}, {"col", t.col}, {"length", t.length},
+            {"tokenType", t.tokenType}, {"source", t.source}
+        };
+    }
 
     struct ParamHint {
         int line, col;
         std::string name, source;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"col\":" << col
-              << ",\"name\":" << J(name) << ",\"source\":" << J(source) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const ParamHint& p) {
+        j = json{
+            {"line", p.line}, {"col", p.col}, {"name", p.name}, {"source", p.source}
+        };
+    }
 
     struct ChainHint {
         int line, endCol;
         std::string type, source;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"line\":" << line << ",\"endCol\":" << endCol
-              << ",\"type\":" << J(type) << ",\"source\":" << J(source) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const ChainHint& c) {
+        j = json{
+            {"line", c.line}, {"endCol", c.endCol}, {"type", c.type}, {"source", c.source}
+        };
+    }
 
     struct Signature {
         std::string name, ownerType, kind, returnType, description, source, visibility;
         int line, col, endCol;
         std::vector<std::string> params;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"name\":" << J(name) << ",\"ownerType\":" << J(ownerType)
-              << ",\"kind\":" << J(kind) << ",\"returnType\":" << J(returnType)
-              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
-              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
-              << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"params\":" << jsonParams(params) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const Signature& s) {
+        j = json{
+            {"name", s.name}, {"ownerType", s.ownerType}, {"kind", s.kind},
+            {"returnType", s.returnType}, {"description", s.description},
+            {"source", s.source}, {"visibility", s.visibility},
+            {"line", s.line}, {"col", s.col}, {"endCol", s.endCol},
+            {"params", s.params}
+        };
+    }
 
     struct ClassMember {
         std::string name, kind, type, returnType, description, source, visibility;
         int line, col, endCol;
         std::vector<std::string> params;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"name\":" << J(name) << ",\"kind\":" << J(kind)
-              << ",\"type\":" << J(type) << ",\"returnType\":" << J(returnType)
-              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
-              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
-              << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"params\":" << jsonParams(params) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const ClassMember& m) {
+        j = json{
+            {"name", m.name}, {"kind", m.kind}, {"type", m.type},
+            {"returnType", m.returnType}, {"description", m.description},
+            {"source", m.source}, {"visibility", m.visibility},
+            {"line", m.line}, {"col", m.col}, {"endCol", m.endCol},
+            {"params", m.params}
+        };
+    }
 
     struct ClassInfo {
         std::string name, superclass, description, source, visibility;
         int line, col, endCol;
         std::vector<ClassMember> members;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"name\":" << J(name) << ",\"superclass\":" << J(superclass)
-              << ",\"description\":" << J(description) << ",\"source\":" << J(source)
-              << ",\"visibility\":" << J(visibility) << ",\"line\":" << line
-              << ",\"col\":" << col << ",\"endCol\":" << endCol
-              << ",\"members\":" << jsonArray(members) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const ClassInfo& c) {
+        j = json{
+            {"name", c.name}, {"superclass", c.superclass},
+            {"description", c.description}, {"source", c.source},
+            {"visibility", c.visibility}, {"line", c.line},
+            {"col", c.col}, {"endCol", c.endCol}, {"members", c.members}
+        };
+    }
 
     struct TemplateInfo {
         std::string name, category, description;
-
-        std::string toJson() const {
-            std::ostringstream o;
-            o << "{\"name\":" << J(name) << ",\"category\":" << J(category)
-              << ",\"description\":" << J(description) << "}";
-            return o.str();
-        }
     };
+
+    inline void to_json(json& j, const TemplateInfo& t) {
+        j = json{
+            {"name", t.name}, {"category", t.category}, {"description", t.description}
+        };
+    }
 
     // ── Analysis result ───────────────────────────────────────────
 
@@ -255,20 +193,20 @@ namespace analyzer {
     };
 
     inline std::string toJson(const AnalysisResult& r) {
-        std::ostringstream o;
-        o << "{\"symbols\":" << jsonArray(r.symbols)
-          << ",\"references\":" << jsonArray(r.references)
-          << ",\"diagnostics\":" << jsonArray(r.diagnostics)
-          << ",\"properties\":" << jsonArray(r.properties)
-          << ",\"foldingRanges\":" << jsonArray(r.foldingRanges)
-          << ",\"semanticTokens\":" << jsonArray(r.semanticTokens)
-          << ",\"paramHints\":" << jsonArray(r.paramHints)
-          << ",\"chainHints\":" << jsonArray(r.chainHints)
-          << ",\"signatures\":" << jsonArray(r.signatures)
-          << ",\"classes\":" << jsonArray(r.classes)
-          << ",\"templates\":" << jsonArray(r.templates)
-          << "}";
-        return o.str();
+        json j = {
+            {"symbols", r.symbols},
+            {"references", r.references},
+            {"diagnostics", r.diagnostics},
+            {"properties", r.properties},
+            {"foldingRanges", r.foldingRanges},
+            {"semanticTokens", r.semanticTokens},
+            {"paramHints", r.paramHints},
+            {"chainHints", r.chainHints},
+            {"signatures", r.signatures},
+            {"classes", r.classes},
+            {"templates", r.templates}
+        };
+        return j.dump();
     }
 
 } // namespace analyzer

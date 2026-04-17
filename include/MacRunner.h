@@ -1,27 +1,28 @@
 #ifndef MAC_RUNNER_H
 #define MAC_RUNNER_H
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <unistd.h>
-#include <vector>
+#include <filesystem>           // path, exists, canonical, is_directory
+#include <fstream>              // ifstream (file reading)
+#include <iostream>             // cout (output)
+#include <sstream>              // ostringstream (source buffering)
+#include <string>               // string
+#include <unistd.h>             // isatty, fileno (interactive detection)
+#include <vector>               // vector (tokens, AST)
 
-#include "Scanner.h"
-#include "Parser.h"
-#include "Resolver.h"
-#include "MacAnalyzer.h"
-#include "NativeFunctions.h"
+#include "Scanner.h"            // scanner::Scanner (lexical analysis)
+#include "Parser.h"             // parser::Parser (syntactic analysis)
+#include "Resolver.h"           // resolver::Resolver (variable resolution)
+#include "MacAnalyzer.h"        // analyzer::MacAnalyzer (semantic analysis for LSP)
+#include "NativeFunctions.h"    // callable::cleanupTempFiles
+#include "nlohmann/json.hpp"    // nlohmann::json (analyzer error output)
 
 extern "C" {
-#include "linenoise.h"
+#include "linenoise.h"          // linenoise, linenoiseHistoryAdd/Save/Load (REPL editing)
 }
-#include "MacMeme.h"
+#include "MacMeme.h"            // meme::MacMeme (scriptDir, binaryDir, templateMap)
 
 #ifdef __APPLE__
-#include <mach-o/dyld.h>
+#include <mach-o/dyld.h>        // _NSGetExecutablePath (binary location)
 #endif
 
 namespace runner {
@@ -216,7 +217,9 @@ namespace runner {
 
         std::string source = readFile(path);
         if (source.empty()) {
-            std::cout << "{\"symbols\":[],\"references\":[],\"diagnostics\":[{\"line\":1,\"col\":1,\"endCol\":1,\"message\":\"Could not open file.\",\"severity\":\"error\",\"source\":\"user\"}],\"properties\":[],\"foldingRanges\":[],\"semanticTokens\":[],\"paramHints\":[],\"chainHints\":[],\"signatures\":[],\"classes\":[],\"templates\":[]}" << std::endl;
+            analyzer::AnalysisResult empty;
+            empty.diagnostics.push_back({1, 1, 1, "Could not open file.", "error", "user"});
+            std::cout << analyzer::toJson(empty) << std::endl;
             return;
         }
 
