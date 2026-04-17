@@ -1214,6 +1214,44 @@ void linenoiseEditBackspace(struct linenoiseState *l) {
     }
 }
 
+/* Move cursor to the start of the previous word. */
+void linenoiseEditMoveWordLeft(struct linenoiseState *l) {
+    /* Skip spaces before the word. */
+    while (l->pos > 0 && l->buf[l->pos-1] == ' ')
+        l->pos -= utf8PrevCharLen(l->buf, l->pos);
+    /* Skip non-space characters. */
+    while (l->pos > 0 && l->buf[l->pos-1] != ' ')
+        l->pos -= utf8PrevCharLen(l->buf, l->pos);
+    refreshLine(l);
+}
+
+/* Move cursor to the end of the next word. */
+void linenoiseEditMoveWordRight(struct linenoiseState *l) {
+    /* Skip non-space characters. */
+    while (l->pos < l->len && l->buf[l->pos] != ' ')
+        l->pos += utf8NextCharLen(l->buf, l->pos, l->len);
+    /* Skip spaces after the word. */
+    while (l->pos < l->len && l->buf[l->pos] == ' ')
+        l->pos += utf8NextCharLen(l->buf, l->pos, l->len);
+    refreshLine(l);
+}
+
+/* Delete the next word (from cursor to end of word). */
+void linenoiseEditDeleteNextWord(struct linenoiseState *l) {
+    size_t old_pos = l->pos;
+    /* Skip non-space characters. */
+    while (l->pos < l->len && l->buf[l->pos] != ' ')
+        l->pos += utf8NextCharLen(l->buf, l->pos, l->len);
+    /* Skip spaces after the word. */
+    while (l->pos < l->len && l->buf[l->pos] == ' ')
+        l->pos += utf8NextCharLen(l->buf, l->pos, l->len);
+    size_t diff = l->pos - old_pos;
+    memmove(l->buf+old_pos, l->buf+l->pos, l->len-l->pos+1);
+    l->len -= diff;
+    l->pos = old_pos;
+    refreshLine(l);
+}
+
 /* Delete the previous word, maintaining the cursor at the start of the
  * current word. Handles UTF-8 by moving character-by-character. */
 void linenoiseEditDeletePrevWord(struct linenoiseState *l) {
@@ -1341,6 +1379,7 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
     }
 
     switch(c) {
+    case 10:       /* newline (pasted text) */
     case ENTER:    /* enter */
         history_len--;
         free(history[history_len]);
@@ -1409,13 +1448,27 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
         /* ESC [ sequences. */
         if (seq[0] == '[') {
             if (seq[1] >= '0' && seq[1] <= '9') {
-                /* Extended escape, read additional byte. */
+                /* Extended escape, read additional byte(s). */
                 if (read(l->ifd,seq+2,1) == -1) break;
                 if (seq[2] == '~') {
                     switch(seq[1]) {
                     case '3': /* Delete key. */
                         linenoiseEditDelete(l);
                         break;
+                    }
+                } else if (seq[2] == ';') {
+                    /* ESC [ N ; M X — modifier sequences
+                     * M=3: Alt/Option, M=5: Ctrl */
+                    char mod, key;
+                    if (read(l->ifd,&mod,1) == -1) break;
+                    if (read(l->ifd,&key,1) == -1) break;
+                    if (key == 'C') { /* Right with modifier */
+                        linenoiseEditMoveWordRight(l);
+                    } else if (key == 'D') { /* Left with modifier */
+                        linenoiseEditMoveWordLeft(l);
+                    } else if (key == '~' && seq[1] == '3') {
+                        /* ESC [ 3 ; M ~ — Option/Ctrl+Delete */
+                        linenoiseEditDeleteNextWord(l);
                     }
                 }
             } else {
@@ -1452,6 +1505,15 @@ char *linenoiseEditFeed(struct linenoiseState *l) {
                 linenoiseEditMoveEnd(l);
                 break;
             }
+        }
+
+        /* ESC b / ESC f — Alt+Left/Right on some terminals */
+        else if (seq[0] == 'b') {
+            linenoiseEditMoveWordLeft(l);
+        } else if (seq[0] == 'f') {
+            linenoiseEditMoveWordRight(l);
+        } else if (seq[0] == 'd') {
+            linenoiseEditDeleteNextWord(l);
         }
         break;
     default:
