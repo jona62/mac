@@ -1,13 +1,13 @@
 #ifndef RESOLVER_H
 #define RESOLVER_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include "Expr.h"
-#include "Stmt.h"
-#include "MacValue.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <vector>               // vector (scope stack)
+#include <unordered_map>        // unordered_map (scope bindings)
+#include "Expr.h"               // expr::Expr<T>, Visitor<T> (expression visiting)
+#include "Stmt.h"               // stmt::Stmt<T>, StmtVisitor<T> (statement visiting)
+#include "MacValue.h"           // value::MacValue (template parameter)
 
 // Forward declare — full definition included after class for resolveLocal
 namespace interpreter {
@@ -317,8 +317,7 @@ namespace resolver {
 
 } // namespace resolver
 
-// Include full Interpreter definition for resolveLocal
-#include "Interpreter.h"
+#include "Interpreter.h"        // interpreter::Interpreter (resolveLocal needs full definition)
 
 inline void resolver::Resolver::resolveLocal(expr::Expr<MV>* expr, const token::Token& name) {
     auto nameStr = std::get<std::string>(name.lexeme);

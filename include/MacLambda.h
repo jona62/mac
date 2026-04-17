@@ -1,13 +1,13 @@
 #ifndef MAC_LAMBDA_H
 #define MAC_LAMBDA_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include "MacCallable.h"
-#include "Stmt.h"
-#include "Environment.h"
-#include "Return.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <vector>               // vector (parameter names)
+#include "MacCallable.h"        // callable::MacCallable (base class)
+#include "Stmt.h"               // stmt::Stmt (lambda body AST)
+#include "Environment.h"        // environment::Environment (closure capture)
+#include "Return.h"             // errors::Return (return value exception)
 
 namespace callable {
 

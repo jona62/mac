@@ -1,15 +1,15 @@
 #ifndef MAC_TIMELINE_H
 #define MAC_TIMELINE_H
 
-#include <algorithm>
-#include <cmath>
-#include <cstring>
-#include <memory>
-#include <string>
-#include <vector>
-#include "GifEncoder.h"
-#include "MemeLayout.h"
-#include "RenderSurface.h"
+#include <algorithm>            // min, max
+#include <cmath>                // sin, cos, pow (easing curves)
+#include <cstring>              // memcpy (pixel blending)
+#include <memory>               // shared_ptr
+#include <string>               // string (output path)
+#include <vector>               // vector (keyframes, transitions)
+#include "GifEncoder.h"         // meme::GifEncoder (LZW encoding, file writing)
+#include "MemeLayout.h"         // layout::resizePixels (frame scaling)
+#include "RenderSurface.h"      // meme::RenderSurface (pixel data)
 
 namespace meme {
 

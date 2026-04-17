@@ -1,12 +1,12 @@
 #ifndef MAC_GIF_H
 #define MAC_GIF_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include "GifEncoder.h"
-#include "MemeLayout.h"
-#include "RenderSurface.h"
+#include <memory>               // shared_ptr
+#include <string>               // string (output path)
+#include <vector>               // vector (frames)
+#include "GifEncoder.h"         // meme::GifEncoder (LZW encoding, file writing)
+#include "MemeLayout.h"         // layout::resizePixels (frame scaling)
+#include "RenderSurface.h"      // meme::RenderSurface (pixel data)
 
 namespace meme {
 

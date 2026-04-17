@@ -1,14 +1,14 @@
 #ifndef MAC_FUNCTION_H
 #define MAC_FUNCTION_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include "MacCallable.h"
-#include "MacInstance.h"
-#include "Stmt.h"
-#include "Environment.h"
-#include "Return.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <vector>               // vector (parameter names)
+#include "MacCallable.h"        // callable::MacCallable (base class)
+#include "MacInstance.h"        // instance::MacInstance (for bind())
+#include "Stmt.h"               // stmt::FunctionStmt (declaration AST)
+#include "Environment.h"        // environment::Environment (closure)
+#include "Return.h"             // errors::Return (return value exception)
 
 namespace interpreter {
     class Interpreter;

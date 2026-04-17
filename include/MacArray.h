@@ -1,11 +1,11 @@
 #ifndef MAC_ARRAY_H
 #define MAC_ARRAY_H
 
-#include <memory>
-#include <string>
-#include <sstream>
-#include <vector>
-#include "MacValue.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <sstream>              // ostringstream (toString)
+#include <vector>               // vector (element storage)
+#include "MacValue.h"           // value::MacValue (element type)
 
 namespace collection {
 

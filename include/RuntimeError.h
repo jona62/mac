@@ -1,9 +1,9 @@
 #ifndef RUNTIME_ERROR_H
 #define RUNTIME_ERROR_H
 
-#include <exception>
-#include <string>
-#include "Token.h"
+#include <exception>            // exception (base class)
+#include <string>               // string, to_string
+#include "Token.h"              // token::Token (error location)
 
 namespace errors {
 

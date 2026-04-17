@@ -1,13 +1,13 @@
 #ifndef SCANNER_H
 #define SCANNER_H
 
-#include <cstddef>
-#include <iostream> // for cout
-#include <iterator> // for std::forward_iterator_tag
-#include <string>
-#include <unordered_map>
+#include <cstddef>              // size_t
+#include <iostream>             // cout (error messages)
+#include <iterator>             // forward_iterator_tag (Scanner::Iterator)
+#include <string>               // string
+#include <unordered_map>        // unordered_map (keywords table)
 
-#include "Token.h"
+#include "Token.h"              // token::Token, TokenType, TokenValue
 
 using std::cout;
 using std::string;

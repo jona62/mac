@@ -1,13 +1,13 @@
 #ifndef MAC_MAP_H
 #define MAC_MAP_H
 
-#include <memory>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <unordered_map>
-#include "MacValue.h"
-#include "RuntimeError.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <sstream>              // ostringstream (toString)
+#include <vector>               // vector (ordered entries)
+#include <unordered_map>        // unordered_map (key index)
+#include "MacValue.h"           // value::MacValue (key/value types)
+#include "RuntimeError.h"       // errors::RuntimeError
 
 namespace collection {
 

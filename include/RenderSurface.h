@@ -1,9 +1,9 @@
 #ifndef RENDER_SURFACE_H
 #define RENDER_SURFACE_H
 
-#include <string>
-#include <utility>
-#include <vector>
+#include <string>               // string (toString)
+#include <utility>              // move
+#include <vector>               // vector (pixel buffer)
 
 namespace meme {
 

@@ -1,10 +1,10 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include <vector>
-#include "Scanner.h"
-#include "Expr.h"
-#include "Stmt.h"
+#include <vector>               // vector (token list, parsed statements)
+#include "Scanner.h"            // scanner::Scanner (token source)
+#include "Expr.h"               // expr::Expr<T>, expression subclasses
+#include "Stmt.h"               // stmt::Stmt<T>, statement subclasses
 
 using token::Token;
 using expr::Expr;

@@ -1,6 +1,6 @@
-#include "Scanner.h"
+#include "Scanner.h"                // scanner::Scanner, TokenType, keywords
 
-#include <memory>
+#include <memory>               // shared_ptr
 
 using std::monostate;
 using token::Token;

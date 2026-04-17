@@ -1,14 +1,14 @@
 #ifndef MAC_MEME_H
 #define MAC_MEME_H
 
-#include <algorithm>
-#include <filesystem>
-#include <iomanip>
-#include <memory>
-#include <string>
-#include <sstream>
-#include <unordered_map>
-#include <vector>
+#include <algorithm>            // transform, min
+#include <filesystem>           // path, exists (template resolution)
+#include <iomanip>              // hex formatting
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <sstream>              // ostringstream (toString)
+#include <unordered_map>        // unordered_map (template registry)
+#include <vector>               // vector (positioned texts, panels)
 
 namespace meme {
 
@@ -170,8 +170,7 @@ namespace meme {
 
 } // namespace meme
 
-// Include MemeRenderer so the render/save implementations work
-#include "MemeRenderer.h"
+#include "MemeRenderer.h"       // meme::MemeRenderer (render/save implementations)
 
 inline std::vector<unsigned char> meme::MacMeme::render() const {
     int w, h;

@@ -1,11 +1,11 @@
 #ifndef MEME_EFFECTS_H
 #define MEME_EFFECTS_H
 
-#include <algorithm>
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
+#include <algorithm>            // clamp, min, max
+#include <cmath>                // sqrt, sin, cos, pow, fabs
+#include <cstdlib>              // rand, srand
+#include <cstring>              // memcpy
+#include <vector>               // vector (pixel buffers)
 
 namespace effects {
 

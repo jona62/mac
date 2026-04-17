@@ -1,10 +1,10 @@
 #ifndef ASTPRINTER_H
 #define ASTPRINTER_H
 
-#include <string>
-#include <sstream>
-#include <memory>
-#include "Expr.h"
+#include <string>               // string
+#include <sstream>              // ostringstream (S-expression output)
+#include <memory>               // shared_ptr
+#include "Expr.h"               // expr::Expr<T>, Visitor<T> (AST visiting)
 
 using expr::Visitor;
 using std::string;

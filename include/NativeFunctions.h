@@ -1,27 +1,27 @@
 #ifndef NATIVE_FUNCTIONS_H
 #define NATIVE_FUNCTIONS_H
 
-#include <algorithm>
-#include <atomic>
-#include <cctype>
-#include <unistd.h>
-#include <chrono>
-#include <cmath>
-#include <cstdlib>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include "MacCallable.h"
-#include "MacArray.h"
-#include "MacMap.h"
-#include "MacMeme.h"
-#include "MacGif.h"
-#include "MacTimeline.h"
-#include "MemeEffects.h"
-#include "MemeLayout.h"
-#include "MacInstance.h"
+#include <algorithm>            // sort, reverse, transform
+#include <atomic>               // atomic (temp file counter)
+#include <cctype>               // tolower, toupper
+#include <unistd.h>             // getpid (temp file naming)
+#include <chrono>               // high_resolution_clock (clock())
+#include <cmath>                // sqrt, abs, pow, floor, ceil, round
+#include <cstdlib>              // rand (noise effects)
+#include <filesystem>           // path, exists, create_directories (output/save)
+#include <fstream>              // ofstream (file writing)
+#include <iostream>             // cout, cin (print, input)
+#include <sstream>              // ostringstream (string conversion)
+#include <string>               // string
+#include "MacCallable.h"        // callable::MacCallable (base class for all natives)
+#include "MacArray.h"           // collection::MacArray (array operations)
+#include "MacMap.h"             // collection::MacMap (map operations)
+#include "MacMeme.h"            // meme::MacMeme, TextStyle, PositionedText
+#include "MacGif.h"             // meme::MacGif (GIF creation)
+#include "MacTimeline.h"        // meme::MacTimeline (timeline animation)
+#include "MemeEffects.h"        // effects::* (blur, sepia, grayscale, etc.)
+#include "MemeLayout.h"         // layout::resizePixels, compositePixels
+#include "MacInstance.h"        // instance::MacInstance (property extraction)
 
 namespace callable {
 

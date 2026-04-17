@@ -1,12 +1,12 @@
 #ifndef MAC_INSTANCE_H
 #define MAC_INSTANCE_H
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include "MacValue.h"
-#include "Token.h"
-#include "RuntimeError.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <unordered_map>        // unordered_map (instance fields)
+#include "MacValue.h"           // value::MacValue (field values)
+#include "Token.h"              // token::Token (property access errors)
+#include "RuntimeError.h"       // errors::RuntimeError
 
 namespace callable {
     class MacClass;

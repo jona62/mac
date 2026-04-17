@@ -1,12 +1,12 @@
 #ifndef ANALYZER_REGISTRY_H
 #define ANALYZER_REGISTRY_H
 
-#include <functional>
-#include <string>
-#include <unordered_set>
-#include "AnalyzerTypes.h"
-#include "NativeRegistry.h"
-#include "Token.h"
+#include <functional>           // function (DefFn, SigFn callbacks)
+#include <string>               // string
+#include <unordered_set>        // unordered_set (native name tracking)
+#include "AnalyzerTypes.h"      // analyzer::Signature, SymbolDef
+#include "NativeRegistry.h"     // native_registry::all(), NativeDefinition
+#include "Token.h"              // token::Token (synthetic tokens for natives)
 
 namespace analyzer {
 

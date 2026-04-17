@@ -1,10 +1,10 @@
 #ifndef MAC_CALLABLE_H
 #define MAC_CALLABLE_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include "MacValue.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <vector>               // vector (argument lists)
+#include "MacValue.h"           // value::MacValue (variant type)
 
 namespace interpreter {
     class Interpreter;

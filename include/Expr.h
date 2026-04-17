@@ -1,10 +1,10 @@
 #ifndef EXPR_H
 #define EXPR_H
 
-#include <memory>
-#include <string>
-#include <vector>
-#include "Token.h"
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <vector>               // vector (argument lists, array elements)
+#include "Token.h"              // token::Token (operator/identifier tokens)
 
 using std::shared_ptr;
 using std::string;

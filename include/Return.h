@@ -1,8 +1,8 @@
 #ifndef RETURN_H
 #define RETURN_H
 
-#include <exception>
-#include "MacValue.h"
+#include <exception>            // exception (base class)
+#include "MacValue.h"           // value::MacValue (return payload)
 
 namespace errors {
 

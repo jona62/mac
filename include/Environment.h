@@ -1,12 +1,12 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include "MacValue.h"
-#include "Token.h"
-#include "RuntimeError.h"
+#include <memory>               // shared_ptr, enable_shared_from_this
+#include <string>               // string
+#include <unordered_map>        // unordered_map (variable bindings)
+#include "MacValue.h"           // value::MacValue
+#include "Token.h"              // token::Token (for error reporting)
+#include "RuntimeError.h"       // errors::RuntimeError
 
 namespace environment {
 

@@ -1,10 +1,10 @@
 #ifndef STMT_H
 #define STMT_H
 
-#include <memory>
-#include <vector>
-#include <string>
-#include "Expr.h"
+#include <memory>               // shared_ptr
+#include <vector>               // vector (statement lists, parameters)
+#include <string>               // string
+#include "Expr.h"               // expr::Expr<T>, all expression subclasses
 
 using std::shared_ptr;
 using std::vector;

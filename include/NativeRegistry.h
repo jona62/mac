@@ -1,11 +1,11 @@
 #ifndef NATIVE_REGISTRY_H
 #define NATIVE_REGISTRY_H
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <vector>
-#include "NativeFunctions.h"
+#include <functional>           // function (factory callbacks)
+#include <memory>               // shared_ptr, make_shared
+#include <string>               // string
+#include <vector>               // vector (overloads, definitions)
+#include "NativeFunctions.h"    // callable::* (all native function classes)
 
 namespace native_registry {
 

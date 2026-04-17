@@ -1,12 +1,12 @@
 #ifndef MAC_CLASS_H
 #define MAC_CLASS_H
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include "MacCallable.h"
-#include "MacInstance.h"
-#include "MacFunction.h"
+#include <memory>               // shared_ptr, enable_shared_from_this
+#include <string>               // string
+#include <unordered_map>        // unordered_map (method table)
+#include "MacCallable.h"        // callable::MacCallable (base class)
+#include "MacInstance.h"        // instance::MacInstance (instantiation)
+#include "MacFunction.h"        // callable::MacFunction (method storage)
 
 namespace callable {
 

@@ -1,7 +1,7 @@
-#include "Parser.h"
-#include "ParserError.h"
-#include "Interpreter.h"
-#include <iostream>
+#include "Parser.h"                 // parser::Parser, parse<T>()
+#include "ParserError.h"            // errors::ParseError
+#include "Interpreter.h"            // interpreter::Interpreter (template instantiation)
+#include <iostream>             // cerr (error output)
 
 using expr::Unary;
 using expr::Binary;

@@ -1,27 +1,27 @@
 #ifndef MEME_RENDERER_H
 #define MEME_RENDERER_H
 
-#include <algorithm>
-#include <cctype>
-#include <cmath>
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include <algorithm>            // min, max, transform
+#include <cctype>               // toupper (uppercase text transform)
+#include <cmath>                // round, sqrt
+#include <cstdint>              // uint8_t
+#include <cstdio>               // snprintf
+#include <cstring>              // memcpy, memset
+#include <filesystem>           // path, exists (font/image file resolution)
+#include <fstream>              // ifstream (file reading)
+#include <memory>               // shared_ptr
+#include <sstream>              // ostringstream
+#include <stdexcept>            // runtime_error
+#include <string>               // string
+#include <unordered_map>        // unordered_map (image/font/glyph/render caches)
+#include <utility>              // pair, move
+#include <vector>               // vector (pixel buffers)
 
 // Do NOT define STB_*_IMPLEMENTATION here -- already in src/stb_impl.cpp
-#include "RenderSurface.h"
-#include "stb/stb_image.h"
-#include "stb/stb_image_write.h"
-#include "stb/stb_truetype.h"
+#include "RenderSurface.h"      // meme::RenderSurface (pixel buffer output)
+#include "stb/stb_image.h"      // stbi_load, stbi_image_free
+#include "stb/stb_image_write.h" // stbi_write_png
+#include "stb/stb_truetype.h"   // stbtt_InitFont, stbtt_GetCodepointBitmap
 
 namespace meme {
 

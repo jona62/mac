@@ -1,28 +1,28 @@
 #ifndef INTERPRETER_H
 #define INTERPRETER_H
 
-#include <cmath>
-#include <memory>
-#include <string>
-#include <variant>
-#include <vector>
-#include <sstream>
-#include "Expr.h"
-#include "Stmt.h"
-#include "MacValue.h"
-#include "MacCallable.h"
-#include "MacFunction.h"
-#include "MacLambda.h"
-#include "MacClass.h"
-#include "MacArray.h"
-#include "MacMap.h"
-#include "MacMeme.h"
-#include "MacGif.h"
-#include "RenderSurface.h"
-#include "NativeRegistry.h"
-#include "Environment.h"
-#include "RuntimeError.h"
-#include "Return.h"
+#include <cmath>                // fmod (modulo operator)
+#include <memory>               // shared_ptr, make_shared
+#include <string>               // string
+#include <variant>              // get, holds_alternative (MacValue dispatch)
+#include <vector>               // vector (statement lists, arguments)
+#include <sstream>              // ostringstream (value stringification)
+#include "Expr.h"               // expr::Expr<T>, Visitor<T>, all expression types
+#include "Stmt.h"               // stmt::Stmt<T>, StmtVisitor<T>, all statement types
+#include "MacValue.h"           // value::MacValue (runtime value variant)
+#include "MacCallable.h"        // callable::MacCallable (function interface)
+#include "MacFunction.h"        // callable::MacFunction (user-defined functions)
+#include "MacLambda.h"          // callable::MacLambda (lambda expressions)
+#include "MacClass.h"           // callable::MacClass (class objects)
+#include "MacArray.h"           // collection::MacArray (array values)
+#include "MacMap.h"             // collection::MacMap (map values)
+#include "MacMeme.h"            // meme::MacMeme (meme template rendering)
+#include "MacGif.h"             // meme::MacGif (GIF animation)
+#include "RenderSurface.h"      // meme::RenderSurface (pixel buffer)
+#include "NativeRegistry.h"     // native_registry::all() (builtin function defs)
+#include "Environment.h"        // environment::Environment (variable scopes)
+#include "RuntimeError.h"       // errors::RuntimeError
+#include "Return.h"             // errors::Return, BreakException, ContinueException
 
 using std::shared_ptr;
 using std::make_shared;

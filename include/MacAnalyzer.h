@@ -1,17 +1,17 @@
 #ifndef MAC_ANALYZER_H
 #define MAC_ANALYZER_H
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include "Expr.h"
-#include "Stmt.h"
-#include "Token.h"
-#include "AnalyzerTypes.h"
-#include "AnalyzerRegistry.h"
+#include <functional>           // function (callback types)
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <unordered_map>        // unordered_map (class indices, scope symbols)
+#include <unordered_set>        // unordered_set (native name tracking)
+#include <vector>               // vector (result arrays)
+#include "Expr.h"               // expr::Expr<T>, expression subclasses (AST walking)
+#include "Stmt.h"               // stmt::Stmt<T>, statement subclasses (AST walking)
+#include "Token.h"              // token::Token (position extraction)
+#include "AnalyzerTypes.h"      // analyzer::AnalysisResult, all output structs
+#include "AnalyzerRegistry.h"   // analyzer::registerNatives (native function setup)
 
 namespace analyzer {
 
@@ -401,7 +401,7 @@ namespace analyzer {
 
 } // namespace analyzer
 
-#include "AnalyzerWalk.h"
-#include "AnalyzerInference.h"
+#include "AnalyzerWalk.h"       // MacAnalyzer::analyzeStmt, analyzeExpr (inline impl)
+#include "AnalyzerInference.h"  // MacAnalyzer::inferType, inferCallType (inline impl)
 
 #endif // MAC_ANALYZER_H

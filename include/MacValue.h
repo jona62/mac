@@ -1,9 +1,9 @@
 #ifndef MAC_VALUE_H
 #define MAC_VALUE_H
 
-#include <memory>
-#include <string>
-#include <variant>
+#include <memory>               // shared_ptr
+#include <string>               // string
+#include <variant>              // variant, monostate (MacValue type)
 
 namespace callable {
     class MacCallable;

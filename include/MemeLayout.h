@@ -1,10 +1,10 @@
 #ifndef MEME_LAYOUT_H
 #define MEME_LAYOUT_H
 
-#include <algorithm>
-#include <cstring>
-#include <string>
-#include <vector>
+#include <algorithm>            // min, max
+#include <cstring>              // memcpy
+#include <string>               // string
+#include <vector>               // vector (pixel buffers)
 
 namespace layout {
 

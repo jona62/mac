@@ -1,15 +1,15 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include <cstddef>
-#include <iostream>
-#include <sstream>
-#include <iterator> // for std::forward_iterator_tag
-#include <string>
-#include <memory> // for std::shared_ptr
-#include <stdexcept> // for std::runtime_error
-#include <variant> // for std::get, std::variant, std::holds_alternative and std::monostate
-#include <unordered_map>
+#include <cstddef>              // size_t
+#include <iostream>             // cout, endl
+#include <sstream>              // ostringstream
+#include <iterator>             // forward_iterator_tag
+#include <string>               // string
+#include <memory>               // shared_ptr
+#include <stdexcept>            // runtime_error
+#include <variant>              // variant, monostate, get, holds_alternative
+#include <unordered_map>        // unordered_map (keyword lookup)
 
 using std::cout, std::endl;
 using std::monostate;

@@ -1,12 +1,12 @@
 #ifndef GIF_ENCODER_H
 #define GIF_ENCODER_H
 
-#include <algorithm>
-#include <array>
-#include <cstdio>
-#include <cstring>
-#include <string>
-#include <vector>
+#include <algorithm>            // min, max, fill
+#include <array>                // array (LZW hash table)
+#include <cstdio>               // FILE, fopen, fwrite, fclose
+#include <cstring>              // memcpy, memset
+#include <string>               // string (output path)
+#include <vector>               // vector (pixel data, color table)
 
 namespace meme {
 
