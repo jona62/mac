@@ -22,9 +22,16 @@ style bold_red { color: "#FF0000", fontWeight: "bold" }
 | Feature | Description |
 |---------|-------------|
 | Dynamic typing | Values are strings, numbers, booleans, nil, arrays, or maps |
-| First-class functions | Functions are values, with closures and lambdas |
+| First-class functions | Functions are values, with closures, lambdas, and implicit returns |
 | Classes | Single inheritance, constructors, methods, fields |
+| Enums | Exhaustive sum types with match destructuring (`Result`, `Option`) |
+| Pattern matching | `match expr { Pattern -> result }` with enum destructuring |
+| String interpolation | `"Hello, {name}!"` embeds expressions in strings |
+| Destructuring | `var [a, b] = expr` and `for (var [k, v] in pairs)` |
+| Immutable bindings | `val x = 42` prevents reassignment |
 | Pipe operator | `value \|> func` for pipeline-style composition |
+| Partial application | `partial(fn, arg)` creates pre-filled functions |
+| Expression blocks | `{ statements; tail_expr }` — last expression is the block's value |
 | Meme literals | `@template "text"` creates renderable meme objects |
 | Effects | `blur(5)`, `sepia`, `grayscale` — composable image transforms |
 | Grid layout | `grid 2x2 { ... }` for multi-panel compositions |
@@ -33,4 +40,4 @@ style bold_red { color: "#FF0000", fontWeight: "bold" }
 
 ## Version
 
-This reference documents Mac v0.2.3.
+This reference documents Mac v0.7.0.
