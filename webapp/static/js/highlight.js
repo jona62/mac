@@ -1,8 +1,8 @@
 // Mac Studio — Syntax highlighting (from mac-lang/syntaxes/mac.tmLanguage.json)
 
-const HL_KEYWORDS = new Set("var,fun,effect,style,class,for,while,if,else,return,print,in,break,continue,and,or,gif,timeline,grid,loop".split(","));
+const HL_KEYWORDS = new Set("var,fun,effect,style,class,for,while,if,else,return,print,in,break,continue,and,or,gif,grid,loop".split(","));
 const HL_CONSTANTS = new Set("true,false,nil,this,super,Top,Bottom,Center,PNG,JPG,GIF,crossfade,slideLeft,slideRight,slideUp,slideDown,wipe,deepfry".split(","));
-const HL_CLASSES = new Set("Template,Meme,Gif,Timeline,Frame,Size,Duration,Position,Format".split(","));
+const HL_CLASSES = new Set("Template,Meme,Gif,Frame,Size,Duration,Position,Format".split(","));
 
 function highlightMac(code) {
   const TOKEN_RE = /(\/\/.*$)|("(?:[^"\\]|\\.)*")|(\b\d+(?:ms|s)\b)|(\b\d+(?:\.\d+)?\b)|(=>|->|\|>|>>|---)|(@\w+(?:\.\w+)*)|(\b[A-Za-z_]\w*\b)/gm;

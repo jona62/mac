@@ -741,13 +741,13 @@ def layout_expression(layout_kind: str, slot_var_names: list[str]) -> str:
 
 
 def _animation_block(scenes: list[dict], save_target: str) -> list[str]:
-    """Generate gif loop { } or timeline loop { } lines depending on transitions."""
+    """Generate gif loop { } lines, with optional --- transition syntax."""
     has_transitions = any(
         scene.get("transition") and scene["transition"].get("type") not in (None, "cut")
         for scene in scenes
     )
     lines: list[str] = []
-    block_type = "timeline" if has_transitions else "gif"
+    block_type = "gif"
     lines.append(f"{block_type} loop {{")
     for i, scene in enumerate(scenes):
         trans = scene.get("transition") if i > 0 else None

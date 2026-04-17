@@ -21,7 +21,6 @@
 - [Effects](./meme/effects.md)
 - [Grid Layout](./meme/grid.md)
 - [GIF Animation](./meme/gif.md)
-- [Timeline](./meme/timeline.md)
 - [Saving Output](./meme/save.md)
 
 # Standard Library
