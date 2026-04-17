@@ -45,7 +45,7 @@ namespace token {
         LESS, LESS_EQUAL,
 
         // Literals.
-        IDENTIFIER, STRING, NUMBER,
+        IDENTIFIER, STRING, INTERP_STRING, NUMBER,
 
         // Keywords.
         AND, BREAK, CLASS, CONTINUE, EFFECT, ELSE, FALSE, FUN, FOR,
@@ -68,7 +68,7 @@ namespace token {
         "EQUAL", "EQUAL_EQUAL",
         "GREATER", "GREATER_EQUAL",
         "LESS", "LESS_EQUAL",
-        "IDENTIFIER", "STRING", "NUMBER",
+        "IDENTIFIER", "STRING", "INTERP_STRING", "NUMBER",
         "AND", "BREAK", "CLASS", "CONTINUE", "EFFECT", "ELSE", "FALSE", "FUN", "FOR",
         "IF", "IN", "NIL", "OR",
         "PRINT", "RETURN", "STYLE", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
@@ -85,7 +85,7 @@ namespace token {
         string toString() const {
             std::ostringstream ss;
             ss << "Token type: " << TokenTypeNames[static_cast<int>(type)];
-            if (type == TokenType::STRING) {
+            if (type == TokenType::STRING || type == TokenType::INTERP_STRING) {
                 ss << ", Literal: " << get<string>(lexeme);
             } else if (type == TokenType::NUMBER) {
                 ss << ", Literal: " << get<double>(lexeme);

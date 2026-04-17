@@ -105,6 +105,8 @@ namespace parser {
         shared_ptr<stmt::Stmt<T>> effectDeclaration();
         template <typename T>
         shared_ptr<stmt::Stmt<T>> styleDeclaration();
+        template <typename T>
+        shared_ptr<Expr<T>> parseInterpolatedString(const std::string& raw, const Token& tok);
         double parseDuration();
 
         void synchronize();

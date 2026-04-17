@@ -357,6 +357,12 @@ shared_ptr<Expr<T>> Parser::primary() {
 
     if (match(TokenType::NUMBER, TokenType::STRING)) return make_shared<expr::Literal<T>>(previous().lexeme);
 
+    if (match(TokenType::INTERP_STRING)) {
+        Token tok = previous();
+        auto raw = std::get<std::string>(tok.lexeme);
+        return parseInterpolatedString<T>(raw, tok);
+    }
+
     if (match(TokenType::SUPER)) {
         Token keyword = previous();
         consume(TokenType::DOT, "Expected '.' after 'super'.");
@@ -915,6 +921,92 @@ shared_ptr<Expr<T>> Parser::gridBlock() {
     return make_shared<expr::GridBlockExpr<T>>(keyword, cols, rows, std::move(entries));
 }
 
+template <typename T>
+shared_ptr<Expr<T>> Parser::parseInterpolatedString(const std::string& raw, const Token& tok) {
+    shared_ptr<Expr<T>> result = nullptr;
+    std::string segment;
+    size_t i = 0;
+
+    auto makeLit = [&](const std::string& s) {
+        return make_shared<expr::Literal<T>>(
+            TokenValue(s));
+    };
+
+    auto addPart = [&](shared_ptr<Expr<T>> part) {
+        if (result) {
+            Token plusTok(TokenType::PLUS, TokenValue(std::string("+")), tok.line, tok.column);
+            result = make_shared<Binary<T>>(result, plusTok, part);
+        } else {
+            result = part;
+        }
+    };
+
+    while (i < raw.size()) {
+        // Handle \{ escape — produce literal {
+        if (raw[i] == '\\' && i + 1 < raw.size() && raw[i + 1] == '{') {
+            segment += '{';
+            i += 2;
+            continue;
+        }
+        if (raw[i] == '{') {
+            // Emit the text segment accumulated so far
+            if (!segment.empty()) {
+                addPart(makeLit(segment));
+                segment.clear();
+            }
+            // Find matching }
+            i++; // skip opening {
+            int depth = 1;
+            std::string exprStr;
+            while (i < raw.size() && depth > 0) {
+                if (raw[i] == '{') depth++;
+                else if (raw[i] == '}') {
+                    depth--;
+                    if (depth == 0) break;
+                }
+                exprStr += raw[i];
+                i++;
+            }
+            if (i < raw.size()) i++; // skip closing }
+
+            if (exprStr.empty()) {
+                // Empty interpolation {} — emit empty string
+                addPart(makeLit(""));
+                continue;
+            }
+
+            // Parse the inner expression
+            scanner::Scanner innerScanner(exprStr);
+            std::vector<Token> innerTokens;
+            for (auto& t : innerScanner) innerTokens.push_back(t);
+            innerTokens.push_back(Token(TokenType::END_OF_FILE, TokenValue(std::string("")), tok.line, tok.column));
+
+            Parser innerParser(innerTokens);
+            auto expr = innerParser.expression<T>();
+
+            // Start with empty string to ensure string context for +
+            if (!result) {
+                result = makeLit("");
+            }
+            addPart(expr);
+            continue;
+        }
+        segment += raw[i];
+        i++;
+    }
+
+    // Emit trailing text
+    if (!segment.empty()) {
+        addPart(makeLit(segment));
+    }
+
+    if (!result) {
+        result = makeLit("");
+    }
+
+    return result;
+}
+
 void Parser::synchronize() {
     advance();
     while (!isAtEnd()) {
@@ -972,5 +1064,6 @@ template shared_ptr<Expr<MV>> Parser::gifBlock<MV>();
 template shared_ptr<Expr<MV>> Parser::gridBlock<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::effectDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::styleDeclaration<MV>();
+template shared_ptr<Expr<MV>> Parser::parseInterpolatedString<MV>(const std::string&, const Token&);
 
 } // namespace parser

@@ -160,6 +160,13 @@ namespace interpreter {
                     if (std::holds_alternative<string>(left) && std::holds_alternative<string>(right)) {
                         return std::get<string>(left) + std::get<string>(right);
                     }
+                    // Auto-stringify: if either side is a string, convert the other
+                    if (std::holds_alternative<string>(left)) {
+                        return std::get<string>(left) + stringify(right);
+                    }
+                    if (std::holds_alternative<string>(right)) {
+                        return stringify(left) + std::get<string>(right);
+                    }
                     throw errors::RuntimeError(expr->operatorToken, "Operands must be two numbers or two strings.");
                 case token::TokenType::GREATER:
                     checkNumberOperands(expr->operatorToken, left, right);

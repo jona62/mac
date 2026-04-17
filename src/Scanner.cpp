@@ -117,9 +117,18 @@ namespace scanner {
                         type = TokenType::SLASH;
                     }
                     break;
-                case '"':
+                case '"': {
+                    bool hasInterp = false;
+                    bool hasEscapedBrace = false;
                     while (peek() != '"' && !isAtEnd()) {
                         if (peek() == '\n') { line++; lineStart = current + 1; }
+                        if (peek() == '\\' && peekNext() == '{') {
+                            hasEscapedBrace = true;
+                            advance(); // skip backslash
+                            advance(); // skip {
+                            continue;
+                        }
+                        if (peek() == '{') hasInterp = true;
                         advance();
                     }
                     if (isAtEnd()) {
@@ -127,9 +136,24 @@ namespace scanner {
                         return Token(TokenType::NONE, TokenValue(), line, col);
                     } else {
                         advance(); // closing "
-                        TokenValue literal = source.substr(start + 1, current - start - 2); // Exclude the quotes
-                        return Token(TokenType::STRING, literal, line, col);
+                        std::string raw = source.substr(start + 1, current - start - 2); // Exclude the quotes
+                        // For non-interpolated strings, convert \{ to { in the value
+                        if (!hasInterp && hasEscapedBrace) {
+                            std::string processed;
+                            for (size_t si = 0; si < raw.size(); si++) {
+                                if (raw[si] == '\\' && si + 1 < raw.size() && raw[si + 1] == '{') {
+                                    processed += '{';
+                                    si++; // skip the {
+                                } else {
+                                    processed += raw[si];
+                                }
+                            }
+                            raw = processed;
+                        }
+                        TokenType strType = hasInterp ? TokenType::INTERP_STRING : TokenType::STRING;
+                        return Token(strType, TokenValue(raw), line, col);
                     }
+                }
                 default:
                     if(isdigit(c)) {
                         while (isDigit(peek())) advance();
