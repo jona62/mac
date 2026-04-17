@@ -81,7 +81,7 @@ fi
 TMPDIR=$(mktemp -d)
 
 printf "  ${CYAN}⠹${RESET} Fetching latest release\r"
-RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest")
+RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" </dev/null)
 LATEST=$(echo "$RELEASE_JSON" | grep "browser_download_url.*$TARGET" | cut -d '"' -f 4)
 VERSION=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | cut -d '"' -f 4)
 printf "  ${GREEN}✓${RESET} Fetching latest release\n"
@@ -96,7 +96,7 @@ fi
 printf "  ${GREEN}✓${RESET} Found ${BOLD}$VERSION${RESET}\n"
 
 # ── Download ──
-curl -fsSL "$LATEST" -o "$TMPDIR/mac.tar.gz" &
+curl -fsSL "$LATEST" -o "$TMPDIR/mac.tar.gz" </dev/null &
 spin $! "Downloading binary"
 
 # ── Extract ──
