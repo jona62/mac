@@ -12,6 +12,31 @@ var uninitialized;        // value is nil
 
 Variables must be declared before use. Referencing an undefined variable is a runtime error.
 
+## Immutable Bindings
+
+Use `val` to declare a variable that cannot be reassigned.
+
+```
+val name = "Mac";
+print name;                       // Mac
+name = "other";                   // Runtime Error: Cannot reassign 'val' binding 'name'.
+```
+
+A `val` declaration must always have an initializer:
+
+```
+val x = 42;
+val y = x + 1;                    // Fine — val doesn't freeze the value, just the binding
+print y;                          // 43
+```
+
+Destructuring also works with `val`:
+
+```
+val [a, b] = [1, 2];
+print a;                          // 1
+```
+
 ## Assignment
 
 ```

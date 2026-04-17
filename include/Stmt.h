@@ -50,8 +50,8 @@ namespace stmt {
     template <typename T>
     class VarStmt : public Stmt<T> {
     public:
-        VarStmt(token::Token name, shared_ptr<expr::Expr<T>> initializer)
-            : name(name), initializer(initializer) {}
+        VarStmt(token::Token name, shared_ptr<expr::Expr<T>> initializer, bool isVal = false)
+            : name(name), initializer(initializer), isVal(isVal) {}
 
         void accept(shared_ptr<StmtVisitor<T>> visitor) override {
             visitor->visitVarStmt(this);
@@ -59,6 +59,7 @@ namespace stmt {
 
         token::Token name;
         shared_ptr<expr::Expr<T>> initializer;
+        bool isVal;
     };
 
     template <typename T>

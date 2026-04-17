@@ -309,7 +309,7 @@ namespace interpreter {
             if (stm->initializer != nullptr) {
                 value = evaluate(stm->initializer);
             }
-            env->define(std::get<string>(stm->name.lexeme), value);
+            env->define(std::get<string>(stm->name.lexeme), value, stm->isVal);
         }
 
         void visitBlockStmt(stmt::BlockStmt<MacValue>* stm) override {

@@ -1,0 +1,22 @@
+val x = 42;
+print x;                              // expect: 42
+
+val name = "Mac";
+print name;                           // expect: Mac
+
+// val with expression
+val y = x + 8;
+print y;                              // expect: 50
+
+// val in block scope
+{
+    val inner = "scoped";
+    print inner;                      // expect: scoped
+}
+
+// val with destructuring
+val [a, b] = [10, 20];
+print a;                              // expect: 10
+print b;                              // expect: 20
+
+print "val ok";                       // expect: val ok

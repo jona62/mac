@@ -3,7 +3,7 @@ var double = fun(x) { return x * 2; };
 print double(21);               // expect: 42
 
 // Lambda as argument
-fun apply(fn, val) { return fn(val); }
+fun apply(fn, v) { return fn(v); }
 print apply(fun(x) { return x + 1; }, 10);  // expect: 11
 
 // Lambda closure

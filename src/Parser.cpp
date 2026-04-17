@@ -27,11 +27,13 @@ template <typename T>
 std::vector<shared_ptr<stmt::Stmt<T>>> Parser::parse() {
     std::vector<shared_ptr<stmt::Stmt<T>>> statements;
     while (!isAtEnd()) {
-        // Array destructuring: var [a, b] = expr; — emits multiple flat VarStmts
-        if (peek().type == TokenType::VAR && current + 1 < tokens.size()
+        // Array destructuring: var [a, b] = expr; or val [a, b] = expr;
+        if ((peek().type == TokenType::VAR || peek().type == TokenType::VAL)
+            && current + 1 < tokens.size()
             && tokens[current + 1].type == TokenType::LEFT_BRACKET) {
-            advance(); // consume VAR
-            auto stmts = varDestructuring<T>();
+            bool isVal = peek().type == TokenType::VAL;
+            advance(); // consume VAR/VAL
+            auto stmts = varDestructuring<T>(isVal);
             for (auto& s : stmts) statements.push_back(s);
             continue;
         }
@@ -55,7 +57,8 @@ shared_ptr<stmt::Stmt<T>> Parser::declaration() {
             advance(); // consume FUN
             return functionDeclaration<T>("function");
         }
-        if (match(TokenType::VAR)) return varDeclaration<T>();
+        if (match(TokenType::VAR)) return varDeclaration<T>(false);
+        if (match(TokenType::VAL)) return varDeclaration<T>(true);
         if (match(TokenType::EFFECT)) return effectDeclaration<T>();
         if (match(TokenType::STYLE)) return styleDeclaration<T>();
         return statement<T>();
@@ -67,7 +70,7 @@ shared_ptr<stmt::Stmt<T>> Parser::declaration() {
 }
 
 template <typename T>
-shared_ptr<stmt::Stmt<T>> Parser::varDeclaration() {
+shared_ptr<stmt::Stmt<T>> Parser::varDeclaration(bool isVal) {
     consume(TokenType::IDENTIFIER, "Expected variable name.");
     Token name = previous();
 
@@ -76,13 +79,17 @@ shared_ptr<stmt::Stmt<T>> Parser::varDeclaration() {
         initializer = expression<T>();
     }
 
+    if (isVal && !initializer) {
+        throw ParseError(name, "'val' declarations must have an initializer.");
+    }
+
     consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
-    return make_shared<stmt::VarStmt<T>>(name, initializer);
+    return make_shared<stmt::VarStmt<T>>(name, initializer, isVal);
 }
 
 template <typename T>
-std::vector<shared_ptr<stmt::Stmt<T>>> Parser::varDestructuring() {
-    // Already consumed 'var', next token is '['
+std::vector<shared_ptr<stmt::Stmt<T>>> Parser::varDestructuring(bool isVal) {
+    // Already consumed 'var'/'val', next token is '['
     advance(); // consume '['
     int line = previous().line;
 
@@ -113,7 +120,7 @@ std::vector<shared_ptr<stmt::Stmt<T>>> Parser::varDestructuring() {
         auto tmpVar = make_shared<expr::Variable<T>>(tmpToken);
         auto index = make_shared<expr::Literal<T>>(token::TokenValue(static_cast<double>(i)));
         auto indexGet = make_shared<expr::IndexGet<T>>(tmpVar, bracketToken, index);
-        stmts.push_back(make_shared<stmt::VarStmt<T>>(names[i], indexGet));
+        stmts.push_back(make_shared<stmt::VarStmt<T>>(names[i], indexGet, isVal));
     }
 
     return stmts;
@@ -380,11 +387,13 @@ std::vector<shared_ptr<stmt::Stmt<T>>> Parser::block() {
     std::vector<shared_ptr<stmt::Stmt<T>>> statements;
 
     while (!isAtEnd() && peek().type != TokenType::RIGHT_BRACE) {
-        // Array destructuring: var [a, b] = expr; — emits multiple flat VarStmts
-        if (peek().type == TokenType::VAR && current + 1 < tokens.size()
+        // Array destructuring: var [a, b] = expr; or val [a, b] = expr;
+        if ((peek().type == TokenType::VAR || peek().type == TokenType::VAL)
+            && current + 1 < tokens.size()
             && tokens[current + 1].type == TokenType::LEFT_BRACKET) {
-            advance(); // consume VAR
-            auto stmts = varDestructuring<T>();
+            bool isVal = peek().type == TokenType::VAL;
+            advance(); // consume VAR/VAL
+            auto stmts = varDestructuring<T>(isVal);
             for (auto& s : stmts) statements.push_back(s);
             continue;
         }
@@ -1144,6 +1153,7 @@ void Parser::synchronize() {
         switch (peek().type) {
             case token::TokenType::CLASS:
             case token::TokenType::FUN:
+            case token::TokenType::VAL:
             case token::TokenType::VAR:
             case token::TokenType::FOR:
             case token::TokenType::IF:
@@ -1162,8 +1172,8 @@ void Parser::synchronize() {
 using MV = interpreter::MacValue;
 template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::parse<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::declaration<MV>();
-template shared_ptr<stmt::Stmt<MV>> Parser::varDeclaration<MV>();
-template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::varDestructuring<MV>();
+template shared_ptr<stmt::Stmt<MV>> Parser::varDeclaration<MV>(bool);
+template std::vector<shared_ptr<stmt::Stmt<MV>>> Parser::varDestructuring<MV>(bool);
 template shared_ptr<stmt::Stmt<MV>> Parser::functionDeclaration<MV>(const std::string&);
 template shared_ptr<stmt::Stmt<MV>> Parser::classDeclaration<MV>();
 template shared_ptr<stmt::Stmt<MV>> Parser::statement<MV>();

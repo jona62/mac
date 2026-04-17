@@ -109,7 +109,7 @@
     },
     "keywords": {
       "name": "keyword.control.mac",
-      "match": "\\b(var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue)\\b"
+      "match": "\\b(val|var|fun|effect|style|class|for|while|if|else|return|print|in|break|continue)\\b"
     },
     "logical-operators": {
       "name": "keyword.operator.logical.mac",

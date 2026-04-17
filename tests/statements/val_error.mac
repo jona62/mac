@@ -1,0 +1,3 @@
+val x = 42;
+x = 99;
+// expect runtime error: Cannot reassign

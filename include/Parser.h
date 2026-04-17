@@ -40,9 +40,9 @@ namespace parser {
         template <typename T>
         shared_ptr<stmt::Stmt<T>> declaration();
         template <typename T>
-        shared_ptr<stmt::Stmt<T>> varDeclaration();
+        shared_ptr<stmt::Stmt<T>> varDeclaration(bool isVal = false);
         template <typename T>
-        std::vector<shared_ptr<stmt::Stmt<T>>> varDestructuring();
+        std::vector<shared_ptr<stmt::Stmt<T>>> varDestructuring(bool isVal = false);
         template <typename T>
         shared_ptr<stmt::Stmt<T>> functionDeclaration(const std::string& kind);
         template <typename T>

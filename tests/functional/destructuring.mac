@@ -19,8 +19,8 @@ var [only] = [42];
 print only;                       // expect: 42
 
 // For-in with enumerate
-for (var [i, val] in enumerate(["a", "b", "c"])) {
-    print "{i}:{val}";
+for (var [i, v] in enumerate(["a", "b", "c"])) {
+    print "{i}:{v}";
 }
 // expect: 0:a
 // expect: 1:b
