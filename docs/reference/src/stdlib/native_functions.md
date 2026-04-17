@@ -56,6 +56,13 @@ Built-in functions available in every Mac program without imports.
 | `drop` | `drop(array, n)` | `[T]` | Skip first n elements |
 | `zip` | `zip(a, b)` | `[[A, B]]` | Pair elements from two arrays |
 | `enumerate` | `enumerate(array)` | `[[number, T]]` | Index-value pairs |
+| `takeWhile` | `takeWhile(array, fn)` | `[T]` | Take elements while predicate is true |
+| `dropWhile` | `dropWhile(array, fn)` | `[T]` | Drop elements while predicate is true |
+| `partition` | `partition(array, fn)` | `[[T], [T]]` | Split by predicate |
+| `groupBy` | `groupBy(array, fn)` | `{string: [T]}` | Group by key function |
+| `unique` | `unique(array)` | `[T]` | Remove duplicates |
+| `chunk` | `chunk(array, n)` | `[[T]]` | Split into groups of n |
+| `scan` | `scan(array, fn, init)` | `[T]` | Reduce keeping intermediates |
 | `each` | `each(array, fn)` | `nil` | Side-effect iteration |
 
 ## Array Predicates
