@@ -543,8 +543,8 @@ class Vec {
 }
 var v = Vec();
 var i = 0;
-var val = 42;
-v.set(i, val);
+var num = 42;
+v.set(i, num);
 """)
     hints = user_items(data, "paramHints")
     h = find(hints, name="index")
