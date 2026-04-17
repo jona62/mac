@@ -29,6 +29,26 @@ fun greet(name) {
 print greet("Mac");       // Hello, Mac!
 ```
 
+## Implicit Return
+
+The last expression in a function body, when written without a trailing semicolon, becomes the return value of the function.
+
+```
+fun add(a, b) {
+    a + b
+}
+// equivalent to: fun add(a, b) { return a + b; }
+```
+
+A trailing semicolon suppresses the implicit return -- the function returns `nil` instead:
+
+```
+fun f() { 42; }
+print f();                // nil
+```
+
+Explicit `return` statements still work as before and take precedence.
+
 ## Closures
 
 Functions capture variables from their enclosing scope.

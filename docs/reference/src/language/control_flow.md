@@ -93,7 +93,21 @@ var label = match score {
 };
 ```
 
-Each arm is a pattern followed by `->` and a result expression. The `_` wildcard matches any value. If no arm matches and there is no wildcard, the result is `nil`.
+Each arm is a pattern followed by `->` and a result expression. Arms can use block expressions to compute their result:
+
+```
+val result = match value {
+    Result.Ok(v) -> {
+        val doubled = v * 2;
+        doubled + 1
+    }
+    Result.Error(e) -> -1
+};
+```
+
+The last expression in a block arm (without a trailing semicolon) becomes the arm's value.
+
+The `_` wildcard matches any value. If no arm matches and there is no wildcard, the result is `nil`.
 
 ```
 var x = match 42 {

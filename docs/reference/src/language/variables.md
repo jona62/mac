@@ -44,6 +44,19 @@ var count = 0;
 count = count + 1;
 ```
 
+## Block Expressions
+
+A block `{ }` is an expression -- its value is the last expression in the block when written without a trailing semicolon. This lets you use blocks anywhere a value is expected:
+
+```
+val x = {
+    val a = 1;
+    val b = 2;
+    a + b     // block value
+};
+print x;      // 3
+```
+
 ## Scoping
 
 Variables are block-scoped. A variable declared inside `{ }` is not visible outside it.
