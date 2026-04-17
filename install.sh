@@ -79,13 +79,12 @@ fi
 
 # ── Fetch latest release ──
 TMPDIR=$(mktemp -d)
-RELEASE_FILE="$TMPDIR/release.json"
 
-curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" -o "$RELEASE_FILE" &
-spin $! "Fetching latest release"
-
-LATEST=$(grep "browser_download_url.*$TARGET" "$RELEASE_FILE" | cut -d '"' -f 4)
-VERSION=$(grep '"tag_name"' "$RELEASE_FILE" | head -1 | cut -d '"' -f 4)
+printf "  ${CYAN}⠹${RESET} Fetching latest release\r"
+RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest")
+LATEST=$(echo "$RELEASE_JSON" | grep "browser_download_url.*$TARGET" | cut -d '"' -f 4)
+VERSION=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | cut -d '"' -f 4)
+printf "  ${GREEN}✓${RESET} Fetching latest release\n"
 
 if [ -z "$LATEST" ]; then
     printf "  ${RED}✗${RESET} No release found for ${BOLD}$TARGET${RESET}\n"
