@@ -1,0 +1,70 @@
+// Expression blocks: last expression without semicolon becomes the value
+
+// Function implicit return
+fun add(a, b) {
+    a + b
+}
+print add(2, 3);             // expect: 5
+
+// Semicolon suppresses return value
+fun noop() {
+    42;
+}
+print noop();                // expect: nil
+
+// Explicit return still works
+fun explicit() {
+    return 99;
+}
+print explicit();            // expect: 99
+
+// Block as expression (assigned to val)
+val x = {
+    val a = 1;
+    val b = 2;
+    a + b
+};
+print x;                     // expect: 3
+
+// Nested block expressions
+val y = {
+    val inner = {
+        val n = 10;
+        n + 5
+    };
+    inner * 2
+};
+print y;                     // expect: 30
+
+// Function with statements and tail expression
+fun compute(x) {
+    val doubled = x * 2;
+    val tripled = x * 3;
+    doubled + tripled
+}
+print compute(5);            // expect: 25
+
+// Lambda with tail expression
+val double = fun(x) { x * 2 };
+print double(7);             // expect: 14
+
+// Method implicit return
+class Calc {
+    square(x) {
+        x * x
+    }
+}
+val c = Calc();
+print c.square(4);           // expect: 16
+
+// Empty function returns nil
+fun empty() {}
+print empty();               // expect: nil
+
+// Mix of return and tail expression
+fun earlyReturn(x) {
+    if (x < 0) return 0;
+    x * x
+}
+print earlyReturn(5);        // expect: 25
+print earlyReturn(-1);       // expect: 0

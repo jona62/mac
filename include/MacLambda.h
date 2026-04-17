@@ -15,8 +15,9 @@ namespace callable {
     public:
         MacLambda(std::vector<token::Token> params,
                   std::vector<std::shared_ptr<stmt::Stmt<value::MacValue>>> body,
-                  std::shared_ptr<environment::Environment> closure)
-            : params(params), body(body), closure(closure) {}
+                  std::shared_ptr<environment::Environment> closure,
+                  std::shared_ptr<expr::Expr<value::MacValue>> tailExpr = nullptr)
+            : params(params), body(body), closure(closure), tailExpr(std::move(tailExpr)) {}
 
         value::MacValue call(std::shared_ptr<interpreter::Interpreter> interpreter,
                              std::vector<value::MacValue> arguments) override;
@@ -28,6 +29,7 @@ namespace callable {
         std::vector<token::Token> params;
         std::vector<std::shared_ptr<stmt::Stmt<value::MacValue>>> body;
         std::shared_ptr<environment::Environment> closure;
+        std::shared_ptr<expr::Expr<value::MacValue>> tailExpr;
     };
 
 } // namespace callable

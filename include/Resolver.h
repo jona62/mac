@@ -132,6 +132,7 @@ namespace resolver {
                 define(param);
             }
             resolve(expr->body);
+            if (expr->tailExpr) resolveExpr(expr->tailExpr);
             endScope();
             return std::monostate{};
         }
@@ -202,6 +203,7 @@ namespace resolver {
         void visitBlockStmt(stmt::BlockStmt<MV>* stm) override {
             beginScope();
             resolve(stm->statements);
+            if (stm->tailExpr) resolveExpr(stm->tailExpr);
             endScope();
         }
 
@@ -321,6 +323,7 @@ namespace resolver {
                 define(param);
             }
             resolve(function->body);
+            if (function->tailExpr) resolveExpr(function->tailExpr);
             endScope();
         }
     };

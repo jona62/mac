@@ -338,7 +338,7 @@ namespace interpreter {
 
         void visitBlockStmt(stmt::BlockStmt<MacValue>* stm) override {
             auto blockEnv = make_shared<environment::Environment>(env);
-            executeBlock(stm->statements, blockEnv);
+            executeBlock(stm->statements, blockEnv, stm->tailExpr);
         }
 
         void visitIfStmt(stmt::IfStmt<MacValue>* stm) override {
@@ -580,7 +580,7 @@ namespace interpreter {
         }
 
         MacValue visitLambdaExpr(expr::LambdaExpr<MacValue>* expr) override {
-            auto lambda = make_shared<callable::MacLambda>(expr->params, expr->body, env);
+            auto lambda = make_shared<callable::MacLambda>(expr->params, expr->body, env, expr->tailExpr);
             return MacValue(std::static_pointer_cast<callable::MacCallable>(lambda));
         }
 
@@ -925,19 +925,25 @@ namespace interpreter {
             }
         }
 
-        void executeBlock(const std::vector<shared_ptr<stmt::Stmt<MacValue>>>& statements,
-                          shared_ptr<environment::Environment> blockEnv) {
+        MacValue executeBlock(const std::vector<shared_ptr<stmt::Stmt<MacValue>>>& statements,
+                          shared_ptr<environment::Environment> blockEnv,
+                          shared_ptr<expr::Expr<MacValue>> tailExpr = nullptr) {
             auto previousEnv = env;
+            MacValue result = std::monostate{};
             try {
                 env = blockEnv;
                 for (auto& statement : statements) {
                     execute(statement);
+                }
+                if (tailExpr) {
+                    result = evaluate(tailExpr);
                 }
                 env = previousEnv;
             } catch (...) {
                 env = previousEnv;
                 throw;
             }
+            return result;
         }
 
         string stringify(const MacValue& value) {
@@ -1076,12 +1082,12 @@ inline value::MacValue callable::MacFunction::call(
     }
 
     try {
-        interpreter->executeBlock(declaration->body, funcEnv);
+        auto tailResult = interpreter->executeBlock(declaration->body, funcEnv,
+            declaration->tailExpr);
+        return tailResult; // implicit return from tail expression (or nil)
     } catch (const errors::Return& returnValue) {
         return returnValue.returnValue;
     }
-
-    return std::monostate{};
 }
 
 // MacLambda::call implementation
@@ -1095,12 +1101,11 @@ inline value::MacValue callable::MacLambda::call(
     }
 
     try {
-        interpreter->executeBlock(body, funcEnv);
+        auto tailResult = interpreter->executeBlock(body, funcEnv, tailExpr);
+        return tailResult;
     } catch (const errors::Return& returnValue) {
         return returnValue.returnValue;
     }
-
-    return std::monostate{};
 }
 
 #endif // INTERPRETER_H

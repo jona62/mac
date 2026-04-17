@@ -24,6 +24,7 @@ namespace analyzer {
         } else if (auto* p = dynamic_cast<stmt::BlockStmt<MV>*>(s)) {
             beginScope();
             for (auto& st : p->statements) analyzeStmt(st.get());
+            if (p->tailExpr) analyzeExpr(p->tailExpr.get());
             endScope();
         } else if (auto* p = dynamic_cast<stmt::IfStmt<MV>*>(s)) {
             analyzeExpr(p->condition.get());
@@ -39,7 +40,8 @@ namespace analyzer {
             beginScope();
             for (auto& prm : p->params) define(prm, "parameter", "unknown");
             for (auto& st : p->body) analyzeStmt(st.get());
-            auto returnType = inferBlockReturn(p->body);
+            if (p->tailExpr) analyzeExpr(p->tailExpr.get());
+            auto returnType = p->tailExpr ? inferType(p->tailExpr.get()) : inferBlockReturn(p->body);
             addFunctionSignature(p, "function", returnType);
             endScope();
         } else if (auto* p = dynamic_cast<stmt::ReturnStmt<MV>*>(s)) {
@@ -78,11 +80,13 @@ namespace analyzer {
                 beginScope();
                 for (auto& prm : m->params) define(prm, "parameter", "unknown");
                 for (auto& st : m->body) analyzeStmt(st.get());
+                if (m->tailExpr) analyzeExpr(m->tailExpr.get());
 
                 std::vector<std::string> params;
                 params.reserve(m->params.size());
                 for (auto& prm : m->params) params.push_back(tokName(prm));
-                auto returnType = methodName == "init" ? className : inferBlockReturn(m->body);
+                auto returnType = methodName == "init" ? className
+                    : (m->tailExpr ? inferType(m->tailExpr.get()) : inferBlockReturn(m->body));
                 upsertMember(className, m->name, methodName == "init" ? "constructor" : "method",
                              "fun(" + std::to_string(m->params.size()) + ")", returnType, params,
                              "", visibility);
@@ -285,6 +289,7 @@ namespace analyzer {
             beginScope();
             for (auto& prm : p->params) define(prm, "parameter", "unknown");
             for (auto& st : p->body) analyzeStmt(st.get());
+            if (p->tailExpr) analyzeExpr(p->tailExpr.get());
             endScope();
         } else if (auto* p = dynamic_cast<expr::PipeExpr<MV>*>(e)) {
             analyzeExpr(p->value.get());

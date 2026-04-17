@@ -260,14 +260,16 @@ namespace expr {
     class LambdaExpr : public Expr<T> {
     public:
         LambdaExpr(Token funKeyword, std::vector<Token> params,
-                   std::vector<shared_ptr<stmt::Stmt<T>>> body)
-            : funKeyword(funKeyword), params(params), body(body) {}
+                   std::vector<shared_ptr<stmt::Stmt<T>>> body,
+                   shared_ptr<Expr<T>> tailExpr = nullptr)
+            : funKeyword(funKeyword), params(params), body(body), tailExpr(std::move(tailExpr)) {}
         T visit(shared_ptr<Visitor<T>> visitor) override {
             return visitor->visitLambdaExpr(this);
         }
         Token funKeyword;
         std::vector<Token> params;
         std::vector<shared_ptr<stmt::Stmt<T>>> body;
+        shared_ptr<Expr<T>> tailExpr;
     };
 
     template <typename T>

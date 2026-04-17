@@ -65,14 +65,16 @@ namespace stmt {
     template <typename T>
     class BlockStmt : public Stmt<T> {
     public:
-        BlockStmt(vector<shared_ptr<Stmt<T>>> statements)
-            : statements(statements) {}
+        BlockStmt(vector<shared_ptr<Stmt<T>>> statements,
+                  shared_ptr<expr::Expr<T>> tailExpr = nullptr)
+            : statements(statements), tailExpr(std::move(tailExpr)) {}
 
         void accept(shared_ptr<StmtVisitor<T>> visitor) override {
             visitor->visitBlockStmt(this);
         }
 
         vector<shared_ptr<Stmt<T>>> statements;
+        shared_ptr<expr::Expr<T>> tailExpr;
     };
 
     template <typename T>
@@ -111,8 +113,9 @@ namespace stmt {
     public:
         FunctionStmt(token::Token name,
                      vector<token::Token> params,
-                     vector<shared_ptr<Stmt<T>>> body)
-            : name(name), params(params), body(body) {}
+                     vector<shared_ptr<Stmt<T>>> body,
+                     shared_ptr<expr::Expr<T>> tailExpr = nullptr)
+            : name(name), params(params), body(body), tailExpr(std::move(tailExpr)) {}
 
         void accept(shared_ptr<StmtVisitor<T>> visitor) override {
             visitor->visitFunctionStmt(this);
@@ -121,6 +124,7 @@ namespace stmt {
         token::Token name;
         vector<token::Token> params;
         vector<shared_ptr<Stmt<T>>> body;
+        shared_ptr<expr::Expr<T>> tailExpr;
     };
 
     template <typename T>

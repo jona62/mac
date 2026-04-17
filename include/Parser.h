@@ -5,6 +5,7 @@
 #include "Scanner.h"            // scanner::Scanner (token source)
 #include "Expr.h"               // expr::Expr<T>, expression subclasses
 #include "Stmt.h"               // stmt::Stmt<T>, statement subclasses
+#include "MacValue.h"           // value::MacValue (pendingTailExpr_ type)
 
 using token::Token;
 using expr::Expr;
@@ -25,6 +26,9 @@ namespace parser {
         const std::vector<Token>& tokens;
         size_t current;
         int nestingDepth = 0;
+
+        // Tail expression detected during block parsing (expr before } without ;)
+        std::shared_ptr<expr::Expr<value::MacValue>> pendingTailExpr_;
 
         bool isAtEnd();
         const Token& advance();

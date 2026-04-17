@@ -147,7 +147,9 @@ shared_ptr<stmt::Stmt<T>> Parser::functionDeclaration(const std::string& kind) {
 
     consume(TokenType::LEFT_BRACE, "Expected '{' before " + kind + " body.");
     auto body = block<T>();
-    return make_shared<stmt::FunctionStmt<T>>(name, params, body);
+    auto tailExpr = pendingTailExpr_;
+    pendingTailExpr_ = nullptr;
+    return make_shared<stmt::FunctionStmt<T>>(name, params, body, tailExpr);
 }
 
 template <typename T>
@@ -225,7 +227,12 @@ shared_ptr<stmt::Stmt<T>> Parser::statement() {
     }
     if (match(TokenType::WHILE)) return whileStatement<T>();
     if (match(TokenType::FOR)) return forStatement<T>();
-    if (match(TokenType::LEFT_BRACE)) return make_shared<stmt::BlockStmt<T>>(block<T>());
+    if (match(TokenType::LEFT_BRACE)) {
+        auto body = block<T>();
+        auto tail = pendingTailExpr_;
+        pendingTailExpr_ = nullptr;
+        return make_shared<stmt::BlockStmt<T>>(body, tail);
+    }
     return expressionStatement<T>();
 }
 
@@ -406,6 +413,11 @@ shared_ptr<stmt::Stmt<T>> Parser::forStatement() {
 template <typename T>
 shared_ptr<stmt::Stmt<T>> Parser::expressionStatement() {
     auto expr = expression<T>();
+    if (peek().type == TokenType::RIGHT_BRACE) {
+        // Tail expression: no semicolon needed before }
+        pendingTailExpr_ = expr;
+        return nullptr;
+    }
     consume(TokenType::SEMICOLON, "Expected ';' after expression.");
     return make_shared<stmt::ExpressionStmt<T>>(expr);
 }
@@ -413,6 +425,7 @@ shared_ptr<stmt::Stmt<T>> Parser::expressionStatement() {
 template <typename T>
 std::vector<shared_ptr<stmt::Stmt<T>>> Parser::block() {
     std::vector<shared_ptr<stmt::Stmt<T>>> statements;
+    pendingTailExpr_ = nullptr;
 
     while (!isAtEnd() && peek().type != TokenType::RIGHT_BRACE) {
         // Array destructuring: var [a, b] = expr; or val [a, b] = expr;
@@ -428,6 +441,9 @@ std::vector<shared_ptr<stmt::Stmt<T>>> Parser::block() {
         auto decl = declaration<T>();
         if (decl != nullptr) {
             statements.push_back(decl);
+        } else if (pendingTailExpr_) {
+            // Tail expression detected — stop parsing the block
+            break;
         }
     }
 
@@ -522,7 +538,9 @@ shared_ptr<Expr<T>> Parser::primary() {
         consume(TokenType::RIGHT_PAREN, "Expected ')' after lambda parameters.");
         consume(TokenType::LEFT_BRACE, "Expected '{' before lambda body.");
         auto body = block<T>();
-        return make_shared<expr::LambdaExpr<T>>(funToken, params, body);
+        auto tailExpr = pendingTailExpr_;
+        pendingTailExpr_ = nullptr;
+        return make_shared<expr::LambdaExpr<T>>(funToken, params, body, tailExpr);
     }
 
     // Arrow function: x -> expr
@@ -604,7 +622,36 @@ shared_ptr<Expr<T>> Parser::primary() {
 
     if (match(TokenType::LEFT_BRACKET)) return arrayLiteral<T>();
 
-    if (match(TokenType::LEFT_BRACE)) return mapLiteral<T>();
+    if (match(TokenType::LEFT_BRACE)) {
+        // Disambiguate: map literal vs block expression
+        // Map: {} or { identifier/string : ... }
+        // Block: { statements... tailExpr }
+        bool isMap = false;
+        if (peek().type == TokenType::RIGHT_BRACE) {
+            isMap = true; // empty map {}
+        } else if ((peek().type == TokenType::IDENTIFIER || peek().type == TokenType::STRING)
+                   && current + 1 < tokens.size()
+                   && tokens[current + 1].type == TokenType::COLON) {
+            isMap = true; // { key: value, ... }
+        }
+        if (isMap) return mapLiteral<T>();
+
+        // Block expression: { stmts... tailExpr }
+        auto body = block<T>();
+        auto tail = pendingTailExpr_;
+        pendingTailExpr_ = nullptr;
+        // Wrap as a block statement inside a lambda that's immediately called
+        // Actually, we need a new expr node or we can reuse BlockStmt.
+        // Simplest: create a BlockExpr that the interpreter can evaluate.
+        // But for now, synthesize as an immediately-invoked lambda with no params.
+        std::vector<Token> noParams;
+        Token synth(TokenType::FUN, std::string(""), peek().line);
+        auto lambda = make_shared<expr::LambdaExpr<T>>(synth, noParams, body, tail);
+        // Immediately invoke it: (fun() { ... })()
+        Token paren(TokenType::RIGHT_PAREN, std::string(")"), peek().line);
+        std::vector<shared_ptr<Expr<T>>> noArgs;
+        return make_shared<expr::Call<T>>(lambda, paren, noArgs);
+    }
 
     if (match(TokenType::AT)) return memeLiteral<T>();
 
