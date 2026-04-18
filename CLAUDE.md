@@ -1,5 +1,9 @@
 # Mac Development Guide
 
+## Skills
+
+Read `.agent/skills/` for available skills. The `mac-language` skill covers all Mac syntax, templates, effects, and examples - use it when writing or explaining Mac programs.
+
 ## Project Overview
 
 Mac (Meme as Code) is a C++23 tree-walk interpreter where memes are first-class citizens. The project has three components:
