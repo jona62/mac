@@ -82,9 +82,7 @@ namespace meme {
         // Resolve a template name to an image file path
         // Check if a string contains path traversal sequences
         static bool hasTraversal(const std::string& s) {
-            return s.find("..") != std::string::npos ||
-                   s.find('/') != std::string::npos ||
-                   s.find('\\') != std::string::npos;
+            return s.find("..") != std::string::npos;
         }
 
         static std::string resolveTemplate(const std::string& name) {
@@ -119,18 +117,12 @@ namespace meme {
             }
 
             // Direct file path - try script-relative, then binary-relative
-            // For paths with directory components, validate they resolve under allowed dirs
-            auto scrPath = scriptDir() + "/" + name;
-            if (std::filesystem::exists(scrPath)) {
-                auto resolved = std::filesystem::canonical(scrPath).string();
-                auto scrBase = std::filesystem::canonical(scriptDir()).string();
-                if (resolved.starts_with(scrBase)) return resolved;
-            }
-            auto binPath = binaryDir() + "/" + name;
-            if (std::filesystem::exists(binPath)) {
-                auto resolved = std::filesystem::canonical(binPath).string();
-                auto binBase = std::filesystem::canonical(binaryDir()).string();
-                if (resolved.starts_with(binBase)) return resolved;
+            // Block path traversal (../) but allow symlinks within the directory
+            if (!hasTraversal(name)) {
+                auto scrPath = scriptDir() + "/" + name;
+                if (std::filesystem::exists(scrPath)) return scrPath;
+                auto binPath = binaryDir() + "/" + name;
+                if (std::filesystem::exists(binPath)) return binPath;
             }
             return name;
         }
