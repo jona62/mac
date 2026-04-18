@@ -1,0 +1,22 @@
+// Escape sequences in strings
+
+// expect: hello
+// expect: world
+print "hello\nworld";
+
+// expect: a	b
+print "a\tb";
+
+// expect: back\slash
+print "back\\slash";
+
+// expect: say "hi"
+print "say \"hi\"";
+
+// expect: {literal}
+print "\{literal}";
+
+// expect: multi
+// expect: 	line
+// expect: test
+print "multi\n\tline\ntest";

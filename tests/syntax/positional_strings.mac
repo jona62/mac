@@ -1,0 +1,19 @@
+// Positional string arguments for meme literals
+
+// 1 string -> center
+val a = @blank "Hello";
+// expect: instance
+print type(a);
+
+// 2 strings -> top + bottom
+val b = @two_panel "Top" "Bottom";
+// expect: instance
+print type(b);
+
+// 3 strings -> top + bottom + center
+val c = @blank "A" "B" "C";
+// expect: instance
+print type(c);
+
+// expect: done
+print "done";

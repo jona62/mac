@@ -122,10 +122,12 @@ namespace scanner {
                     bool hasEscapedBrace = false;
                     while (peek() != '"' && !isAtEnd()) {
                         if (peek() == '\n') { line++; lineStart = current + 1; }
-                        if (peek() == '\\' && peekNext() == '{') {
-                            hasEscapedBrace = true;
+                        if (peek() == '\\') {
                             advance(); // skip backslash
-                            advance(); // skip {
+                            if (!isAtEnd()) {
+                                if (peek() == '{') hasEscapedBrace = true;
+                                advance(); // skip escaped char
+                            }
                             continue;
                         }
                         if (peek() == '{') hasInterp = true;
@@ -137,13 +139,28 @@ namespace scanner {
                     } else {
                         advance(); // closing "
                         std::string raw = source.substr(start + 1, current - start - 2); // Exclude the quotes
-                        // For non-interpolated strings, convert \{ to { in the value
-                        if (!hasInterp && hasEscapedBrace) {
+                        // Process escape sequences
+                        {
                             std::string processed;
                             for (size_t si = 0; si < raw.size(); si++) {
-                                if (raw[si] == '\\' && si + 1 < raw.size() && raw[si + 1] == '{') {
-                                    processed += '{';
-                                    si++; // skip the {
+                                if (raw[si] == '\\' && si + 1 < raw.size()) {
+                                    char next = raw[si + 1];
+                                    switch (next) {
+                                        case 'n':  processed += '\n'; si++; break;
+                                        case 't':  processed += '\t'; si++; break;
+                                        case 'r':  processed += '\r'; si++; break;
+                                        case '\\': processed += '\\'; si++; break;
+                                        case '"':  processed += '"';  si++; break;
+                                        case '{':
+                                            if (!hasInterp) {
+                                                processed += '{';
+                                                si++;
+                                            } else {
+                                                processed += raw[si];
+                                            }
+                                            break;
+                                        default:   processed += raw[si]; break;
+                                    }
                                 } else {
                                     processed += raw[si];
                                 }

@@ -1009,8 +1009,32 @@ shared_ptr<Expr<T>> Parser::memeLiteral() {
         return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, false, width, height, styleName);
     }
 
-    // One-liner: @template expr (string literal, variable, or any primary expression)
-    if (peek().type != TokenType::SEMICOLON && peek().type != TokenType::END_OF_FILE) {
+    // Positional strings: @template "top" "bottom" "center" (1-3 strings)
+    // Maps to: 1 string → center, 2 strings → top + bottom, 3 strings → top + bottom + center
+    if (peek().type == TokenType::STRING) {
+        std::vector<std::shared_ptr<Expr<T>>> positional;
+        while (peek().type == TokenType::STRING) {
+            positional.push_back(primary<T>());
+        }
+        static const std::string posNames1[] = {"center"};
+        static const std::string posNames2[] = {"top", "bottom"};
+        static const std::string posNames3[] = {"top", "bottom", "center"};
+        const std::string* names = posNames1;
+        if (positional.size() == 2) names = posNames2;
+        else if (positional.size() >= 3) names = posNames3;
+        size_t count = std::min(positional.size(), size_t(3));
+        for (size_t i = 0; i < count; i++) {
+            Token key(TokenType::IDENTIFIER, token::TokenValue(std::string(names[i])),
+                      templateName.line, templateName.column);
+            entries.push_back({key, positional[i]});
+        }
+        return make_shared<expr::MemeLiteralExpr<T>>(templateName, entries, true, width, height, styleName);
+    }
+
+    // One-liner with non-string expression: @template expr
+    if (peek().type != TokenType::SEMICOLON && peek().type != TokenType::END_OF_FILE &&
+        peek().type != TokenType::PIPE && peek().type != TokenType::FAT_ARROW &&
+        peek().type != TokenType::COLON && peek().type != TokenType::RIGHT_BRACE) {
         auto value = primary<T>();
         Token centerKey(TokenType::IDENTIFIER, token::TokenValue(std::string("center")),
                         templateName.line, templateName.column);
