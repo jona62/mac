@@ -1,0 +1,9 @@
+val g = gif {
+    @blank 16x16 "A" : 100ms
+    --- crossfade 20s ---
+    @blank 16x16 "B" : 100ms
+};
+
+save(g, "too_many_transition_frames.gif");
+
+// expect runtime error: GIF frame limit exceeded (max 200 frames).

@@ -2,8 +2,10 @@
 #define MAC_GIF_H
 
 #include <memory>               // shared_ptr
+#include <stdexcept>            // runtime_error
 #include <string>               // string (output path)
 #include <vector>               // vector (frames)
+#include "GifLimits.h"          // meme::MAX_GIF_FRAMES
 #include "GifEncoder.h"         // meme::GifEncoder (LZW encoding, file writing)
 #include "MemeLayout.h"         // layout::resizePixels (frame scaling)
 #include "RenderSurface.h"      // meme::RenderSurface (pixel data)
@@ -21,6 +23,9 @@ namespace meme {
 
         // Chainable - returns shared_ptr to self
         std::shared_ptr<MacGif> addFrame(const std::shared_ptr<RenderSurface>& surface, int durationMs) {
+            if (frames.size() >= MAX_GIF_FRAMES) {
+                throw std::runtime_error("GIF frame limit exceeded (max " + std::to_string(MAX_GIF_FRAMES) + " frames).");
+            }
             frames.push_back({surface, durationMs});
             return std::shared_ptr<MacGif>(this, [](MacGif*){});
         }

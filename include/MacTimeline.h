@@ -5,8 +5,10 @@
 #include <cmath>                // sin, cos, pow (easing curves)
 #include <cstring>              // memcpy (pixel blending)
 #include <memory>               // shared_ptr
+#include <stdexcept>            // runtime_error
 #include <string>               // string (output path)
 #include <vector>               // vector (keyframes, transitions)
+#include "GifLimits.h"          // meme::MAX_GIF_FRAMES
 #include "GifEncoder.h"         // meme::GifEncoder (LZW encoding, file writing)
 #include "MemeLayout.h"         // layout::resizePixels (frame scaling)
 #include "RenderSurface.h"      // meme::RenderSurface (pixel data)
@@ -105,10 +107,19 @@ namespace meme {
                         int targetW,
                         int targetH,
                         Emit emit) const {
+            std::size_t emittedFrames = 0;
+            auto emitChecked = [&](const std::vector<unsigned char>& pixels, int delayCs) {
+                if (emittedFrames >= MAX_GIF_FRAMES) {
+                    throw std::runtime_error("GIF frame limit exceeded (max " + std::to_string(MAX_GIF_FRAMES) + " frames).");
+                }
+                emit(pixels, delayCs);
+                emittedFrames++;
+            };
+
             for (size_t i = 0; i < keyframes.size(); i++) {
                 int holdMs = (i < holds.size()) ? holds[i] : 0;
                 if (holdMs <= 0) holdMs = 2000;
-                emit(resized[i], std::max(1, holdMs / 10));
+                emitChecked(resized[i], std::max(1, holdMs / 10));
 
                 if (i + 1 < keyframes.size() && i < transitions.size()) {
                     auto& trans = transitions[i];
@@ -119,9 +130,9 @@ namespace meme {
 
                     for (int f = 1; f < frameCount; f++) {
                         float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
-                        emit(renderTransitionFrame(resized[i], resized[i + 1],
-                                                   targetW, targetH, t, trans.type),
-                             frameDelayCs);
+                        emitChecked(renderTransitionFrame(resized[i], resized[i + 1],
+                                                          targetW, targetH, t, trans.type),
+                                    frameDelayCs);
                     }
                 }
             }
@@ -137,9 +148,9 @@ namespace meme {
 
                     for (int f = 1; f < frameCount; f++) {
                         float t = applyEasing(static_cast<float>(f) / frameCount, trans.easing);
-                        emit(renderTransitionFrame(resized[lastIdx], resized[0],
-                                                   targetW, targetH, t, trans.type),
-                             frameDelayCs);
+                        emitChecked(renderTransitionFrame(resized[lastIdx], resized[0],
+                                                          targetW, targetH, t, trans.type),
+                                    frameDelayCs);
                     }
                 }
             }

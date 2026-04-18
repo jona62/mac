@@ -249,7 +249,11 @@ namespace interpreter {
                     " arguments but got " + std::to_string(arguments.size()) + ".");
             }
 
-            return function->call(shared_from_this(), arguments);
+            try {
+                return function->call(shared_from_this(), arguments);
+            } catch (const std::runtime_error& error) {
+                throw errors::RuntimeError(expr->paren, error.what());
+            }
         }
 
         MacValue visitAssignExpr(expr::Assign<MacValue>* expr) override {
@@ -811,10 +815,14 @@ namespace interpreter {
             }
 
             auto rawGif = std::make_shared<meme::MacGif>();
-            for (auto& entry : expr->entries) {
-                auto meme = evaluate(entry.meme);
-                int durationMs = static_cast<int>(entry.durationMs);
-                rawGif->addFrame(callable::getRenderSurface(meme), durationMs);
+            try {
+                for (auto& entry : expr->entries) {
+                    auto meme = evaluate(entry.meme);
+                    int durationMs = static_cast<int>(entry.durationMs);
+                    rawGif->addFrame(callable::getRenderSurface(meme), durationMs);
+                }
+            } catch (const std::runtime_error& error) {
+                throw errors::RuntimeError(expr->keyword, error.what());
             }
 
             auto gifClass = env->get(token::Token(token::TokenType::IDENTIFIER,
