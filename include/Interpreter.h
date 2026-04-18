@@ -898,6 +898,19 @@ namespace interpreter {
                 arr->elements.push_back(evaluate(e));
             }
 
+            // Warn on item/slot mismatch
+            int slots = expr->cols * expr->rows;
+            int items = static_cast<int>(arr->elements.size());
+            if (items > slots) {
+                std::cerr << "grid " << expr->cols << "x" << expr->rows
+                          << ": " << items << " items provided, only " << slots
+                          << " slots - last " << (items - slots) << " truncated" << std::endl;
+            } else if (items < slots) {
+                std::cerr << "grid " << expr->cols << "x" << expr->rows
+                          << ": " << items << " items provided, " << slots
+                          << " slots - " << (slots - items) << " filled with blank" << std::endl;
+            }
+
             // Call toGrid(arr, cols, rows)
             auto toGridFn = env->get(token::Token(token::TokenType::IDENTIFIER,
                 token::TokenValue(std::string("toGrid")), 0));
