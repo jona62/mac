@@ -32,7 +32,22 @@ jobs:
       - run: cd mac-lang && npm ci
       - run: cd mac-lang && npx tsc --noEmit
 
-  # ── Lane 2: Release builds (only on tags, parallel) ───
+  # ── Lane 2: Deploy docs (after Linux test passes) ─────
+  deploy:
+    name: Deploy
+    needs: test-linux
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: eu-west-1.rigbox.dev
+          username: base-uvvrblcc-1yvx9yo7
+          key: ${{ secrets.RIGBOX_SSH_KEY }}
+          script: bash ~/deploy.sh
+
+  # ── Lane 3: Release builds (only on tags, parallel) ───
   check-version:
     name: Validate version
     if: startsWith(github.ref, 'refs/tags/v')
