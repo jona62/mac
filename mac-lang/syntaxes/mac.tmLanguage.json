@@ -116,7 +116,7 @@
     },
     "language-variables": {
       "name": "variable.language.mac",
-      "match": "\\b(this|super)\\b"
+      "match": "\\b(this|super|init)\\b"
     },
     "keywords": {
       "name": "keyword.control.mac",
@@ -155,7 +155,7 @@
     },
     "stdlib-types": {
       "name": "support.class.mac",
-      "match": "\\b(Template|Meme|Gif|Size|Duration|Position|Format)\\b"
+      "match": "\\b(Template|Meme|Gif|Size|Duration|Position|Format|Result|Option)\\b"
     },
     "stdlib-constants": {
       "name": "support.constant.mac",
