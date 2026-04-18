@@ -20,14 +20,26 @@ The Web GIF Studio and Code Playground live in a monorepo: [mac-studio-meme/mac-
 
 ### Playground Link Generation
 
-To generate a shareable playground link from code:
-
+Code only:
 ```bash
 curl -s -X POST https://playground.macstudio.meme/api/share \
   -H 'Content-Type: application/json' \
   -d '{"code": "print \"Hello, Mac!\";"}'
 # Returns: {"ok": true, "url": "https://playground.macstudio.meme/#code=..."}
 ```
+
+Code with images (multipart):
+```bash
+curl -s -X POST https://playground.macstudio.meme/api/share \
+  -F 'code=@meme.user "caption" => "out.png";' \
+  -F 'image=@photo.jpg'
+# Returns: {"ok": true, "url": "...#code=...&images=abc123", "images": [...]}
+```
+
+Limits (defined in `mac-studio/shared/python/mac_shared/limits.py`):
+- Max code: 50 KB
+- Max image: 5 MB per file, .png/.jpg/.jpeg/.gif only
+- Max 3 images per share request
 
 ## Build
 
