@@ -172,7 +172,11 @@ stack(<meme>, <meme>)      // vertical
 ```
 <expr> => "filename.png"       // save to ~/mac/output/
 <expr> => "filename.gif"       // auto-detects format
+<expr> => "subdir/file.png"    // explicit relative path
+<expr> => "/tmp/file.png"      // explicit absolute path
 ```
+
+If `MAC_OUTPUT_DIR` is set, saves are redirected there and only the filename portion is kept.
 
 ## Reference
 

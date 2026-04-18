@@ -25,9 +25,9 @@ var m = @blank "Hello";
 save(m, "hello.png");
 ```
 
-## Output Directory
+## Output Paths
 
-Filenames without a path are written to `~/mac/output/`:
+When `MAC_OUTPUT_DIR` is not set, Mac resolves save paths like this:
 
 | Input | Output path |
 |-------|-------------|
@@ -35,7 +35,25 @@ Filenames without a path are written to `~/mac/output/`:
 | `"sub/hello.png"` | `./sub/hello.png` (relative to cwd) |
 | `"/tmp/hello.png"` | `/tmp/hello.png` (absolute) |
 
-The output directory is created automatically on first save.
+Any missing parent directories are created automatically on save.
+
+## MAC_OUTPUT_DIR
+
+Set `MAC_OUTPUT_DIR` to force all saves into a specific directory:
+
+```bash
+MAC_OUTPUT_DIR=/tmp/mac-out mac script.mac
+```
+
+When this override is set, Mac keeps only the filename portion of the requested path:
+
+| Requested path | Actual output path |
+|----------------|--------------------|
+| `"hello.png"` | `/tmp/mac-out/hello.png` |
+| `"sub/hello.png"` | `/tmp/mac-out/hello.png` |
+| `"/tmp/hello.png"` | `/tmp/mac-out/hello.png` |
+
+This is mainly useful for hosts like playgrounds, editors, and web apps that need all generated files to stay in one managed directory.
 
 ## Supported Formats
 
@@ -47,7 +65,7 @@ The output directory is created automatically on first save.
 
 ## Confirmation
 
-On every successful save, the absolute output path is printed to stderr:
+On every successful save, the actual absolute output path is printed to stderr:
 
 ```
   Saved /Users/you/mac/output/hello.png
@@ -59,3 +77,4 @@ This appears in REPL, file execution, and piped modes without interfering with s
 
 - [Meme Literals](./meme_literal.md)
 - [GIF Animation](./gif.md)
+- [Command-Line Flags](../cli/flags.md)

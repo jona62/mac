@@ -94,6 +94,15 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/an
     fi
 done
 
+TOTAL=$((TOTAL + 1))
+if bash "$SCRIPT_DIR/integration/path_resolution.sh" "$MAC"; then
+    PASS=$((PASS + 1))
+    echo "  PASS  integration/path_resolution.sh"
+else
+    FAIL=$((FAIL + 1))
+    echo "  FAIL  integration/path_resolution.sh"
+fi
+
 echo ""
 echo "Results: $PASS passed, $FAIL failed, $TOTAL total"
 

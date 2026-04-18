@@ -29,14 +29,8 @@ namespace callable {
 
     static std::shared_ptr<meme::RenderSurface> getRenderSurface(const value::MacValue& val);
 
-    // All user output goes to output/ directory (overridable via MAC_OUTPUT_DIR)
-    static std::string getOutputDir() {
-        const char* override = std::getenv("MAC_OUTPUT_DIR");
-        if (override && override[0] != '\0') {
-            std::string dir(override);
-            std::filesystem::create_directories(dir);
-            return dir;
-        }
+    // Default output directory for bare filenames when no override is set.
+    static std::string getDefaultOutputDir() {
         const char* home = std::getenv("HOME");
         if (!home) home = ".";
         std::string dir = std::string(home) + "/mac/output";
@@ -44,16 +38,49 @@ namespace callable {
         return dir;
     }
 
+    // Optional sandbox directory used by web apps and other hosts.
+    static std::string getOutputOverrideDir() {
+        const char* override = std::getenv("MAC_OUTPUT_DIR");
+        if (override && override[0] != '\0') {
+            std::string dir(override);
+            std::filesystem::create_directories(dir);
+            return dir;
+        }
+        return "";
+    }
+
     static std::string toOutputPath(const std::string& path) {
-        // Extract just the filename — strip any directory components to prevent traversal
-        auto filename = std::filesystem::path(path).filename().string();
-        if (filename.empty()) filename = "output.png";
-        return getOutputDir() + "/" + filename;
+        std::filesystem::path requested(path);
+        auto overrideDir = getOutputOverrideDir();
+
+        // When an override is set, keep saves inside that directory and strip any path components.
+        if (!overrideDir.empty()) {
+            auto filename = requested.filename().string();
+            if (filename.empty()) filename = "output.png";
+            return (std::filesystem::path(overrideDir) / filename).string();
+        }
+
+        // Bare filenames go to the default output directory for discoverability.
+        if (path.empty() || (!requested.is_absolute() && !requested.has_parent_path())) {
+            auto filename = requested.filename().string();
+            if (filename.empty()) filename = "output.png";
+            return (std::filesystem::path(getDefaultOutputDir()) / filename).string();
+        }
+
+        // Explicit relative and absolute paths are respected for CLI users.
+        if (requested.filename().empty()) {
+            requested /= "output.png";
+        }
+        auto parent = requested.parent_path();
+        if (!parent.empty()) {
+            std::filesystem::create_directories(parent);
+        }
+        return requested.string();
     }
 
     static value::MacValue savedResult(bool ok, const std::string& path) {
         if (ok) {
-            auto abs = std::filesystem::absolute(path).string();
+            auto abs = std::filesystem::absolute(path).lexically_normal().string();
             std::cerr << "\033[2m  Saved " << abs << "\033[0m" << std::endl;
         }
         return ok;

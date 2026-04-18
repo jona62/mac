@@ -17,7 +17,19 @@ mac --version
 mac script.mac
 ```
 
-Execute a `.mac` file. Output files go to `~/mac/output/`. Temporary effect files are cleaned up after execution.
+Execute a `.mac` file. Bare filenames save to `~/mac/output/` by default, while explicit relative and absolute paths are respected. Temporary effect files are cleaned up after execution.
+
+### Environment
+
+#### `MAC_OUTPUT_DIR`
+
+```bash
+MAC_OUTPUT_DIR=/tmp/mac-out mac script.mac
+```
+
+Redirect all saves into a single directory. When this is set, Mac strips any path components from the requested save path and writes the file into `MAC_OUTPUT_DIR` using only its filename.
+
+This is primarily intended for hosts like web apps and editors that need to control where generated files land. The saved confirmation still prints the actual absolute path so users can find the output immediately.
 
 ### Interactive REPL
 
@@ -53,3 +65,7 @@ mac --uninstall
 ```
 
 Remove the Mac installation. See [Installation](./install.md#uninstall).
+
+## See Also
+
+- [Saving Output](../meme/save.md)

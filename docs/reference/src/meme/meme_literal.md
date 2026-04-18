@@ -73,6 +73,7 @@ save(m, "meme.jpg");
 ```
 
 Output files are written to `~/mac/output/` by default.
+Explicit relative and absolute save paths are respected unless `MAC_OUTPUT_DIR` is set by the host.
 
 ## With Styles
 

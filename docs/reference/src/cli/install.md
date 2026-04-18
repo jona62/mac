@@ -50,4 +50,4 @@ Removes `~/.mac/` (binary, assets, stdlib), `~/.local/bin/mac` (symlink), and `~
 | `~/.local/bin/mac` | Symlink to binary |
 | `~/.mac_history` | REPL command history |
 | `~/.mac/update_check` | Update check cache |
-| `~/mac/output/` | Generated memes, GIFs |
+| `~/mac/output/` | Default generated output for bare filenames |
