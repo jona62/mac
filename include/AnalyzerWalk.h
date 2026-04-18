@@ -420,6 +420,10 @@ namespace analyzer {
             analyzeExpr(p->subject.get());
             for (auto& arm : p->arms) {
                 if (arm.pattern) analyzeExpr(arm.pattern.get());
+                // Register destructured bindings so the result expression can see them
+                for (auto& binding : arm.bindings) {
+                    define(binding, "variable", "unknown", "Match binding");
+                }
                 analyzeExpr(arm.result.get());
             }
             if (p->keyword.line > 0 && currentSource == "user") {
