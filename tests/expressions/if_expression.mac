@@ -1,0 +1,40 @@
+// If/else as expressions
+
+// Simple
+// expect: 42
+print if (true) 42 else 0;
+
+// expect: no
+print if (false) "yes" else "no";
+
+// With blocks
+// expect: big
+val x = if (10 > 5) { "big" } else { "small" };
+print x;
+
+// In lambda
+val max = (a, b) -> if (a > b) a else b;
+// expect: 7
+print max(3, 7);
+// expect: 10
+print max(10, 2);
+
+// Nested (else if chain)
+val grade = (s) -> if (s >= 90) "A" else if (s >= 80) "B" else if (s >= 70) "C" else "F";
+// expect: A
+print grade(95);
+// expect: B
+print grade(82);
+// expect: F
+print grade(55);
+
+// In reduce
+val nums = [3, 1, 4, 1, 5];
+val biggest = nums |> reduce((a, b) -> if (a > b) a else b, 0);
+// expect: 5
+print biggest;
+
+// Assigned from if expression
+val label = if (42 > 0) "positive" else "negative";
+// expect: positive
+print label;

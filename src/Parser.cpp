@@ -655,6 +655,68 @@ shared_ptr<Expr<T>> Parser::primary() {
 
     if (match(TokenType::AT)) return memeLiteral<T>();
 
+    // if/else expression: if (cond) expr else expr
+    if (match(TokenType::IF)) {
+        Token ifTok = previous();
+        consume(TokenType::LEFT_PAREN, "Expected '(' after 'if'.");
+        auto condition = expression<T>();
+        consume(TokenType::RIGHT_PAREN, "Expected ')' after if condition.");
+
+        // Then branch: either a block { ... } or a single expression
+        shared_ptr<Expr<T>> thenExpr;
+        shared_ptr<stmt::Stmt<T>> thenStmt;
+        if (peek().type == TokenType::LEFT_BRACE) {
+            advance(); // consume {
+            auto body = block<T>();
+            auto tail = pendingTailExpr_;
+            pendingTailExpr_ = nullptr;
+            // Wrap block as immediately-invoked lambda
+            std::vector<Token> noParams;
+            Token synth(TokenType::FUN, std::string(""), ifTok.line);
+            auto lambda = make_shared<expr::LambdaExpr<T>>(synth, noParams, body, tail);
+            Token paren(TokenType::RIGHT_PAREN, std::string(")"), ifTok.line);
+            thenExpr = make_shared<expr::Call<T>>(lambda, paren, std::vector<shared_ptr<Expr<T>>>{});
+        } else {
+            thenExpr = expression<T>();
+        }
+
+        if (!match(TokenType::ELSE)) {
+            throw ParseError(peek(), "if expression requires 'else' branch.");
+        }
+
+        shared_ptr<Expr<T>> elseExpr;
+        if (peek().type == TokenType::LEFT_BRACE) {
+            advance();
+            auto body = block<T>();
+            auto tail = pendingTailExpr_;
+            pendingTailExpr_ = nullptr;
+            std::vector<Token> noParams;
+            Token synth(TokenType::FUN, std::string(""), ifTok.line);
+            auto lambda = make_shared<expr::LambdaExpr<T>>(synth, noParams, body, tail);
+            Token paren(TokenType::RIGHT_PAREN, std::string(")"), ifTok.line);
+            elseExpr = make_shared<expr::Call<T>>(lambda, paren, std::vector<shared_ptr<Expr<T>>>{});
+        } else if (peek().type == TokenType::IF) {
+            // else if - recurse
+            elseExpr = primary<T>();
+        } else {
+            elseExpr = expression<T>();
+        }
+
+        // Synthesize as: condition ? thenExpr : elseExpr
+        // Using a ternary-style node via immediately-invoked lambda:
+        // (fun() { if (cond) return thenExpr; return elseExpr; })()
+        auto returnThen = make_shared<stmt::ReturnStmt<T>>(ifTok, thenExpr);
+        auto returnElse = make_shared<stmt::ReturnStmt<T>>(ifTok, elseExpr);
+        auto elseStmt = std::shared_ptr<stmt::Stmt<T>>(std::move(returnElse));
+        auto ifStmt = make_shared<stmt::IfStmt<T>>(condition, returnThen, elseStmt);
+        std::vector<shared_ptr<stmt::Stmt<T>>> body = { ifStmt };
+        std::vector<Token> noParams;
+        Token synth(TokenType::FUN, std::string(""), ifTok.line);
+        auto lambda = make_shared<expr::LambdaExpr<T>>(synth, noParams, body, nullptr);
+        Token paren(TokenType::RIGHT_PAREN, std::string(")"), ifTok.line);
+        return make_shared<expr::Call<T>>(lambda, paren, std::vector<shared_ptr<Expr<T>>>{});
+    }
+
     throw ParseError(peek(), "Expected expression.");
 }
 
