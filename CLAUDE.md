@@ -12,7 +12,7 @@ Mac (Meme as Code) is a C++23 tree-walk interpreter where memes are first-class 
 - **VS Code Extension + LSP** - TypeScript in `mac-lang/`
 - **Language Reference** - mdBook in `docs/reference/`
 
-The Web GIF Studio and Code Playground live in a monorepo: [mac-studio-meme/mac-studio](https://github.com/mac-studio-meme/mac-studio)
+The Web GIF Studio and Code Playground live in a monorepo: [mac-studio-meme/mac-studio](https://github.com/mac-studio-meme/mac-studio). If developing locally, look for a sibling `mac-studio/` directory next to this repo. It contains `studio/` (GIF Studio), `playground/` (Code Playground), `shared/` (common JS/Python), `deploy/`, and `tests/`.
 
 ## Web Properties
 
