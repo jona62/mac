@@ -105,7 +105,11 @@ namespace meme {
                     {"png", "jpg", "jpeg", "gif", "bmp", "webp"};
                 bool catIsExt = std::find(imgExts.begin(), imgExts.end(), category) != imgExts.end();
                 bool baseIsExt = std::find(imgExts.begin(), imgExts.end(), base) != imgExts.end();
-                if (!catIsExt && !baseIsExt && !hasTraversal(category) && !hasTraversal(base)) {
+                auto isSafeName = [](const std::string& s) {
+                    return !s.empty() && s.find("..") == std::string::npos &&
+                           s.find('/') == std::string::npos && s.find('\\') == std::string::npos;
+                };
+                if (!catIsExt && !baseIsExt && isSafeName(category) && isSafeName(base)) {
                     std::string dir = "assets/templates/" + category + "/";
                     for (auto& e : imgExts) {
                         auto path = dir + base + "." + e;
@@ -117,13 +121,32 @@ namespace meme {
             }
 
             // Direct file path - try script-relative, then binary-relative
-            // Block path traversal (../) but allow symlinks within the directory
-            if (!hasTraversal(name)) {
-                auto scrPath = scriptDir() + "/" + name;
-                if (std::filesystem::exists(scrPath)) return scrPath;
-                auto binPath = binaryDir() + "/" + name;
-                if (std::filesystem::exists(binPath)) return binPath;
+            if (hasTraversal(name)) return name;
+
+            // "uploads/" is a known symlink managed by the server - allow without canonical check
+            bool trustedPrefix = name.starts_with("uploads/");
+
+            auto scrPath = scriptDir() + "/" + name;
+            if (std::filesystem::exists(scrPath)) {
+                if (trustedPrefix) return scrPath;
+                // For untrusted paths, verify canonical path stays under script dir
+                try {
+                    auto resolved = std::filesystem::canonical(scrPath).string();
+                    auto base = std::filesystem::canonical(scriptDir()).string();
+                    if (resolved.starts_with(base)) return resolved;
+                } catch (...) {}
             }
+
+            auto binPath = binaryDir() + "/" + name;
+            if (std::filesystem::exists(binPath)) {
+                if (trustedPrefix) return binPath;
+                try {
+                    auto resolved = std::filesystem::canonical(binPath).string();
+                    auto base = std::filesystem::canonical(binaryDir()).string();
+                    if (resolved.starts_with(base)) return resolved;
+                } catch (...) {}
+            }
+
             return name;
         }
 
