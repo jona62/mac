@@ -50,8 +50,8 @@ cmake -S . -B build && cmake --build build
 ## Test
 
 ```bash
-bash tests/run_tests.sh                        # 86 runtime tests
-python3 tests/analyzer/run_analyzer_tests.py   # 41 analyzer tests
+bash tests/run_tests.sh                        # runtime tests
+python3 tests/analyzer/run_analyzer_tests.py   # analyzer tests
 cd mac-lang && npx tsc --noEmit                # LSP typecheck
 ```
 
