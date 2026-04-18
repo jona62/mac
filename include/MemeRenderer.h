@@ -264,8 +264,8 @@ namespace meme {
             int imgW = cached.w, imgH = cached.h;
             const unsigned char* imgData = cached.pixels.data();
 
-            int w = (targetWidth > 0) ? targetWidth : imgW;
-            int h = (targetHeight > 0) ? targetHeight : imgH;
+            int w = (targetWidth > 0) ? std::min(targetWidth, 4096) : imgW;
+            int h = (targetHeight > 0) ? std::min(targetHeight, 4096) : imgH;
 
             // Build RGBA buffer -- fill with background, then composite template on top
             std::vector<unsigned char> pixels(w * h * 4);
