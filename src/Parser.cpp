@@ -664,6 +664,7 @@ shared_ptr<Expr<T>> Parser::arrayLiteral() {
     std::vector<shared_ptr<Expr<T>>> elements;
     if (peek().type != TokenType::RIGHT_BRACKET) {
         do {
+            if (peek().type == TokenType::RIGHT_BRACKET) break; // trailing comma
             elements.push_back(expression<T>());
         } while (match(TokenType::COMMA));
     }
@@ -679,6 +680,7 @@ shared_ptr<Expr<T>> Parser::mapLiteral() {
 
     if (peek().type != TokenType::RIGHT_BRACE) {
         do {
+            if (peek().type == TokenType::RIGHT_BRACE) break; // trailing comma
             if (match(TokenType::IDENTIFIER) || match(TokenType::STRING)) {
                 keys.push_back(previous());
             } else {
@@ -697,6 +699,7 @@ shared_ptr<Expr<T>> Parser::finishCall(shared_ptr<Expr<T>> callee) {
     std::vector<shared_ptr<Expr<T>>> arguments;
     if (peek().type != TokenType::RIGHT_PAREN) {
         do {
+            if (peek().type == TokenType::RIGHT_PAREN) break; // trailing comma
             if (arguments.size() >= 255) {
                 std::cerr << ParseError(peek(), "Can't have more than 255 arguments.").what() << std::endl;
             }

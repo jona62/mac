@@ -1,0 +1,25 @@
+// Trailing commas in arrays, maps, and function calls
+
+val a = [1, 2, 3,];
+// expect: [1, 2, 3]
+print a;
+
+val nested = [
+    ["a", "b"],
+    ["c", "d"],
+];
+// expect: [[a, b], [c, d]]
+print nested;
+
+val m = { x: 1, y: 2, };
+// expect: {x: 1, y: 2}
+print m;
+
+fun add(a, b) { a + b }
+// expect: 7
+print add(3, 4,);
+
+// Empty collections still work
+val empty = [];
+// expect: []
+print empty;
