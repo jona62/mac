@@ -40,4 +40,4 @@ style bold_red { color: "#FF0000", fontWeight: "bold" }
 
 ## Version
 
-This reference documents Mac v0.8.1.
+This reference documents Mac v0.9.0.
