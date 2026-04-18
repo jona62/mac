@@ -80,6 +80,13 @@ namespace meme {
         }
 
         // Resolve a template name to an image file path
+        // Check if a string contains path traversal sequences
+        static bool hasTraversal(const std::string& s) {
+            return s.find("..") != std::string::npos ||
+                   s.find('/') != std::string::npos ||
+                   s.find('\\') != std::string::npos;
+        }
+
         static std::string resolveTemplate(const std::string& name) {
             auto& map = templateMap();
             auto it = map.find(name);
@@ -90,7 +97,7 @@ namespace meme {
                 return it->second;
             }
 
-            // Dotted name → subdirectory lookup (e.g. "meme.shrek_smirk")
+            // Dotted name -> subdirectory lookup (e.g. "meme.shrek_smirk")
             auto dot = name.find('.');
             if (dot != std::string::npos) {
                 auto category = name.substr(0, dot);
@@ -100,7 +107,7 @@ namespace meme {
                     {"png", "jpg", "jpeg", "gif", "bmp", "webp"};
                 bool catIsExt = std::find(imgExts.begin(), imgExts.end(), category) != imgExts.end();
                 bool baseIsExt = std::find(imgExts.begin(), imgExts.end(), base) != imgExts.end();
-                if (!catIsExt && !baseIsExt) {
+                if (!catIsExt && !baseIsExt && !hasTraversal(category) && !hasTraversal(base)) {
                     std::string dir = "assets/templates/" + category + "/";
                     for (auto& e : imgExts) {
                         auto path = dir + base + "." + e;
@@ -111,11 +118,20 @@ namespace meme {
                 }
             }
 
-            // Treat as a direct file path — try script-relative, then binary-relative
+            // Direct file path - try script-relative, then binary-relative
+            // For paths with directory components, validate they resolve under allowed dirs
             auto scrPath = scriptDir() + "/" + name;
-            if (std::filesystem::exists(scrPath)) return scrPath;
+            if (std::filesystem::exists(scrPath)) {
+                auto resolved = std::filesystem::canonical(scrPath).string();
+                auto scrBase = std::filesystem::canonical(scriptDir()).string();
+                if (resolved.starts_with(scrBase)) return resolved;
+            }
             auto binPath = binaryDir() + "/" + name;
-            if (std::filesystem::exists(binPath)) return binPath;
+            if (std::filesystem::exists(binPath)) {
+                auto resolved = std::filesystem::canonical(binPath).string();
+                auto binBase = std::filesystem::canonical(binaryDir()).string();
+                if (resolved.starts_with(binBase)) return resolved;
+            }
             return name;
         }
 

@@ -45,11 +45,10 @@ namespace callable {
     }
 
     static std::string toOutputPath(const std::string& path) {
-        // Already absolute — leave it alone
-        if (!path.empty() && path[0] == '/') return path;
-        // Has directory separators — treat as relative to cwd
-        if (path.find('/') != std::string::npos || path.find('\\') != std::string::npos) return path;
-        return getOutputDir() + "/" + path;
+        // Extract just the filename — strip any directory components to prevent traversal
+        auto filename = std::filesystem::path(path).filename().string();
+        if (filename.empty()) filename = "output.png";
+        return getOutputDir() + "/" + filename;
     }
 
     static value::MacValue savedResult(bool ok, const std::string& path) {
@@ -302,8 +301,8 @@ namespace callable {
             auto topText = std::get<std::string>(args[1]);
             auto bottomText = std::get<std::string>(args[2]);
             auto centerText = std::get<std::string>(args[3]);
-            int width = static_cast<int>(std::get<double>(args[4]));
-            int height = static_cast<int>(std::get<double>(args[5]));
+            int width = std::clamp(static_cast<int>(std::get<double>(args[4])), 0, 4096);
+            int height = std::clamp(static_cast<int>(std::get<double>(args[5])), 0, 4096);
             auto outputPath = toOutputPath(std::get<std::string>(args[6]));
             auto m = std::make_shared<meme::MacMeme>("", topText, bottomText, centerText);
             m->imagePath = templatePath;
