@@ -11,10 +11,5 @@ tools/gen_templates
 !assets/templates/**/*.png
 !assets/templates/**/*.jpg
 !assets/templates/**/*.gif
-!webapp/static/og-image.png
-webapp/generated/*
-!webapp/generated/.gitkeep
-webapp/uploads/
-webapp/server.pid
-webapp/server.log
 output/
+.superpowers/

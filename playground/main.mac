@@ -47,108 +47,108 @@ style whisper {
 
 // ===== MEME DEFINITIONS (lazy) =====
 
-var canary = () -> @meme.shrek_smirk 900x900 cinematic {
+val canary = () -> @meme.shrek_smirk 900x900 cinematic {
     top: "When everyone gets "
     bottom: "But its none of your business"
 } |> clean;
 
-var trial1 = () -> grid 2x1 {
+val trial1 = () -> grid 2x1 {
     @meme.shrek_side_eye ""
     @blank cinematic { center: "Manager thinks you're fixing canaries" } |> clean
 } |> pad(5) |> border(2);
 
-var trial2 = () -> grid 2x1 {
+val trial2 = () -> grid 2x1 {
     @meme.kid_crying ""
     @blank cinematic { top: "Everyone getting 30% bump" bottom: "You got 0%" } |> clean
 } |> pad(5) |> border(2);
 
-var works_on_my_machine = () -> @meme.shrek_smirk cinematic {
+val works_on_my_machine = () -> @meme.shrek_smirk cinematic {
     top: "It works on my machine"
     bottom: "Then we'll ship your machine"
 };
 
-var debugging = () -> @meme.window_despair panic {
+val debugging = () -> @meme.window_despair panic {
     top: "console.log('here 1')"
     bottom: "console.log('here 2') // never prints"
 } |> glitch;
 
-var standup = () -> grid 2x1 {
+val standup = () -> grid 2x1 {
     @meme.girl_side_eye ""
     @blank cinematic { top: "Standup: 'Making good progress'" bottom: "Reality: Changed one variable name" }
 } |> pad(5) |> border(2);
 
-var code_review = () -> grid 2x2 {
+val code_review = () -> grid 2x2 {
     @meme.shrek_smirk shout "Opens PR: 3 lines"
     @meme.kid_crying panic "47 comments"
     @meme.shrek_side_eye shout "Fixes all comments"
     @meme.girl_side_eye panic "nit: add period"
 } |> pad(5) |> border(2);
 
-var meetings = () -> grid 2x1 {
+val meetings = () -> grid 2x1 {
     @meme.kid_crying ""
     @blank cinematic { top: "1 hour meeting, 12 people" bottom: "Let's schedule a follow-up" } |> vintage
 } |> pad(5) |> border(2);
 
-var stackoverflow = () -> @meme.girl_side_eye cinematic {
+val stackoverflow = () -> @meme.girl_side_eye cinematic {
     top: "Read the docs"
     bottom: "Copy from Stack Overflow. Ship it."
 };
 
-var git_history = () -> grid 2x2 {
+val git_history = () -> grid 2x2 {
     @meme.shrek_smirk shout "'fix'"
     @meme.shrek_side_eye shout "'fix fix'"
     @meme.kid_crying shout "'actually fix'"
     @meme.girl_side_eye panic "'WHY'"
 } |> pad(5) |> border(2);
 
-var imposter = () -> grid 2x1 {
+val imposter = () -> grid 2x1 {
     @meme.shrek_smirk shout "I have no idea what I'm doing"
     @meme.shrek_side_eye shout "Designs distributed system before lunch"
 } |> pad(5) |> border(2);
 
-var pto_deploy = () -> grid 2x1 {
+val pto_deploy = () -> grid 2x1 {
     @meme.jordan_crying ""
     @blank panic { top: "Deployed before PTO" bottom: "Pager at the airport" }
 } |> pad(5) |> border(2);
 
-var pr_waiting = () -> grid 2x1 {
+val pr_waiting = () -> grid 2x1 {
     @meme.guy_crying ""
     @blank cinematic { top: "PR opened 3 days ago" bottom: "0 reviewers. 0 comments. 0 hope." }
 } |> pad(5) |> border(2);
 
-var quick_fix = () -> @meme.jordan_crying cinematic {
+val quick_fix = () -> @meme.jordan_crying cinematic {
     top: "It's just a quick fix"
     bottom: "4 hours and 37 files later"
 };
 
-var npm_update = () -> grid 2x2 {
+val npm_update = () -> grid 2x2 {
     @meme.shrek_smirk cinematic "npm update"
     @meme.idk_about_that cinematic "847 vulnerabilities"
     @meme.jordan_crying panic "npm audit fix"
     @meme.guy_crying panic "1203 vulnerabilities"
 } |> pad(5) |> border(2);
 
-var intern_push = () -> @meme.kid_crying panic {
+val intern_push = () -> @meme.kid_crying panic {
     top: "Who pushed to main?"
     bottom: "The intern with admin access"
 } |> glitch;
 
-var lgtm = () -> grid 2x1 {
+val lgtm = () -> grid 2x1 {
     @meme.idk_about_that ""
     @blank cinematic { top: "Reviews 2000 line PR in 30s" bottom: "LGTM" }
 } |> pad(5) |> border(2);
 
-var not_a_bug = () -> grid 2x1 {
+val not_a_bug = () -> grid 2x1 {
     @meme.girl_side_eye shout "It's not a bug"
     @meme.shrek_smirk chill "It's a feature"
 } |> pad(5) |> border(2);
 
-var old_code = () -> @meme.idk_about_that cinematic {
+val old_code = () -> @meme.idk_about_that cinematic {
     top: "My own code from 6 months ago"
     bottom: "Who wrote this garbage"
 };
 
-var deploy_cycle = () -> gif loop {
+val deploy_cycle = () -> gif loop {
     @meme.shrek_smirk cinematic "Deploy to prod" : 1120ms
     @meme.shrek_side_eye chill "All tests passing" : 1360ms
     @meme.kid_crying panic "500 errors spiking" : 1520ms
@@ -156,7 +156,7 @@ var deploy_cycle = () -> gif loop {
     @meme.window_despair panic "No more Friday deploys" : 1760ms
 };
 
-var oncall = () -> timeline loop {
+val oncall = () -> gif loop {
     @meme.shrek_smirk chill { top: "Friday 5pm" bottom: "How bad can it be?" } : 2000ms
     --- fadeBlack 300ms ---
     @meme.kid_crying panic { top: "Friday 5:01pm" bottom: "SEV-2: Everything is on fire" } |> glitch : 2560ms
@@ -164,7 +164,7 @@ var oncall = () -> timeline loop {
     @meme.window_despair cinematic { top: "Monday 9am" bottom: "Hands off like a war veteran" } |> vintage : 2240ms
 };
 
-var fix_one_break_three = () -> timeline loop {
+val fix_one_break_three = () -> gif loop {
     @meme.shrek_smirk chill { top: "git commit -m 'fix: resolve null pointer'" bottom: "Feeling good" } : 2960ms
     --- crossfade 300ms ---
     @meme.idk_about_that cinematic { top: "3 new tickets" bottom: "All linked to your commit" } : 2000ms
@@ -174,7 +174,7 @@ var fix_one_break_three = () -> timeline loop {
     @meme.guy_crying panic { top: "Me realizing" bottom: "I am the bug" } : 2000ms
 };
 
-var prod_incident = () -> gif loop {
+val prod_incident = () -> gif loop {
     @meme.shrek_smirk chill "Everything is fine" : 1520ms
     @meme.window_despair cinematic "That metric looks weird" : 2000ms
     @meme.idk_about_that cinematic "Is that supposed to spike?" : 2160ms
@@ -185,49 +185,49 @@ var prod_incident = () -> gif loop {
 
 // ===== NEW MEMES =====
 
-var rebase = () -> @meme.king_bach_stare cinematic {
+val rebase = () -> @meme.king_bach_stare cinematic {
     top: "git rebase main"
     bottom: "47 conflicts in files you never touched"
 };
 
-var docker = () -> grid 2x1 {
+val docker = () -> grid 2x1 {
     @meme.shrek_smirk chill "Docker build: 0 errors"
     @meme.king_bach_stare shout "Docker run: segfault"
 } |> pad(5) |> border(2);
 
-var todo = () -> @meme.shrek_side_eye cinematic {
+val todo = () -> @meme.shrek_side_eye cinematic {
     top: "// TODO: fix this later"
     bottom: "Committed 3 years ago"
 } |> vintage;
 
-var yaml = () -> grid 2x1 {
+val yaml = () -> grid 2x1 {
     @meme.girl_side_eye ""
     @blank panic { top: "Entire pipeline broke" bottom: "Wrong indentation in YAML" }
 } |> pad(5) |> border(2);
 
-var ai_fix = () -> grid 2x2 {
+val ai_fix = () -> grid 2x2 {
     @meme.shrek_smirk chill "Ask AI to fix the bug"
     @meme.king_bach_stare cinematic "AI refactors entire codebase"
     @meme.kid_crying panic "Now nothing compiles"
     @meme.jordan_crying panic "git reset --hard"
 } |> pad(5) |> border(2);
 
-var dns = () -> @meme.window_despair shout {
+val dns = () -> @meme.window_despair shout {
     top: "It's always DNS"
     bottom: "It was DNS"
 };
 
-var regex = () -> grid 2x1 {
+val regex = () -> grid 2x1 {
     @meme.shrek_smirk shout "I'll just write a quick regex"
     @meme.window_despair whisper "3 hours later: ^(?!.*(?<=\\d)(?=\\w))"
 } |> pad(5) |> border(2);
 
-var localhost = () -> @meme.king_bach_stare cinematic {
+val localhost = () -> @meme.king_bach_stare cinematic {
     top: "Demo to stakeholders"
     bottom: "localhost refused to connect"
 };
 
-var merge_conflict = () -> timeline loop {
+val merge_conflict = () -> gif loop {
     @meme.shrek_smirk chill { top: "Feature branch" bottom: "Clean and ready" } : 2000ms
     --- crossfade 300ms ---
     @meme.king_bach_stare cinematic { top: "git pull origin main" bottom: "CONFLICT in 23 files" } : 2000ms
@@ -237,7 +237,7 @@ var merge_conflict = () -> timeline loop {
     @meme.jordan_crying panic { top: "Tests pass" bottom: "But the UI is upside down" } : 2080ms
 };
 
-var standup_timeline = () -> gif loop {
+val standup_timeline = () -> gif loop {
     @meme.shrek_smirk chill "No blockers" : 880ms
     @meme.shrek_side_eye cinematic "Well actually..." : 1280ms
     @meme.king_bach_stare cinematic "One small thing" : 1200ms
@@ -246,19 +246,19 @@ var standup_timeline = () -> gif loop {
     @meme.jordan_crying panic "We need a follow-up meeting" : 2320ms
 };
 
-var legacy = () -> grid 2x2 {
+val legacy = () -> grid 2x2 {
     @meme.shrek_smirk shout "Reads legacy code"
     @meme.shrek_side_eye shout "No tests, no docs"
     @meme.king_bach_stare panic "Last commit: 2019"
     @meme.girl_side_eye panic "Author left the company"
 } |> pad(5) |> border(2);
 
-var env_file = () -> grid 2x1 {
+val env_file = () -> grid 2x1 {
     @meme.king_bach_stare ""
     @blank panic { top: "Works in staging" bottom: "Forgot to set env vars in prod" }
 } |> pad(5) |> border(2);
 
-var microservices = () -> timeline loop {
+val microservices = () -> gif loop {
     @meme.shrek_smirk chill { top: "Monolith is too complex" bottom: "Let's do microservices" } : 2000ms
     --- crossfade 300ms ---
     @meme.shrek_side_eye cinematic { top: "6 months later" bottom: "47 services, 200 repos" } : 2000ms
