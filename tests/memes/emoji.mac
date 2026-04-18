@@ -1,0 +1,9 @@
+// Emoji rendering - color emoji from sprite atlas
+// These should render without crashing (visual verification)
+
+@blank "Hello 🔥💯🚀" => "emoji_basic.png";
+
+@dark { top: "Mixed 🎉" bottom: "Text + Emoji 🎨" } => "emoji_mixed.png";
+
+// expect: Done
+print "Done";

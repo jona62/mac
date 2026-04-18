@@ -18,6 +18,7 @@
 #include <vector>               // vector (pixel buffers)
 
 // Do NOT define STB_*_IMPLEMENTATION here -- already in src/stb_impl.cpp
+#include "EmojiAtlas.h"         // meme::EmojiAtlas (color emoji sprite rendering)
 #include "RenderSurface.h"      // meme::RenderSurface (pixel buffer output)
 #include "stb/stb_image.h"      // stbi_load, stbi_image_free
 #include "stb/stb_image_write.h" // stbi_write_png
@@ -26,6 +27,34 @@
 namespace meme {
 
     // TextStyle is defined in MacMeme.h to avoid circular dependency
+
+    // Decode one UTF-8 codepoint from a string, advancing the index.
+    // Returns the Unicode codepoint, or 0xFFFD (replacement char) on invalid input.
+    inline int utf8Decode(const std::string& s, size_t& i) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        int cp = 0;
+        int extra = 0;
+        if (c < 0x80) { return c; }
+        else if ((c & 0xE0) == 0xC0) { cp = c & 0x1F; extra = 1; }
+        else if ((c & 0xF0) == 0xE0) { cp = c & 0x0F; extra = 2; }
+        else if ((c & 0xF8) == 0xF0) { cp = c & 0x07; extra = 3; }
+        else { return 0xFFFD; }
+        for (int j = 0; j < extra; ++j) {
+            if (++i >= s.size()) return 0xFFFD;
+            unsigned char b = static_cast<unsigned char>(s[i]);
+            if ((b & 0xC0) != 0x80) return 0xFFFD;
+            cp = (cp << 6) | (b & 0x3F);
+        }
+        return cp;
+    }
+
+    // Collect all codepoints from a UTF-8 string.
+    inline std::vector<int> utf8Codepoints(const std::string& s) {
+        std::vector<int> cps;
+        for (size_t i = 0; i < s.size(); ++i)
+            cps.push_back(utf8Decode(s, i));
+        return cps;
+    }
 
     class MemeRenderer {
     public:
@@ -181,17 +210,32 @@ namespace meme {
 
         struct CachedFont { std::vector<unsigned char> data; stbtt_fontinfo info; };
 
-        static CachedFont& fontCache() {
-            static CachedFont cache;
-            if (cache.data.empty()) {
-                std::string fontPath = getAssetsDir() + "/fonts/meme-font.ttf";
-                cache.data = readFile(fontPath);
-                if (cache.data.empty()) throw std::runtime_error("MemeRenderer: cannot load font");
-                stbtt_InitFont(&cache.info, cache.data.data(),
-                    stbtt_GetFontOffsetForIndex(cache.data.data(), 0));
+        static CachedFont loadFont(const std::string& path) {
+            CachedFont f;
+            f.data = readFile(path);
+            if (!f.data.empty()) {
+                stbtt_InitFont(&f.info, f.data.data(),
+                    stbtt_GetFontOffsetForIndex(f.data.data(), 0));
             }
-            return cache;
+            return f;
         }
+
+        static std::vector<CachedFont>& fontChain() {
+            static std::vector<CachedFont> chain;
+            if (chain.empty()) {
+                std::string assetsDir = getAssetsDir();
+                std::string dir = assetsDir + "/fonts/";
+                auto primary = loadFont(dir + "meme-font.ttf");
+                if (primary.data.empty()) throw std::runtime_error("MemeRenderer: cannot load font");
+                chain.push_back(std::move(primary));
+                auto fallback = loadFont(dir + "fallback.ttf");
+                if (!fallback.data.empty()) chain.push_back(std::move(fallback));
+                EmojiAtlas::instance(assetsDir);
+            }
+            return chain;
+        }
+
+        struct GlyphResult { const CachedGlyph* glyph; int fontIndex; };
 
         static int scaleKey(float scale) {
             return std::max(1, static_cast<int>(std::lround(scale * 10000.0f)));
@@ -223,8 +267,9 @@ namespace meme {
             return out.str();
         }
 
-        static const CachedGlyph& glyphFor(stbtt_fontinfo& fontInfo, int codepoint, float scale) {
-            std::uint64_t key = (static_cast<std::uint64_t>(scaleKey(scale)) << 32)
+        static const CachedGlyph& glyphFor(stbtt_fontinfo& fontInfo, int codepoint, float scale, int fontIndex = 0) {
+            std::uint64_t key = (static_cast<std::uint64_t>(fontIndex) << 48)
+                | (static_cast<std::uint64_t>(scaleKey(scale)) << 32)
                 | static_cast<std::uint32_t>(codepoint);
             auto& cache = glyphCache();
             auto it = cache.find(key);
@@ -244,6 +289,21 @@ namespace meme {
             }
 
             return cache.emplace(key, std::move(glyph)).first->second;
+        }
+
+        static GlyphResult glyphForFallback(int codepoint, float fontSize) {
+            auto& chain = fontChain();
+            for (int fi = 0; fi < static_cast<int>(chain.size()); ++fi) {
+                int glyphIdx = stbtt_FindGlyphIndex(&chain[fi].info, codepoint);
+                if (glyphIdx != 0) {
+                    float s = stbtt_ScaleForPixelHeight(&chain[fi].info, fontSize);
+                    const auto& g = glyphFor(chain[fi].info, codepoint, s, fi);
+                    return {&g, fi};
+                }
+            }
+            float s = stbtt_ScaleForPixelHeight(&chain[0].info, fontSize);
+            const auto& g = glyphFor(chain[0].info, codepoint, s, 0);
+            return {&g, 0};
         }
 
         // ---- internal render ----
@@ -313,22 +373,20 @@ namespace meme {
                     }
                 }
             }
-            // Load font (cached — local copy of fontInfo since stbtt may mutate it)
-            auto& font = fontCache();
-            const auto& fontData = font.data;
-            stbtt_fontinfo fontInfo = font.info;
+            auto& chain = fontChain();
+            stbtt_fontinfo fontInfo = chain[0].info;
             TextLayoutCache textLayoutCache;
 
             // Draw top text (upper half) — anchored to top edge
             if (!topText.empty()) {
                 int regionY = 0;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, topText,
+                drawMemeText(pixels, w, h, fontInfo, topText,
                              regionY, regionH, activeStyle, textLayoutCache, -1);
             }
 
             if (!centerText.empty()) {
-                drawMemeText(pixels, w, h, fontInfo, fontData, centerText,
+                drawMemeText(pixels, w, h, fontInfo, centerText,
                              0, h, activeStyle, textLayoutCache, 0);
             }
 
@@ -336,18 +394,17 @@ namespace meme {
             if (!bottomText.empty()) {
                 int regionY = h / 2;
                 int regionH = h / 2;
-                drawMemeText(pixels, w, h, fontInfo, fontData, bottomText,
+                drawMemeText(pixels, w, h, fontInfo, bottomText,
                              regionY, regionH, activeStyle, textLayoutCache, 1);
             }
 
             // Draw positioned text entries at absolute x,y coordinates
             for (const auto& pt : posTexts) {
                 if (pt.content.empty()) continue;
-                // Render at the specified position — use a small region around the point
-                int regionH = h / 4;  // use 25% of image height for font sizing
+                int regionH = h / 4;
                 TextStyle positionedStyle = activeStyle;
                 if (pt.fontSizeOverride != 0) positionedStyle.fontSizeOverride = pt.fontSizeOverride;
-                drawMemeText(pixels, w, h, fontInfo, fontData, pt.content,
+                drawMemeText(pixels, w, h, fontInfo, pt.content,
                              pt.y - regionH / 2, regionH, positionedStyle, textLayoutCache, 0,
                              pt.x);
             }
@@ -357,19 +414,16 @@ namespace meme {
             return pixels;
         }
 
-        // Word-wrap text to fit within maxWidth
-        static std::vector<std::string> wrapText(stbtt_fontinfo& fontInfo,
-                                                  const std::string& text,
-                                                  float scale, float maxWidth,
+        static std::vector<std::string> wrapText(const std::string& text,
+                                                  float fontSize, float maxWidth,
                                                   TextLayoutCache& cache) {
-            std::string cacheKey = std::to_string(scaleKey(scale)) + "|" +
+            std::string cacheKey = std::to_string(static_cast<int>(fontSize * 100)) + "|" +
                 std::to_string(static_cast<int>(std::lround(maxWidth))) + "|" + text;
             auto cached = cache.wraps.find(cacheKey);
             if (cached != cache.wraps.end()) return cached->second;
 
             std::vector<std::string> lines;
             std::vector<std::string> words;
-            // Split on spaces
             std::string word;
             for (char c : text) {
                 if (c == ' ') {
@@ -384,7 +438,7 @@ namespace meme {
             std::string line = words[0];
             for (size_t i = 1; i < words.size(); ++i) {
                 std::string candidate = line + " " + words[i];
-                if (measureText(fontInfo, candidate, scale, cache) <= maxWidth) {
+                if (measureText(candidate, fontSize, cache) <= maxWidth) {
                     line = candidate;
                 } else {
                     lines.push_back(line);
@@ -401,7 +455,6 @@ namespace meme {
         static void drawMemeText(std::vector<unsigned char>& pixels,
                                  int imgW, int imgH,
                                  stbtt_fontinfo& fontInfo,
-                                 const std::vector<unsigned char>& fontData,
                                  const std::string& text,
                                  int regionY, int regionH,
                                  const TextStyle& activeStyle,
@@ -412,31 +465,28 @@ namespace meme {
             std::string upper = activeStyle.uppercase ? toUpper(text) : text;
             float maxWidth = imgW * 0.9f;
 
-            // Resolve fontSize: presets (sm/md/lg/xlg encoded as -1..-4),
-            // absolute pixel value (> 0), or auto-size (0)
             float fontSize = 0;
             float fso = activeStyle.fontSizeOverride;
-            if (fso == -1)      fontSize = regionH * 0.25f; // sm
-            else if (fso == -2) fontSize = regionH * 0.40f; // md
-            else if (fso == -3) fontSize = regionH * 0.55f; // lg
-            else if (fso == -4) fontSize = regionH * 0.70f; // xlg
-            else if (fso > 0)   fontSize = fso;             // absolute px
-            else                fontSize = regionH * 0.70f; // auto (default)
+            if (fso == -1)      fontSize = regionH * 0.25f;
+            else if (fso == -2) fontSize = regionH * 0.40f;
+            else if (fso == -3) fontSize = regionH * 0.55f;
+            else if (fso == -4) fontSize = regionH * 0.70f;
+            else if (fso > 0)   fontSize = fso;
+            else                fontSize = regionH * 0.70f;
             if (fontSize < 10.0f) fontSize = 10.0f;
 
             float scale = 0;
             std::vector<std::string> lines;
 
-            // Auto-size: shrink until all wrapped lines fit width and block fits height
             while (fontSize >= 8.0f) {
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                lines = wrapText(fontInfo, upper, scale, maxWidth, textLayoutCache);
+                lines = wrapText(upper, fontSize, maxWidth, textLayoutCache);
                 float lineHeight = fontSize * 1.1f;
                 float blockHeight = lines.size() * lineHeight;
                 bool fits = (blockHeight <= regionH * 0.85f);
                 if (fits) {
                     for (auto& l : lines) {
-                        if (measureText(fontInfo, l, scale, textLayoutCache) > maxWidth) {
+                        if (measureText(l, fontSize, textLayoutCache) > maxWidth) {
                             fits = false;
                             break;
                         }
@@ -449,10 +499,9 @@ namespace meme {
             if (fontSize < 8.0f) {
                 fontSize = 8.0f;
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
-                lines = wrapText(fontInfo, upper, scale, maxWidth, textLayoutCache);
+                lines = wrapText(upper, fontSize, maxWidth, textLayoutCache);
             }
 
-            // Vertical metrics
             int ascent, descent, lineGap;
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
             float ascentPx = ascent * scale;
@@ -461,100 +510,128 @@ namespace meme {
             float margin = regionH * 0.08f;
             float blockStartY;
             if (align < 0) {
-                // Top-aligned: anchor to top edge with margin
                 blockStartY = regionY + margin;
             } else if (align > 0) {
-                // Bottom-aligned: anchor to bottom edge with margin
                 blockStartY = regionY + regionH - blockHeight - margin;
             } else {
-                // Centered (e.g. for center: text)
                 blockStartY = regionY + (regionH - blockHeight) / 2.0f;
             }
 
-            // Draw each line
             for (size_t li = 0; li < lines.size(); ++li) {
-                float lineWidth = measureText(fontInfo, lines[li], scale, textLayoutCache);
+                float lineWidth = measureText(lines[li], fontSize, textLayoutCache);
                 int startX = (xCenter >= 0)
                     ? static_cast<int>(xCenter - lineWidth / 2.0f)
                     : static_cast<int>((imgW - lineWidth) / 2.0f);
                 int startY = static_cast<int>(blockStartY + li * lineHeight + ascentPx);
 
-                // Draw shadow if enabled
                 if (activeStyle.shadowOffsetX != 0 || activeStyle.shadowOffsetY != 0) {
-                    drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                    drawTextLine(pixels, imgW, imgH, lines[li], fontSize,
                                  startX + activeStyle.shadowOffsetX,
                                  startY + activeStyle.shadowOffsetY,
                                  activeStyle.shadowR, activeStyle.shadowG,
-                                 activeStyle.shadowB, activeStyle.shadowA);
+                                 activeStyle.shadowB, activeStyle.shadowA, true);
                 }
 
-                // Draw outline (skip if not bold — gives clean caption look)
                 int r = activeStyle.bold ? activeStyle.outlineWidth : 0;
                 for (int ox = -r; ox <= r; ++ox) {
                     for (int oy = -r; oy <= r; ++oy) {
                         if (ox == 0 && oy == 0) continue;
                         if (ox * ox + oy * oy > r * r) continue;
-                        drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                        drawTextLine(pixels, imgW, imgH, lines[li], fontSize,
                                      startX + ox, startY + oy,
                                      activeStyle.outlineR, activeStyle.outlineG,
-                                     activeStyle.outlineB, 255);
+                                     activeStyle.outlineB, 255, true);
                     }
                 }
 
-                // Draw text
-                drawTextLine(pixels, imgW, imgH, fontInfo, lines[li], scale,
+                drawTextLine(pixels, imgW, imgH, lines[li], fontSize,
                              startX, startY,
                              activeStyle.textR, activeStyle.textG,
-                             activeStyle.textB, activeStyle.textA);
+                             activeStyle.textB, activeStyle.textA, false);
             }
         }
 
-        // Measure total width of a string in pixels
-        static float measureText(stbtt_fontinfo& fontInfo,
-                                 const std::string& text,
-                                 float scale,
+        static float measureText(const std::string& text,
+                                 float fontSize,
                                  TextLayoutCache& cache) {
-            std::string cacheKey = std::to_string(scaleKey(scale)) + "|" + text;
+            std::string cacheKey = std::to_string(static_cast<int>(fontSize * 100)) + "|" + text;
             auto cached = cache.widths.find(cacheKey);
             if (cached != cache.widths.end()) return cached->second;
 
             float width = 0;
-            for (size_t i = 0; i < text.size(); ++i) {
-                const auto& glyph = glyphFor(fontInfo, static_cast<unsigned char>(text[i]), scale);
-                width += glyph.advance;
-                if (i + 1 < text.size()) {
-                    int kern = stbtt_GetCodepointKernAdvance(
-                        &fontInfo, static_cast<unsigned char>(text[i]), static_cast<unsigned char>(text[i + 1]));
-                    width += kern * scale;
+            auto cps = utf8Codepoints(text);
+            auto& chain = fontChain();
+            auto& emoji = EmojiAtlas::instance();
+            int emojiH = static_cast<int>(fontSize * 0.85f);
+
+            for (size_t i = 0; i < cps.size(); ++i) {
+                if (emoji.isLoaded() && EmojiAtlas::isEmojiStart(cps[i])) {
+                    size_t saved = i;
+                    std::string ek = emoji.matchEmoji(cps, i);
+                    if (!ek.empty()) {
+                        width += emoji.emojiAdvance(emojiH);
+                        continue;
+                    }
+                    i = saved;
+                }
+                auto [glyph, fi] = glyphForFallback(cps[i], fontSize);
+                width += glyph->advance;
+                if (i + 1 < cps.size()) {
+                    auto [nextGlyph, nfi] = glyphForFallback(cps[i + 1], fontSize);
+                    if (fi == nfi) {
+                        float s = stbtt_ScaleForPixelHeight(&chain[fi].info, fontSize);
+                        int kern = stbtt_GetCodepointKernAdvance(&chain[fi].info, cps[i], cps[i + 1]);
+                        width += kern * s;
+                    }
                 }
             }
             cache.widths.emplace(std::move(cacheKey), width);
             return width;
         }
 
-        // Draw a single line of text onto the RGBA buffer
         static void drawTextLine(std::vector<unsigned char>& pixels,
                                  int imgW, int imgH,
-                                 stbtt_fontinfo& fontInfo,
                                  const std::string& text,
-                                 float scale,
+                                 float fontSize,
                                  int x0, int y0,
-                                 unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+                                 unsigned char r, unsigned char g, unsigned char b, unsigned char a,
+                                 bool skipEmoji = false) {
             float xPos = static_cast<float>(x0);
-            for (size_t i = 0; i < text.size(); ++i) {
-                const auto& glyph = glyphFor(fontInfo, static_cast<unsigned char>(text[i]), scale);
-                if (!glyph.bitmap.empty()) {
-                    int cx = static_cast<int>(xPos) + glyph.xoff;
-                    int cy = y0 + glyph.yoff;
-                    for (int py = 0; py < glyph.h; ++py) {
-                        for (int px = 0; px < glyph.w; ++px) {
+            auto cps = utf8Codepoints(text);
+            auto& chain = fontChain();
+            auto& emoji = EmojiAtlas::instance();
+            int emojiH = static_cast<int>(fontSize * 0.85f);
+
+            int ascent, descent, lineGap;
+            stbtt_GetFontVMetrics(&chain[0].info, &ascent, &descent, &lineGap);
+            float primaryScale = stbtt_ScaleForPixelHeight(&chain[0].info, fontSize);
+
+            for (size_t i = 0; i < cps.size(); ++i) {
+                if (!skipEmoji && emoji.isLoaded() && EmojiAtlas::isEmojiStart(cps[i])) {
+                    size_t saved = i;
+                    std::string ek = emoji.matchEmoji(cps, i);
+                    if (!ek.empty()) {
+                        int ey = y0 - static_cast<int>(ascent * primaryScale * 0.85f);
+                        emoji.blitEmoji(ek, pixels, imgW, imgH,
+                                        static_cast<int>(xPos), ey, emojiH);
+                        xPos += emoji.emojiAdvance(emojiH);
+                        continue;
+                    }
+                    i = saved;
+                }
+
+                auto [glyph, fi] = glyphForFallback(cps[i], fontSize);
+                if (!glyph->bitmap.empty()) {
+                    int cx = static_cast<int>(xPos) + glyph->xoff;
+                    int cy = y0 + glyph->yoff;
+                    for (int py = 0; py < glyph->h; ++py) {
+                        for (int px = 0; px < glyph->w; ++px) {
                             int dx = cx + px;
                             int dy = cy + py;
                             if (dx < 0 || dx >= imgW || dy < 0 || dy >= imgH) continue;
-                            unsigned char alpha = glyph.bitmap[py * glyph.w + px];
+                            unsigned char alpha = glyph->bitmap[py * glyph->w + px];
                             if (alpha == 0) continue;
                             int idx = (dy * imgW + dx) * 4;
-                            // Alpha-blend
                             float srcA = (alpha * a) / (255.0f * 255.0f);
                             float dstA = pixels[idx + 3] / 255.0f;
                             float outA = srcA + dstA * (1.0f - srcA);
@@ -571,11 +648,14 @@ namespace meme {
                     }
                 }
 
-                xPos += glyph.advance;
-                if (i + 1 < text.size()) {
-                    int kern = stbtt_GetCodepointKernAdvance(
-                        &fontInfo, static_cast<unsigned char>(text[i]), static_cast<unsigned char>(text[i + 1]));
-                    xPos += kern * scale;
+                xPos += glyph->advance;
+                if (i + 1 < cps.size()) {
+                    auto [nextGlyph, nfi] = glyphForFallback(cps[i + 1], fontSize);
+                    if (fi == nfi) {
+                        float s = stbtt_ScaleForPixelHeight(&chain[fi].info, fontSize);
+                        int kern = stbtt_GetCodepointKernAdvance(&chain[fi].info, cps[i], cps[i + 1]);
+                        xPos += kern * s;
+                    }
                 }
             }
         }
@@ -601,15 +681,15 @@ namespace meme {
 
         static std::string toLower(const std::string& s) {
             std::string r = s;
-            std::transform(r.begin(), r.end(), r.begin(),
-                           [](unsigned char c) { return std::tolower(c); });
+            for (auto& c : r)
+                if (static_cast<unsigned char>(c) < 0x80) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             return r;
         }
 
         static std::string toUpper(const std::string& s) {
             std::string r = s;
-            std::transform(r.begin(), r.end(), r.begin(),
-                           [](unsigned char c) { return std::toupper(c); });
+            for (auto& c : r)
+                if (static_cast<unsigned char>(c) < 0x80) c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
             return r;
         }
     };

@@ -1,0 +1,11 @@
+// Unicode text rendering - Greek, math symbols, accented Latin
+// These should render without crashing (visual verification)
+
+@blank "E=mc² ψ(x,t)" => "unicode_latin_greek.png";
+
+@blank { top: "ℏ=h/2π" bottom: "λ=h/p  E=hν" } => "unicode_math.png";
+
+@blank "Schrödinger's Cat" => "unicode_accented.png";
+
+// expect: Done
+print "Done";

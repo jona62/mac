@@ -11,5 +11,6 @@ tools/gen_templates
 !assets/templates/**/*.png
 !assets/templates/**/*.jpg
 !assets/templates/**/*.gif
+!assets/emoji/*.png
 output/
 .superpowers/
