@@ -121,6 +121,16 @@ val area = (s) -> match s {
 print area(Shape.Circle(5));
 ```
 
+### If/Else Expressions
+
+`if`/`else` can be used as an expression anywhere. The `else` branch is required.
+
+```mac
+val x = if (10 > 5) "big" else "small";
+val max = (a, b) -> if (a > b) a else b;
+val grade = (s) -> if (s >= 90) "A" else if (s >= 80) "B" else "F";
+```
+
 ### Expression Blocks
 
 ```mac

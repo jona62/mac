@@ -22,6 +22,40 @@ if (x > 5) {
 // Output: big
 ```
 
+## if / else expressions
+
+`if`/`else` can also be used as an expression, returning a value. The `else` branch is required when used as an expression.
+
+```
+val x = if (10 > 5) "big" else "small";
+print x;
+// Output: big
+```
+
+Both branches can use block expressions:
+
+```
+val x = if (10 > 5) { "big" } else { "small" };
+print x;
+// Output: big
+```
+
+If expressions work anywhere an expression is valid - in assignments, function arguments, pipes, and lambdas:
+
+```
+val max = (a, b) -> if (a > b) a else b;
+print max(3, 7);
+// Output: 7
+```
+
+Nested if expressions act as else-if chains:
+
+```
+val grade = (s) -> if (s >= 90) "A" else if (s >= 80) "B" else if (s >= 70) "C" else "F";
+print grade(95);
+// Output: A
+```
+
 ## while
 
 ```

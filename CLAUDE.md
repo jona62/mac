@@ -87,6 +87,7 @@ All three must pass before pushing.
 | Implicit returns | Functions return last expression without `return` | v0.7 |
 | Trailing commas | Allowed in arrays, maps, and function calls | v0.8 |
 | Escape sequences | `\n`, `\t`, `\\`, `\"`, `\r`, `\{` in strings | v0.8 |
+| If/else expressions | `if (cond) expr else expr` usable anywhere an expression is expected | v0.9 |
 | Save operator | `expr => "file.png"` writes output to `~/mac/output/` (or `MAC_OUTPUT_DIR`) | v0.1 |
 
 ### Available Templates
