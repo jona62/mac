@@ -29,8 +29,14 @@ namespace callable {
 
     static std::shared_ptr<meme::RenderSurface> getRenderSurface(const value::MacValue& val);
 
-    // All user output goes to output/ directory
+    // All user output goes to output/ directory (overridable via MAC_OUTPUT_DIR)
     static std::string getOutputDir() {
+        const char* override = std::getenv("MAC_OUTPUT_DIR");
+        if (override && override[0] != '\0') {
+            std::string dir(override);
+            std::filesystem::create_directories(dir);
+            return dir;
+        }
         const char* home = std::getenv("HOME");
         if (!home) home = ".";
         std::string dir = std::string(home) + "/mac/output";
