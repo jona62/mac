@@ -182,8 +182,7 @@ Version lives in the `VERSION` file (single source of truth). CMake injects it a
 - Most implementation lives in headers due to C++ templates
 - `MacValue` is a `std::variant` with 13 alternatives (string, double, bool, monostate, MacCallable, MacInstance, MacArray, MacMap, RenderSurface, MacMeme, MacGif, MacTimeline, MacEnum)
 - The analyzer outputs JSON via `nlohmann/json` for LSP consumption
-- `MacTimeline` (C++ class) is the internal engine for gif transitions - not exposed to users
-- `_timeline_render` is the only surviving internal timeline native (used by `Gif.save()`)
+- `MacTimeline` is an internal C++ class for gif transition rendering - not exposed to users, used automatically by `gif { }` blocks with `--- transition ---` syntax
 - `Environment` tracks `immutables` set for `val` enforcement
 - `pendingTailExpr_` parser field communicates tail expressions for implicit returns
 - `MAC_OUTPUT_DIR` env var overrides default output directory (`~/mac/output/`)
