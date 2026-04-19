@@ -365,3 +365,83 @@ gif {
 } => "witness.gif";
 
 print "witness.gif saved";
+
+
+// ============================================================
+// "SCOREBOARD" - animated stat reveal
+// Techniques: data-driven frames, effect intensity from values,
+//   grid spread dashboard, string interpolation
+//
+// Customize: stats array and title
+// ============================================================
+
+val board_title = "Q4 RESULTS";
+
+val stats = [
+    { label: "USERS",    value: "12.4K", color: "#00EEFF", intensity: 4 },
+    { label: "REVENUE",  value: "$840K", color: "#00FF88", intensity: 6 },
+    { label: "GROWTH",   value: "+37%",  color: "#AAFF00", intensity: 8 },
+    { label: "UPTIME",   value: "99.9%", color: "#FFD700", intensity: 10 },
+];
+
+effect board_base = contrast(1.3) >> glow(4);
+
+style title_bar {
+    color: "#FFFFFF"
+    outline: 3
+    outlineColor: "#111111"
+    shadow: 4
+    shadowColor: "#FFFFFF44"
+}
+
+// Generate a styled frame per stat
+val stat_frames = stats |> map(s -> {
+    style stat {
+        color: s["color"]
+        outline: 3
+        outlineColor: "#111111"
+        shadow: s["intensity"]
+        shadowColor: "{s[\"color\"]}88"
+    }
+    @dark 700x400 stat {
+        top: s["label"]
+        bottom: s["value"]
+    } |> board_base >> glow(s["intensity"])
+});
+
+// Find the winner (last entry = highest intensity)
+val winner = stats[len(stats) - 1];
+
+style winner_style {
+    color: winner["color"]
+    outline: 5
+    outlineColor: "#222222"
+    shadow: 12
+    shadowColor: "{winner[\"color\"]}99"
+}
+
+effect winner_glow = saturate(3.0) >> glow(16) >> contrast(1.5) >> chromatic(2);
+
+gif {
+    // Title
+    @dark 700x400 title_bar { center: board_title } |> board_base : 1.5s
+    --- wipe 400ms ---
+
+    // Reveal each stat
+    stat_frames[0] : 1s
+    --- slideRight 300ms easeOut ---
+    stat_frames[1] : 1s
+    --- slideRight 300ms easeOut ---
+    stat_frames[2] : 1s
+    --- slideRight 300ms easeOut ---
+    stat_frames[3] : 1s
+    --- fadeBlack 400ms ---
+
+    // Winner highlight
+    @dark 700x400 winner_style { top: winner["label"] bottom: winner["value"] } |> winner_glow : 2s
+    --- zoom 300ms bounce ---
+    @dark 700x400 winner_style { center: winner["value"] } |> winner_glow : 1.5s
+    --- fadeBlack 600ms ---
+} => "scoreboard.gif";
+
+print "scoreboard.gif saved";
