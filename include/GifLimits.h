@@ -5,7 +5,7 @@
 
 namespace meme {
 
-    inline constexpr std::size_t MAX_GIF_FRAMES = 200;
+    inline constexpr std::size_t MAX_GIF_FRAMES = 500;
 
 } // namespace meme
 

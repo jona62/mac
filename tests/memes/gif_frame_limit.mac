@@ -2,10 +2,10 @@ val frame = @blank 16x16 "x";
 val duration = Duration(50);
 var g = Gif();
 
-for (var i = 0; i < 201; i = i + 1) {
+for (var i = 0; i < 501; i = i + 1) {
     g.frame(frame, duration);
 }
 
 g.save("too_many_frames.gif");
 
-// expect runtime error: GIF frame limit exceeded (max 200 frames).
+// expect runtime error: GIF frame limit exceeded (max 500 frames).
