@@ -467,12 +467,12 @@ namespace meme {
 
             float fontSize = 0;
             float fso = activeStyle.fontSizeOverride;
-            if (fso == -1)      fontSize = regionH * 0.25f;
-            else if (fso == -2) fontSize = regionH * 0.40f;
-            else if (fso == -3) fontSize = regionH * 0.55f;
-            else if (fso == -4) fontSize = regionH * 0.70f;
+            if (fso == -1)      fontSize = regionH * 0.20f;
+            else if (fso == -2) fontSize = regionH * 0.30f;
+            else if (fso == -3) fontSize = regionH * 0.45f;
+            else if (fso == -4) fontSize = regionH * 0.60f;
             else if (fso > 0)   fontSize = fso;
-            else                fontSize = regionH * 0.70f;
+            else                fontSize = regionH * 0.55f;
             if (fontSize < 10.0f) fontSize = 10.0f;
 
             float scale = 0;
@@ -481,7 +481,7 @@ namespace meme {
             while (fontSize >= 8.0f) {
                 scale = stbtt_ScaleForPixelHeight(&fontInfo, fontSize);
                 lines = wrapText(upper, fontSize, maxWidth, textLayoutCache);
-                float lineHeight = fontSize * 1.1f;
+                float lineHeight = fontSize * 1.05f;
                 float blockHeight = lines.size() * lineHeight;
                 bool fits = (blockHeight <= regionH * 0.85f);
                 if (fits) {
@@ -505,7 +505,7 @@ namespace meme {
             int ascent, descent, lineGap;
             stbtt_GetFontVMetrics(&fontInfo, &ascent, &descent, &lineGap);
             float ascentPx = ascent * scale;
-            float lineHeight = fontSize * 1.1f;
+            float lineHeight = fontSize * 1.05f;
             float blockHeight = lines.size() * lineHeight;
             float margin = regionH * 0.08f;
             float blockStartY;

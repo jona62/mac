@@ -526,7 +526,17 @@ namespace interpreter {
         MacValue visitArrayExpr(expr::ArrayExpr<MacValue>* expr) override {
             auto arr = std::make_shared<collection::MacArray>();
             for (auto& elem : expr->elements) {
-                arr->elements.push_back(evaluate(elem));
+                if (dynamic_cast<expr::SpreadExpr<MacValue>*>(elem.get())) {
+                    auto val = evaluate(elem);
+                    if (auto* inner = std::get_if<std::shared_ptr<collection::MacArray>>(&val)) {
+                        for (auto& e : (*inner)->elements)
+                            arr->elements.push_back(e);
+                    } else {
+                        arr->elements.push_back(val);
+                    }
+                } else {
+                    arr->elements.push_back(evaluate(elem));
+                }
             }
             return MacValue(arr);
         }
@@ -899,34 +909,70 @@ namespace interpreter {
             return std::monostate{}; // no match, return nil
         }
 
+        MacValue visitSpreadExpr(expr::SpreadExpr<MacValue>* expr) override {
+            return evaluate(expr->expr);
+        }
+
         MacValue visitGridBlockExpr(expr::GridBlockExpr<MacValue>* expr) override {
-            // Evaluate all entries into an array
             auto arr = std::make_shared<collection::MacArray>();
             for (auto& e : expr->entries) {
-                arr->elements.push_back(evaluate(e));
+                if (dynamic_cast<expr::SpreadExpr<MacValue>*>(e.get())) {
+                    auto val = evaluate(e);
+                    if (auto* inner = std::get_if<std::shared_ptr<collection::MacArray>>(&val)) {
+                        for (auto& elem : (*inner)->elements)
+                            arr->elements.push_back(elem);
+                    } else {
+                        arr->elements.push_back(val);
+                    }
+                } else {
+                    arr->elements.push_back(evaluate(e));
+                }
             }
 
-            // Warn on item/slot mismatch
-            int slots = expr->cols * expr->rows;
+            int cols = expr->cols;
+            int rows = expr->rows;
+
+            if (cols == -1) {
+                int items = static_cast<int>(arr->elements.size());
+                if (items > 0 && std::holds_alternative<std::shared_ptr<collection::MacArray>>(arr->elements[0])) {
+                    rows = items;
+                    auto& firstRow = std::get<std::shared_ptr<collection::MacArray>>(arr->elements[0]);
+                    cols = static_cast<int>(firstRow->elements.size());
+                    auto flat = std::make_shared<collection::MacArray>();
+                    for (auto& rowVal : arr->elements) {
+                        if (auto* rowArr = std::get_if<std::shared_ptr<collection::MacArray>>(&rowVal)) {
+                            for (auto& elem : (*rowArr)->elements)
+                                flat->elements.push_back(elem);
+                        } else {
+                            flat->elements.push_back(rowVal);
+                        }
+                    }
+                    arr = flat;
+                } else {
+                    cols = items;
+                    rows = 1;
+                }
+            }
+
+            int slots = cols * rows;
             int items = static_cast<int>(arr->elements.size());
             if (items > slots) {
-                std::cerr << "grid " << expr->cols << "x" << expr->rows
-                          << ": " << items << " items provided, only " << slots
+                std::cerr << "grid " << cols << "x" << rows
+                          << ": " << items << " items, " << slots
                           << " slots - last " << (items - slots) << " truncated" << std::endl;
             } else if (items < slots) {
-                std::cerr << "grid " << expr->cols << "x" << expr->rows
-                          << ": " << items << " items provided, " << slots
+                std::cerr << "grid " << cols << "x" << rows
+                          << ": " << items << " items, " << slots
                           << " slots - " << (slots - items) << " filled with blank" << std::endl;
             }
 
-            // Call toGrid(arr, cols, rows)
             auto toGridFn = env->get(token::Token(token::TokenType::IDENTIFIER,
                 token::TokenValue(std::string("toGrid")), 0));
             auto fn = std::get<shared_ptr<callable::MacCallable>>(toGridFn);
             return fn->call(shared_from_this(), {
                 MacValue(arr),
-                MacValue(static_cast<double>(expr->cols)),
-                MacValue(static_cast<double>(expr->rows))
+                MacValue(static_cast<double>(cols)),
+                MacValue(static_cast<double>(rows))
             });
         }
 

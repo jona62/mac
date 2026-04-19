@@ -75,6 +75,7 @@ All three must pass before pushing.
 | Meme assets | `@meme.shrek_smirk "text"` - dotted name resolves from assets/templates/ | v0.1 |
 | Effects | `blur(5)`, `sepia`, `grayscale`, composable with `>>` | v0.1 |
 | Grid layout | `grid 2x2 { ... }` with mismatch warnings (truncate or fill blank) | v0.1 |
+| Grid spread | `grid 2x2 { ...arr }`, `grid arr`, `grid { ...arr2d }` auto-dims | v0.10 |
 | GIF animation | `gif loop { @tmpl "text" : 500ms }` with transitions and easing | v0.3 |
 | Pipe operator | `value \|> func` | v0.4 |
 | String interpolation | `"Hello, {name}!"` - any expression inside `{}` | v0.4 |

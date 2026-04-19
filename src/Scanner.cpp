@@ -26,7 +26,14 @@ namespace scanner {
                 case '{': type = TokenType::LEFT_BRACE; break;
                 case '}': type = TokenType::RIGHT_BRACE; break;
                 case ',': type = TokenType::COMMA; break;
-                case '.': type = TokenType::DOT; break;
+                case '.':
+                    if (current < source.size() - 1 && source[current] == '.' && current + 1 < source.size() && source[current + 1] == '.') {
+                        current += 2;
+                        type = TokenType::SPREAD;
+                    } else {
+                        type = TokenType::DOT;
+                    }
+                    break;
                 case '+': type = TokenType::PLUS; break;
                 case ';': type = TokenType::SEMICOLON; break;
                 case '*': type = TokenType::STAR; break;

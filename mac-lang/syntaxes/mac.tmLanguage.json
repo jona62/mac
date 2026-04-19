@@ -34,11 +34,11 @@
     "strings": {
       "name": "string.quoted.double.mac",
       "begin": "\"",
-      "end": "\"",
+      "end": "(?<!\\\\)\"",
       "patterns": [
         {
           "name": "constant.character.escape.mac",
-          "match": "\\\\."
+          "match": "\\\\[\\\\\"ntr{]"
         },
         {
           "name": "meta.interpolation.mac",
@@ -47,7 +47,11 @@
           "beginCaptures": { "0": { "name": "punctuation.section.interpolation.begin.mac" } },
           "endCaptures": { "0": { "name": "punctuation.section.interpolation.end.mac" } },
           "patterns": [
-            { "include": "source.mac" }
+            { "include": "#numbers" },
+            { "include": "#comments" },
+            { "include": "#keywords" },
+            { "include": "#operators" },
+            { "include": "#identifiers" }
           ]
         }
       ]

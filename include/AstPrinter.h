@@ -131,6 +131,10 @@ namespace printer {
             return "<grid>";
         }
 
+        string visitSpreadExpr(expr::SpreadExpr<T>*) override {
+            return "<spread>";
+        }
+
         string visitMatchExpr(expr::MatchExpr<T>*) override {
             return "<match>";
         }

@@ -1,0 +1,30 @@
+// Grid spread and auto-dimensions
+
+val items = [
+    @dark 200x200 "A",
+    @dark 200x200 "B",
+    @dark 200x200 "C",
+    @dark 200x200 "D",
+];
+
+// Spread with explicit dimensions
+grid 2x2 { ...items } => "grid_spread_2x2.png";
+
+// Auto dimensions - flat array
+grid { ...items } => "grid_auto_flat.png";
+
+// Direct array form
+grid items => "grid_direct.png";
+
+// Direct with dimensions
+grid 2x2 items => "grid_direct_dims.png";
+
+// 2D array auto-infer
+val rows = [[items[0], items[1]], [items[2], items[3]]];
+grid { ...rows } => "grid_auto_2d.png";
+
+// Mixed spread and literals
+grid 1x5 { ...items @dark 200x200 "E" } => "grid_mixed.png";
+
+// expect: done
+print "done";

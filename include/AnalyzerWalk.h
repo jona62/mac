@@ -432,19 +432,24 @@ namespace analyzer {
                     5, "keyword", currentSource}); // "match" is 5 chars
             }
         }
+        else if (auto* p = dynamic_cast<expr::SpreadExpr<MV>*>(e)) {
+            analyzeExpr(p->expr.get());
+        }
         else if (auto* p = dynamic_cast<expr::GridBlockExpr<MV>*>(e)) {
             if (p->keyword.line > 0 && currentSource == "user") {
                 auto kw = tokName(p->keyword);
                 int kc = safeCol(p->keyword);
                 result.semanticTokens.push_back({p->keyword.line, kc,
                     static_cast<int>(kw.size()), "keyword", currentSource});
-                std::string desc = std::to_string(p->cols) + "x" + std::to_string(p->rows) +
-                    " grid — " + std::to_string(p->entries.size()) + " entries";
+                std::string dims = (p->cols == -1) ? "auto" :
+                    std::to_string(p->cols) + "x" + std::to_string(p->rows);
+                std::string desc = dims + " grid - " + std::to_string(p->entries.size()) + " entries";
                 result.symbols.push_back({kw, "keyword", "Meme", desc, currentSource,
                     "public", "", p->keyword.line, kc, kc + static_cast<int>(kw.size())});
             }
             for (auto& entry : p->entries) {
-                checkFrameType(entry.get(), "grid");
+                if (!dynamic_cast<expr::SpreadExpr<MV>*>(entry.get()))
+                    checkFrameType(entry.get(), "grid");
                 analyzeExpr(entry.get());
             }
         }

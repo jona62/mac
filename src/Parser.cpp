@@ -564,7 +564,8 @@ shared_ptr<Expr<T>> Parser::primary() {
                 auto* nextStr = std::get_if<std::string>(&tokens[current + 1].lexeme);
                 bool isBlock = (nextType == TokenType::LEFT_BRACE) ||
                     (nextStr && *nextStr == "loop") ||
-                    (nextType == TokenType::NUMBER);
+                    (nextType == TokenType::NUMBER) ||
+                    (*s == "grid" && (nextType == TokenType::IDENTIFIER || nextType == TokenType::SPREAD));
                 if (isBlock) {
                     advance();
                     if (*s == "gif") return gifBlock<T>();
@@ -726,8 +727,13 @@ shared_ptr<Expr<T>> Parser::arrayLiteral() {
     std::vector<shared_ptr<Expr<T>>> elements;
     if (peek().type != TokenType::RIGHT_BRACKET) {
         do {
-            if (peek().type == TokenType::RIGHT_BRACKET) break; // trailing comma
-            elements.push_back(expression<T>());
+            if (peek().type == TokenType::RIGHT_BRACKET) break;
+            if (match(TokenType::SPREAD)) {
+                auto inner = expression<T>();
+                elements.push_back(make_shared<expr::SpreadExpr<T>>(previous(), inner));
+            } else {
+                elements.push_back(expression<T>());
+            }
         } while (match(TokenType::COMMA));
     }
     consume(TokenType::RIGHT_BRACKET, "Expected ']' after array elements.");
@@ -1159,37 +1165,48 @@ shared_ptr<Expr<T>> Parser::gifBlock() {
     return make_shared<expr::GifBlockExpr<T>>(keyword, loop, std::move(entries), loopToken);
 }
 
-// grid NxM { entries }
+// grid [NxM] { entries } | grid [NxM] expr
 template <typename T>
 shared_ptr<Expr<T>> Parser::gridBlock() {
     Token keyword = previous();
-    // Parse NxM: NUMBER then 'x' then NUMBER, or just NUMBER (assume square)
-    consume(TokenType::NUMBER, "Expected grid columns (e.g., 2x2).");
-    int cols = static_cast<int>(std::get<double>(previous().lexeme));
-    int rows = cols; // default: square
-    // Check for 'x' followed by number
-    if (peek().type == TokenType::IDENTIFIER) {
-        auto* s = std::get_if<std::string>(&peek().lexeme);
-        if (s && s->length() > 0 && (*s)[0] == 'x') {
-            // Could be "x2" or just "x" followed by number
-            if (s->length() > 1) {
-                rows = std::stoi(s->substr(1));
-                advance();
-            } else {
-                advance(); // consume 'x'
-                consume(TokenType::NUMBER, "Expected row count after 'x'.");
-                rows = static_cast<int>(std::get<double>(previous().lexeme));
+    int cols = -1, rows = -1;
+
+    if (peek().type == TokenType::NUMBER) {
+        cols = static_cast<int>(std::get<double>(peek().lexeme));
+        advance();
+        rows = cols;
+        if (peek().type == TokenType::IDENTIFIER) {
+            auto* s = std::get_if<std::string>(&peek().lexeme);
+            if (s && s->length() > 0 && (*s)[0] == 'x') {
+                if (s->length() > 1) {
+                    rows = std::stoi(s->substr(1));
+                    advance();
+                } else {
+                    advance();
+                    consume(TokenType::NUMBER, "Expected row count after 'x'.");
+                    rows = static_cast<int>(std::get<double>(previous().lexeme));
+                }
             }
         }
     }
 
-    consume(TokenType::LEFT_BRACE, "Expected '{' after grid dimensions.");
-
     std::vector<shared_ptr<Expr<T>>> entries;
-    while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
-        entries.push_back(expression<T>());
+
+    if (peek().type == TokenType::LEFT_BRACE) {
+        advance();
+        while (peek().type != TokenType::RIGHT_BRACE && !isAtEnd()) {
+            if (match(TokenType::SPREAD)) {
+                auto inner = expression<T>();
+                entries.push_back(make_shared<expr::SpreadExpr<T>>(previous(), inner));
+            } else {
+                entries.push_back(expression<T>());
+            }
+        }
+        consume(TokenType::RIGHT_BRACE, "Expected '}' after grid block.");
+    } else {
+        auto inner = call<T>();
+        entries.push_back(make_shared<expr::SpreadExpr<T>>(keyword, inner));
     }
-    consume(TokenType::RIGHT_BRACE, "Expected '}' after grid block.");
 
     return make_shared<expr::GridBlockExpr<T>>(keyword, cols, rows, std::move(entries));
 }

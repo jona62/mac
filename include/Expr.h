@@ -374,6 +374,19 @@ namespace expr {
         std::vector<Arm> arms;
     };
 
+    // ...expr (spread into grid)
+    template <typename T>
+    class SpreadExpr : public Expr<T> {
+    public:
+        SpreadExpr(Token op, shared_ptr<Expr<T>> expr)
+            : op(op), expr(std::move(expr)) {}
+        T visit(shared_ptr<Visitor<T>> visitor) override {
+            return visitor->visitSpreadExpr(this);
+        }
+        Token op;
+        shared_ptr<Expr<T>> expr;
+    };
+
     // grid NxM { entries }
     template <typename T>
     class GridBlockExpr : public Expr<T> {
@@ -414,6 +427,7 @@ namespace expr {
         virtual T visitSaveExpr(SaveExpr<T>* expr) = 0;
         virtual T visitGifBlockExpr(GifBlockExpr<T>* expr) = 0;
         virtual T visitGridBlockExpr(GridBlockExpr<T>* expr) = 0;
+        virtual T visitSpreadExpr(SpreadExpr<T>* expr) = 0;
         virtual T visitMatchExpr(MatchExpr<T>* expr) = 0;
         virtual ~Visitor() = default;
     };

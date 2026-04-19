@@ -167,6 +167,10 @@ namespace resolver {
             for (auto& e : expr->entries) resolveExpr(e);
             return std::monostate{};
         }
+        MV visitSpreadExpr(expr::SpreadExpr<MV>* expr) override {
+            resolveExpr(expr->expr);
+            return std::monostate{};
+        }
         MV visitMatchExpr(expr::MatchExpr<MV>* expr) override {
             resolveExpr(expr->subject);
             for (auto& arm : expr->arms) {

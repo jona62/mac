@@ -37,6 +37,7 @@ namespace token {
         ARROW,   // ->
         FAT_ARROW,   // =>
         TRIPLE_DASH, // ---
+        SPREAD,      // ...
 
         // One or two character tokens.
         BANG, BANG_EQUAL,
@@ -63,7 +64,7 @@ namespace token {
         "LEFT_BRACKET", "RIGHT_BRACKET",
         "COMMA", "DOT", "MINUS", "PLUS", "SEMICOLON", "SLASH", "STAR",
         "COLON", "PERCENT", "AT",
-        "PIPE", "COMPOSE", "ARROW", "FAT_ARROW", "TRIPLE_DASH",
+        "PIPE", "COMPOSE", "ARROW", "FAT_ARROW", "TRIPLE_DASH", "SPREAD",
         "BANG", "BANG_EQUAL",
         "EQUAL", "EQUAL_EQUAL",
         "GREATER", "GREATER_EQUAL",

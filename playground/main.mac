@@ -1,306 +1,259 @@
-// ===== STYLES & EFFECTS =====
+// ============================================================
+// "Pulse" - kinetic typography as motion design
+// A visual sequence treating text as material, not message.
+// ============================================================
 
-effect clean = sharpen >> contrast(1.1);
-effect glitch = pixelate(4) >> contrast(1.8) >> noise(0.2);
-effect vintage = sepia >> brightness(0.9);
-
-style cinematic {
+style mono {
     color: "#FFFFFF"
-    outline: 2
-    outlineColor: "#111111"
-    shadow: 4
-    shadowColor: "#00000088"
-    fontSize: "md"
+    outline: 0
+    bold: false
+    uppercase: false
 }
 
-style panic {
-    color: "#FF0000"
-    outline: 5
-    outlineColor: "#440000"
-    shadow: 3
-    shadowColor: "#00000099"
-    fontSize: "lg"
-}
-
-style chill {
-    color: "#00FF41"
-    outline: 3
-    outlineColor: "#003300"
-    fontSize: "md"
-}
-
-style shout {
+style heavy {
     color: "#FFFFFF"
-    outline: 4
+    outline: 6
     outlineColor: "#000000"
-    shadow: 3
-    shadowColor: "#00000099"
-    fontSize: "xlg"
 }
 
-style whisper {
-    color: "#CCCCCC"
-    outline: 1
+style ember {
+    color: "#FF3300"
+    outline: 3
+    outlineColor: "#330000"
+    shadow: 8
+    shadowColor: "#FF330099"
+}
+
+style void {
+    color: "#000000"
+    outline: 2
     outlineColor: "#333333"
-    fontSize: "sm"
 }
 
-// ===== MEME DEFINITIONS (lazy) =====
+style electric {
+    color: "#00EEFF"
+    outline: 2
+    outlineColor: "#003344"
+    shadow: 6
+    shadowColor: "#00EEFF77"
+}
 
-val canary = () -> @meme.shrek_smirk 900x900 cinematic {
-    top: "When everyone gets "
-    bottom: "But its none of your business"
-} |> clean;
+style flicker {
+    color: "#FFFF00"
+    outline: 2
+    outlineColor: "#444400"
+    shadow: 4
+    shadowColor: "#FFFF0066"
+}
 
-val trial1 = () -> grid 2x1 {
-    @meme.shrek_side_eye ""
-    @blank cinematic { center: "Manager thinks you're fixing canaries" } |> clean
-} |> pad(5) |> border(2);
+effect clean = contrast(1.0);
+effect burn = saturate(3.0) >> contrast(2.2) >> glow(12) >> noise(0.08);
+effect ghost = brightness(0.6) >> blur(2) >> glow(6) >> contrast(1.3);
+effect overload = chromatic(8) >> contrast(2.0) >> saturate(3.0) >> glow(8);
+effect static = noise(0.3) >> contrast(1.8) >> pixelate(3);
+effect fade_out = brightness(0.3) >> contrast(0.8);
 
-val trial2 = () -> grid 2x1 {
-    @meme.kid_crying ""
-    @blank cinematic { top: "Everyone getting 30% bump" bottom: "You got 0%" } |> clean
-} |> pad(5) |> border(2);
+gif {
+    // Silence
+    @dark 720x720 mono { center: "." } |> clean : 800ms
+    --- crossfade 200ms ---
 
-val works_on_my_machine = () -> @meme.shrek_smirk cinematic {
-    top: "It works on my machine"
-    bottom: "Then we'll ship your machine"
-};
+    // Inhale
+    @dark 720x720 mono { center: ". ." } |> clean : 400ms
+    @dark 720x720 mono { center: ". . ." } |> clean : 400ms
+    --- crossfade 150ms ---
 
-val debugging = () -> @meme.window_despair panic {
-    top: "console.log('here 1')"
-    bottom: "console.log('here 2') // never prints"
-} |> glitch;
+    // Arrival
+    @dark 720x720 heavy { center: "PULSE" } |> clean : 600ms
+    --- fadeBlack 100ms ---
 
-val standup = () -> grid 2x1 {
-    @meme.girl_side_eye ""
-    @blank cinematic { top: "Standup: 'Making good progress'" bottom: "Reality: Changed one variable name" }
-} |> pad(5) |> border(2);
+    // Ignition
+    @dark 720x720 ember { center: "PULSE" } |> burn : 500ms
+    --- crossfade 80ms ---
 
-val code_review = () -> grid 2x2 {
-    @meme.shrek_smirk shout "Opens PR: 3 lines"
-    @meme.kid_crying panic "47 comments"
-    @meme.shrek_side_eye shout "Fixes all comments"
-    @meme.girl_side_eye panic "nit: add period"
-} |> pad(5) |> border(2);
+    // Afterimage
+    @dark 720x720 ember { center: "PULSE" } |> ghost : 400ms
+    --- fadeBlack 200ms ---
 
-val meetings = () -> grid 2x1 {
-    @meme.kid_crying ""
-    @blank cinematic { top: "1 hour meeting, 12 people" bottom: "Let's schedule a follow-up" } |> vintage
-} |> pad(5) |> border(2);
+    // Fragmentation
+    @blank 720x720 void { center: "P U L S E" } |> static : 300ms
+    @dark 720x720 void { center: "P U L S E" } |> static : 300ms
+    @blank 720x720 void { center: "P U L S E" } |> static : 200ms
+    --- fadeBlack 150ms ---
 
-val stackoverflow = () -> @meme.girl_side_eye cinematic {
-    top: "Read the docs"
-    bottom: "Copy from Stack Overflow. Ship it."
-};
+    // Electric rebuild
+    @dark 720x720 electric { center: "P" } |> overload : 250ms
+    @dark 720x720 electric { center: "PU" } |> overload : 200ms
+    @dark 720x720 electric { center: "PUL" } |> overload : 200ms
+    @dark 720x720 electric { center: "PULS" } |> overload : 200ms
+    @dark 720x720 electric { center: "PULSE" } |> overload : 500ms
+    --- crossfade 300ms easeOut ---
 
-val git_history = () -> grid 2x2 {
-    @meme.shrek_smirk shout "'fix'"
-    @meme.shrek_side_eye shout "'fix fix'"
-    @meme.kid_crying shout "'actually fix'"
-    @meme.girl_side_eye panic "'WHY'"
-} |> pad(5) |> border(2);
+    // Calm
+    @dark 720x720 mono { center: "PULSE" } |> clean : 1s
+    --- crossfade 400ms easeInOut ---
 
-val imposter = () -> grid 2x1 {
-    @meme.shrek_smirk shout "I have no idea what I'm doing"
-    @meme.shrek_side_eye shout "Designs distributed system before lunch"
-} |> pad(5) |> border(2);
+    // Meaning
+    @dark 720x720 flicker { top: "every" center: "system" bottom: "has one" } |> glow(6) : 1.5s
+    --- fadeBlack 500ms ---
 
-val pto_deploy = () -> grid 2x1 {
-    @meme.jordan_crying ""
-    @blank panic { top: "Deployed before PTO" bottom: "Pager at the airport" }
-} |> pad(5) |> border(2);
+    // Flatline
+    @dark 720x720 mono { center: "________" } |> fade_out : 1.2s
+    --- crossfade 300ms ---
 
-val pr_waiting = () -> grid 2x1 {
-    @meme.guy_crying ""
-    @blank cinematic { top: "PR opened 3 days ago" bottom: "0 reviewers. 0 comments. 0 hope." }
-} |> pad(5) |> border(2);
+    // One last beat
+    @dark 720x720 ember { center: "." } |> burn : 400ms
+    --- fadeBlack 600ms ---
+} => "pulse.gif";
 
-val quick_fix = () -> @meme.jordan_crying cinematic {
-    top: "It's just a quick fix"
-    bottom: "4 hours and 37 files later"
-};
+print "pulse.gif saved";
 
-val npm_update = () -> grid 2x2 {
-    @meme.shrek_smirk cinematic "npm update"
-    @meme.idk_about_that cinematic "847 vulnerabilities"
-    @meme.jordan_crying panic "npm audit fix"
-    @meme.guy_crying panic "1203 vulnerabilities"
-} |> pad(5) |> border(2);
 
-val intern_push = () -> @meme.kid_crying panic {
-    top: "Who pushed to main?"
-    bottom: "The intern with admin access"
-} |> glitch;
+// ============================================================
+// "Chromatic Decay" - procedural animation via functional pipes
+// Pushes Mac's data-driven generation, effect composition,
+// grids, expression blocks, enums, and lambdas.
+// ============================================================
 
-val lgtm = () -> grid 2x1 {
-    @meme.idk_about_that ""
-    @blank cinematic { top: "Reviews 2000 line PR in 30s" bottom: "LGTM" }
-} |> pad(5) |> border(2);
+// -- Palette as data --
+val palette = [
+    { name: "signal",  fg: "#00FF88", bg: "#001a0d", glow: "#00FF8877" },
+    { name: "drift",   fg: "#FF0066", bg: "#1a000a", glow: "#FF006677" },
+    { name: "static",  fg: "#8844FF", bg: "#0d0022", glow: "#8844FF77" },
+    { name: "thermal", fg: "#FF8800", bg: "#1a0e00", glow: "#FF880077" },
+];
 
-val not_a_bug = () -> grid 2x1 {
-    @meme.girl_side_eye shout "It's not a bug"
-    @meme.shrek_smirk chill "It's a feature"
-} |> pad(5) |> border(2);
+// -- Effect pipeline per mood --
+val effects = [
+    glow(6) >> contrast(1.4),
+    chromatic(6) >> glow(8) >> saturate(2.0),
+    pixelate(2) >> noise(0.12) >> contrast(1.6),
+    saturate(2.5) >> glow(10) >> contrast(1.8),
+];
 
-val old_code = () -> @meme.idk_about_that cinematic {
-    top: "My own code from 6 months ago"
-    bottom: "Who wrote this garbage"
-};
+// -- Phases of decay --
+val phases = ["SIGNAL", "DRIFT", "STATIC", "THERMAL"];
+val sub = ["locked", "unstable", "breaking", "critical"];
 
-val deploy_cycle = () -> gif loop {
-    @meme.shrek_smirk cinematic "Deploy to prod" : 1120ms
-    @meme.shrek_side_eye chill "All tests passing" : 1360ms
-    @meme.kid_crying panic "500 errors spiking" : 1520ms
-    @meme.girl_side_eye cinematic "Rollback rollback rollback" : 2160ms
-    @meme.window_despair panic "No more Friday deploys" : 1760ms
-};
+// -- Generate styled frames from data --
+val frames = range(4) |> map(i -> {
+    val p = palette[i];
+    style phase_style {
+        color: p["fg"]
+        outline: 3
+        outlineColor: p["bg"]
+        shadow: 6
+        shadowColor: p["glow"]
+    }
+    @dark 700x700 phase_style {
+        top: phases[i]
+        bottom: sub[i]
+    } |> effects[i]
+});
 
-val oncall = () -> gif loop {
-    @meme.shrek_smirk chill { top: "Friday 5pm" bottom: "How bad can it be?" } : 2000ms
+// -- Composite: 2x2 grid of all phases --
+grid 2x2 { ...frames } |> pad(6) |> border(3) => "decay_grid.png";
+
+// -- Animate: each phase as a scene with transitions --
+gif {
+    frames[0] : 1.5s
+    --- crossfade 400ms easeInOut ---
+    frames[1] : 1.5s
+    --- slideLeft 300ms easeOut ---
+    frames[2] : 1.5s
+    --- zoom 400ms bounce ---
+    frames[3] : 1.5s
+    --- fadeBlack 500ms ---
+
+    // Collapse: all four phases in rapid succession
+    frames[0] : 200ms
+    frames[1] : 200ms
+    frames[2] : 200ms
+    frames[3] : 200ms
     --- fadeBlack 300ms ---
-    @meme.kid_crying panic { top: "Friday 5:01pm" bottom: "SEV-2: Everything is on fire" } |> glitch : 2560ms
-    --- crossfade 200ms ---
-    @meme.window_despair cinematic { top: "Monday 9am" bottom: "Hands off like a war veteran" } |> vintage : 2240ms
-};
 
-val fix_one_break_three = () -> gif loop {
-    @meme.shrek_smirk chill { top: "git commit -m 'fix: resolve null pointer'" bottom: "Feeling good" } : 2960ms
-    --- crossfade 300ms ---
-    @meme.idk_about_that cinematic { top: "3 new tickets" bottom: "All linked to your commit" } : 2000ms
-    --- fadeBlack 400ms ---
-    @meme.jordan_crying panic { top: "Manager:" bottom: "Can you look into these?" } : 2080ms
-    --- crossfade 200ms ---
-    @meme.guy_crying panic { top: "Me realizing" bottom: "I am the bug" } : 2000ms
-};
+    // Resolution
+    @dark 700x700 mono { center: "entropy wins" } |> brightness(0.5) >> vignette : 2s
 
-val prod_incident = () -> gif loop {
-    @meme.shrek_smirk chill "Everything is fine" : 1520ms
-    @meme.window_despair cinematic "That metric looks weird" : 2000ms
-    @meme.idk_about_that cinematic "Is that supposed to spike?" : 2160ms
-    @meme.kid_crying panic "OH NO" : 800ms
-    @meme.jordan_crying panic "SEV-2 DECLARED" : 1040ms
-    @meme.guy_crying panic "Writing the COE" : 1200ms
-};
+    --- fadeBlack 800ms ---
+} => "chromatic_decay.gif";
 
-// ===== NEW MEMES =====
+// -- Bonus: individual phase renders --
+frames[0] => "signal.png";
+frames[1] => "drift.png";
+frames[2] => "static.png";
+frames[3] => "thermal.png";
 
-val rebase = () -> @meme.king_bach_stare cinematic {
-    top: "git rebase main"
-    bottom: "47 conflicts in files you never touched"
-};
+print "chromatic_decay.gif saved";
+print "decay_grid.png saved";
 
-val docker = () -> grid 2x1 {
-    @meme.shrek_smirk chill "Docker build: 0 errors"
-    @meme.king_bach_stare shout "Docker run: segfault"
-} |> pad(5) |> border(2);
 
-val todo = () -> @meme.shrek_side_eye cinematic {
-    top: "// TODO: fix this later"
-    bottom: "Committed 3 years ago"
-} |> vintage;
+// ============================================================
+// "Frequencies" - a data-driven visual synthesizer
+// One animation, three layers: rhythm, color, and texture
+// built entirely from arrays, lambdas, and pipes.
+// ============================================================
 
-val yaml = () -> grid 2x1 {
-    @meme.girl_side_eye ""
-    @blank panic { top: "Entire pipeline broke" bottom: "Wrong indentation in YAML" }
-} |> pad(5) |> border(2);
+// -- Frequency bands as data --
+val bands = [
+    { hz: "60",   label: "SUB",  color: "#FF0044", glow: "#FF004488", fx: blur(3) >> glow(12) >> saturate(2.0) },
+    { hz: "250",  label: "LOW",  color: "#FF6600", glow: "#FF660088", fx: glow(8) >> contrast(1.6) >> noise(0.05) },
+    { hz: "1K",   label: "MID",  color: "#FFCC00", glow: "#FFCC0088", fx: contrast(1.8) >> sharpen >> glow(4) },
+    { hz: "4K",   label: "HIGH", color: "#00FF88", glow: "#00FF8888", fx: chromatic(4) >> glow(6) >> saturate(1.8) },
+    { hz: "12K",  label: "AIR",  color: "#00CCFF", glow: "#00CCFF88", fx: chromatic(8) >> glow(10) >> brightness(1.1) },
+    { hz: "20K",  label: "ULTRA",color: "#AA44FF", glow: "#AA44FF88", fx: pixelate(2) >> chromatic(6) >> glow(8) },
+];
 
-val ai_fix = () -> grid 2x2 {
-    @meme.shrek_smirk chill "Ask AI to fix the bug"
-    @meme.king_bach_stare cinematic "AI refactors entire codebase"
-    @meme.kid_crying panic "Now nothing compiles"
-    @meme.jordan_crying panic "git reset --hard"
-} |> pad(5) |> border(2);
+// -- Build a frame per band using data-driven styles --
+val band_frames = bands |> map(b -> {
+    style freq {
+        color: b["color"]
+        outline: 3
+        outlineColor: "#000000"
+        shadow: 5
+        shadowColor: b["glow"]
+    }
+    @dark 720x400 freq {
+        top: "{b[\"hz\"]} Hz"
+        bottom: b["label"]
+    } |> b["fx"]
+});
 
-val dns = () -> @meme.window_despair shout {
-    top: "It's always DNS"
-    bottom: "It was DNS"
-};
+// -- The sweep: low to high, one band at a time --
+gif {
+    // Intro - silence
+    @dark 720x400 mono { center: "..." } |> brightness(0.3) : 600ms
+    --- fadeBlack 200ms ---
 
-val regex = () -> grid 2x1 {
-    @meme.shrek_smirk shout "I'll just write a quick regex"
-    @meme.window_despair whisper "3 hours later: ^(?!.*(?<=\\d)(?=\\w))"
-} |> pad(5) |> border(2);
+    // Each band hits in sequence
+    band_frames[0] : 500ms
+    --- crossfade 150ms ---
+    band_frames[1] : 500ms
+    --- crossfade 150ms ---
+    band_frames[2] : 500ms
+    --- crossfade 150ms ---
+    band_frames[3] : 500ms
+    --- crossfade 150ms ---
+    band_frames[4] : 500ms
+    --- crossfade 150ms ---
+    band_frames[5] : 500ms
+    --- fadeBlack 300ms ---
 
-val localhost = () -> @meme.king_bach_stare cinematic {
-    top: "Demo to stakeholders"
-    bottom: "localhost refused to connect"
-};
+} => "frequencies_sweep.gif";
 
-val merge_conflict = () -> gif loop {
-    @meme.shrek_smirk chill { top: "Feature branch" bottom: "Clean and ready" } : 2000ms
-    --- crossfade 300ms ---
-    @meme.king_bach_stare cinematic { top: "git pull origin main" bottom: "CONFLICT in 23 files" } : 2000ms
-    --- fadeBlack 400ms ---
-    @meme.kid_crying panic { top: "Resolving conflicts" bottom: "Which version is even right?" } : 2240ms
-    --- crossfade 200ms ---
-    @meme.jordan_crying panic { top: "Tests pass" bottom: "But the UI is upside down" } : 2080ms
-};
+// Rapid strobe - forward then reverse, built from data
+val strobe = [...band_frames, ...reverse(band_frames)]
+    |> reduce((g, f) -> g.frame(f, Duration(120)), Gif());
 
-val standup_timeline = () -> gif loop {
-    @meme.shrek_smirk chill "No blockers" : 880ms
-    @meme.shrek_side_eye cinematic "Well actually..." : 1280ms
-    @meme.king_bach_stare cinematic "One small thing" : 1200ms
-    @meme.kid_crying panic "45 minute discussion" : 1680ms
-    @meme.window_despair panic "Standup is now a planning session" : 2720ms
-    @meme.jordan_crying panic "We need a follow-up meeting" : 2320ms
-};
+// Append closing scenes
+val frequencies = strobe
+    .frame(@dark 720x400 mono { center: "FULL SPECTRUM" } |> glow(6) >> contrast(1.4), Duration(1200))
+    .frame(@dark 720x400 mono { center: "~" } |> noise(0.4) >> brightness(0.4), Duration(800));
 
-val legacy = () -> grid 2x2 {
-    @meme.shrek_smirk shout "Reads legacy code"
-    @meme.shrek_side_eye shout "No tests, no docs"
-    @meme.king_bach_stare panic "Last commit: 2019"
-    @meme.girl_side_eye panic "Author left the company"
-} |> pad(5) |> border(2);
+frequencies.save("frequencies.gif");
 
-val env_file = () -> grid 2x1 {
-    @meme.king_bach_stare ""
-    @blank panic { top: "Works in staging" bottom: "Forgot to set env vars in prod" }
-} |> pad(5) |> border(2);
+// -- Spectrum grid: all 6 bands in a 3x2 layout --
+grid 3x2 { ...band_frames } |> pad(4) |> border(2) => "spectrum.png";
 
-val microservices = () -> gif loop {
-    @meme.shrek_smirk chill { top: "Monolith is too complex" bottom: "Let's do microservices" } : 2000ms
-    --- crossfade 300ms ---
-    @meme.shrek_side_eye cinematic { top: "6 months later" bottom: "47 services, 200 repos" } : 2000ms
-    --- fadeBlack 400ms ---
-    @meme.king_bach_stare panic { top: "Distributed tracing:" bottom: "Request touched 12 services to return a 404" } : 3680ms
-};
-
-// ===== RENDER =====
-
-canary() => "canary.png";
-trial1() => "trial.png";
-trial2() => "trial.png";
-works_on_my_machine() => "works_on_my_machine.png";
-debugging() => "debugging.png";
-standup() => "standup.png";
-code_review() => "code_review.png";
-meetings() => "meetings.png";
-stackoverflow() => "stackoverflow.png";
-git_history() => "git_history.png";
-imposter() => "imposter.png";
-pto_deploy() => "pto_deploy.png";
-pr_waiting() => "pr_waiting.png";
-quick_fix() => "quick_fix.png";
-npm_update() => "npm_update.png";
-intern_push() => "intern_push.png";
-lgtm() => "lgtm.png";
-not_a_bug() => "not_a_bug.png";
-old_code() => "old_code.png";
-deploy_cycle() => "deploy_cycle.gif";
-oncall() => "oncall.gif";
-fix_one_break_three() => "fix_one_break_three.gif";
-prod_incident() => "prod_incident.gif";
-rebase() => "rebase.png";
-docker() => "docker.png";
-todo() => "todo.png";
-yaml() => "yaml.png";
-ai_fix() => "ai_fix.png";
-dns() => "dns.png";
-regex() => "regex.png";
-localhost() => "localhost.png";
-merge_conflict() => "merge_conflict.gif";
-standup_timeline() => "standup_timeline.gif";
-legacy() => "legacy.png";
-env_file() => "env_file.png";
-microservices() => "microservices.gif";
+print "frequencies.gif saved";
+print "spectrum.png saved";
