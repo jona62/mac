@@ -1,0 +1,5 @@
+// animate() must throw a clean runtime error on invalid duration types
+// (previously aborted the interpreter with std::bad_variant_access).
+val frames = [@blank "A"];
+animate(frames, "oops");
+// expect runtime error: animate() duration must be a number of milliseconds or a Duration instance.

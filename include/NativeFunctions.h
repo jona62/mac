@@ -1769,15 +1769,49 @@ namespace callable {
     }
 
     // animate(memesArray, duration)
+    // Accepts either a number (interpreted as milliseconds) or a Duration instance.
     class AnimateFunction : public MacCallable {
     public:
         value::MacValue call(std::shared_ptr<interpreter::Interpreter>,
                              std::vector<value::MacValue> args) override {
+            if (!std::holds_alternative<std::shared_ptr<collection::MacArray>>(args[0])) {
+                throw std::runtime_error(
+                    "animate() expects an array of memes as the first argument.");
+            }
             auto memesArr = std::get<std::shared_ptr<collection::MacArray>>(args[0]);
-            auto durationInst = std::get<std::shared_ptr<instance::MacInstance>>(args[1]);
-            // Get ms from duration instance
-            token::Token msToken(token::TokenType::IDENTIFIER, token::TokenValue(std::string("ms")), 0);
-            int ms = static_cast<int>(std::get<double>(durationInst->get(msToken)));
+
+            int ms = 0;
+            if (std::holds_alternative<double>(args[1])) {
+                // Raw number in milliseconds
+                ms = static_cast<int>(std::get<double>(args[1]));
+            } else if (std::holds_alternative<std::shared_ptr<instance::MacInstance>>(args[1])) {
+                auto durationInst = std::get<std::shared_ptr<instance::MacInstance>>(args[1]);
+                token::Token msToken(token::TokenType::IDENTIFIER, token::TokenValue(std::string("ms")), 0);
+                try {
+                    auto msVal = durationInst->get(msToken);
+                    if (!std::holds_alternative<double>(msVal)) {
+                        throw std::runtime_error(
+                            "animate() duration must be a number of milliseconds "
+                            "or a Duration instance.");
+                    }
+                    ms = static_cast<int>(std::get<double>(msVal));
+                } catch (const std::runtime_error&) {
+                    throw;
+                } catch (...) {
+                    throw std::runtime_error(
+                        "animate() duration must be a number of milliseconds "
+                        "or a Duration instance.");
+                }
+            } else {
+                throw std::runtime_error(
+                    "animate() duration must be a number of milliseconds "
+                    "or a Duration instance.");
+            }
+
+            if (ms <= 0) {
+                throw std::runtime_error(
+                    "animate() duration must be positive.");
+            }
 
             auto gif = std::make_shared<meme::MacGif>();
             for (auto& memeVal : memesArr->elements) {
