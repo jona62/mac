@@ -193,3 +193,89 @@ gif {
 } => "deep.gif";
 
 print "deep.gif saved";
+
+
+// ============================================================
+// "LAUNCH" - product feature announcement
+// Techniques: customizable template, data-driven cards,
+//   letter-by-letter reveal, alternating transitions
+//
+// Customize: product_name, tagline, launch_date, features
+// ============================================================
+
+val product_name = "NEXUS";
+val tagline = "the future, shipped";
+val launch_date = "06.01.26";
+
+val features = [
+    { title: "INSTANT",  detail: "zero latency" },
+    { title: "INFINITE", detail: "no limits" },
+    { title: "SECURE",   detail: "trust nothing" },
+];
+
+val brand_colors = ["#00EEFF", "#FF00AA", "#AAFF00", "#FF8800"];
+
+effect reveal = glow(8) >> contrast(1.3) >> brightness(1.1);
+effect card_pop = glow(6) >> contrast(1.5) >> saturate(1.6);
+effect grand = saturate(3.0) >> glow(14) >> brightness(1.2);
+
+style brand_whisper {
+    color: "#555555"
+    outline: 0
+    bold: false
+    uppercase: false
+}
+
+// Letter-by-letter name reveal
+val name_frames = range(1, len(product_name) + 1) |> map(i -> {
+    style build {
+        color: "#FFFFFF"
+        outline: 4
+        outlineColor: "#111111"
+        shadow: 6
+        shadowColor: "#FFFFFF44"
+    }
+    @dark 800x450 build { center: substr(product_name, 0, i) } |> reveal
+});
+
+// Feature cards from data
+val feature_frames = range(len(features)) |> map(i -> {
+    val f = features[i];
+    val c = brand_colors[i % len(brand_colors)];
+    style feat {
+        color: c
+        outline: 3
+        outlineColor: "#111111"
+        shadow: 5
+        shadowColor: "{c}66"
+    }
+    @dark 800x450 feat { top: f["title"] bottom: f["detail"] } |> card_pop
+});
+
+// Build the full animation
+val launch_intro = name_frames
+    |> reduce((g, f) -> g.frame(f, Duration(200)), Gif());
+
+// Add tagline hold
+val with_tagline = launch_intro
+    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(4), Duration(1500));
+
+// Add feature cards
+val with_features = feature_frames
+    |> reduce((g, f) -> g.frame(f, Duration(1200)), with_tagline);
+
+// Date reveal + closing
+style date_style {
+    color: "#FFD700"
+    outline: 4
+    outlineColor: "#332b00"
+    shadow: 8
+    shadowColor: "#FFD70077"
+}
+
+with_features
+    .frame(@dark 800x450 date_style { center: launch_date } |> grand, Duration(1500))
+    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(3) >> brightness(0.6), Duration(2000))
+    .save("launch.gif");
+
+print "launch.gif saved";
