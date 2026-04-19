@@ -4,64 +4,91 @@
 // ============================================================
 //
 //  1. STYLE AS IDENTITY
-//     Define styles as visual characters, not just formatting.
-//     Name them by mood, not appearance. Pair complementary
-//     outline/shadow colors with the text color for depth.
-//
-//     style ember { color: "#FF3300" outline: 3
-//         outlineColor: "#330000" shadow: 8
-//         shadowColor: "#FF330099" }
+//     Name styles by mood. Pair outline/shadow colors with
+//     the text color for depth.
 //
 //  2. EFFECTS AS VERBS
-//     Compose effects into named pipelines that describe
-//     what they DO. Chain 3-4 effects max.
-//
-//     effect burn = saturate(3.0) >> contrast(2.2) >> glow(12);
-//     effect ghost = brightness(0.6) >> blur(2) >> glow(6);
+//     Compose named pipelines. Chain 3-4 effects max.
 //
 //  3. DATA-DRIVEN FRAMES
-//     Store visual parameters in arrays of maps. Generate
-//     frames with range() |> map(). Define styles inline
-//     from the data inside the lambda.
-//
-//     val palette = [{ fg: "#00FF88", bg: "#001a0d" }, ...];
-//     val frames = range(4) |> map(i -> {
-//         style s { color: palette[i]["fg"] }
-//         @dark 700x700 s { center: labels[i] } |> effects[i]
-//     });
+//     Arrays of maps + range() |> map() to generate frames.
+//     Define styles inline from data inside lambdas.
 //
 //  4. SPREAD FOR COMPOSITION
-//     Use ... to spread arrays into grids and array literals.
-//     Auto-dimensions infer layout from data shape.
-//
-//     grid 2x2 { ...frames } => "grid.png";
-//     val bounce = [...frames, ...reverse(frames)];
+//     [...a, ...b] for arrays, grid { ...frames } for grids.
 //
 //  5. PROGRAMMATIC GIFS
-//     Use reduce() + Gif() + .frame() to build animations
-//     from arrays. Chain .frame() for closing scenes.
-//
-//     val anim = frames
-//         |> reduce((g, f) -> g.frame(f, Duration(200)), Gif());
-//     anim.frame(@dark "fin", Duration(1000)).save("out.gif");
+//     reduce() + Gif() + .frame() builds animations from data.
 //
 //  6. PACING AND RHYTHM
-//     Short durations (100-200ms) for strobes, medium
-//     (500ms-1s) for beats, long (1.5-3s) for holds.
-//     Transitions create flow - crossfade for smooth,
-//     fadeBlack for dramatic, zoom bounce for emphasis.
+//     100-200ms strobes, 500ms-1s beats, 1.5-3s holds.
+//     Match transition type to emotional beat.
 //
 //  7. CONTRAST DRIVES INTEREST
-//     Alternate density with emptiness. Follow a glitch
-//     frame with a clean one. End with simplicity.
+//     Alternate density with emptiness. End with simplicity.
 //
 // ============================================================
 
 
 // ============================================================
-// "Pulse" - kinetic typography as motion design
-// Techniques: style contrast, effect pipelines, pacing
+// "DEEP" - a story in four chapters
+//
+// A cinematic sequence about descent into the unknown,
+// discovery, transformation, and surfacing.
+// Uses every transition type, function composition,
+// data-driven frames, and style layering.
 // ============================================================
+
+
+// -- Reusable frame builder functions --
+
+val make_title = (text, s, fx) -> @dark 800x450 s { center: text } |> fx;
+
+val make_split = (top_text, bot_text, s, fx) ->
+    @dark 800x450 s { top: top_text bottom: bot_text } |> fx;
+
+val make_wide = (text, s, fx) -> @wide 900x400 s { center: text } |> fx;
+
+
+// -- Chapter palettes --
+
+val ch1 = { fg: "#C0D8FF", outline: "#1a2a44", glow: "#C0D8FF55" };
+val ch2 = { fg: "#00FFAA", outline: "#002a1a", glow: "#00FFAA66" };
+val ch3 = { fg: "#FF3366", outline: "#330015", glow: "#FF336688" };
+val ch4 = { fg: "#FFD700", outline: "#332b00", glow: "#FFD70077" };
+
+// -- Build a style from a chapter palette --
+val chapter_style = (ch, weight) -> {
+    style s {
+        color: ch["fg"]
+        outline: weight
+        outlineColor: ch["outline"]
+        shadow: if (weight > 2) weight + 2 else 0
+        shadowColor: ch["glow"]
+    }
+    s
+};
+
+
+// -- Effect vocabularies per chapter --
+
+effect surface    = brightness(1.1) >> contrast(1.1) >> glow(3);
+effect descend    = brightness(0.7) >> contrast(1.4) >> glow(6) >> noise(0.03);
+effect deep       = brightness(0.5) >> glow(10) >> chromatic(3) >> saturate(1.6);
+effect abyss      = brightness(0.3) >> glow(14) >> chromatic(6) >> noise(0.08);
+effect discovery  = saturate(2.5) >> glow(12) >> contrast(1.5);
+effect transform  = hueShift(90) >> chromatic(8) >> glow(8) >> contrast(1.8);
+effect shatter    = pixelate(3) >> noise(0.2) >> contrast(2.0) >> chromatic(4);
+effect emerge     = brightness(1.2) >> glow(6) >> saturate(1.8) >> contrast(1.2);
+effect clarity    = contrast(1.1) >> sharpen >> glow(2);
+effect corona     = saturate(3.0) >> glow(16) >> brightness(1.3);
+
+style whisper {
+    color: "#666666"
+    outline: 0
+    bold: false
+    uppercase: false
+}
 
 style mono {
     color: "#FFFFFF"
@@ -70,191 +97,99 @@ style mono {
     uppercase: false
 }
 
-style heavy {
-    color: "#FFFFFF"
-    outline: 6
-    outlineColor: "#000000"
-}
 
-style ember {
-    color: "#FF3300"
-    outline: 3
-    outlineColor: "#330000"
-    shadow: 8
-    shadowColor: "#FF330099"
-}
+// ============================================================
+// Chapter 1: THE SURFACE
+// Cool blues, gentle transitions, wide calm framing
+// ============================================================
 
-style void {
-    color: "#000000"
-    outline: 2
-    outlineColor: "#333333"
-}
-
-style electric {
-    color: "#00EEFF"
-    outline: 2
-    outlineColor: "#003344"
-    shadow: 6
-    shadowColor: "#00EEFF77"
-}
-
-style flicker {
-    color: "#FFFF00"
-    outline: 2
-    outlineColor: "#444400"
-    shadow: 4
-    shadowColor: "#FFFF0066"
-}
-
-effect clean = contrast(1.0);
-effect burn = saturate(3.0) >> contrast(2.2) >> glow(12) >> noise(0.08);
-effect ghost = brightness(0.6) >> blur(2) >> glow(6) >> contrast(1.3);
-effect overload = chromatic(8) >> contrast(2.0) >> saturate(3.0) >> glow(8);
-effect glitch = noise(0.3) >> contrast(1.8) >> pixelate(3);
-effect fade_out = brightness(0.3) >> contrast(0.8);
+val s1 = chapter_style(ch1, 3);
+val s2 = chapter_style(ch2, 3);
+val s3 = chapter_style(ch3, 4);
+val s4 = chapter_style(ch4, 4);
 
 gif {
-    @dark 720x720 mono { center: "." } |> clean : 800ms
-    --- crossfade 200ms ---
-    @dark 720x720 mono { center: ". ." } |> clean : 400ms
-    @dark 720x720 mono { center: ". . ." } |> clean : 400ms
-    --- crossfade 150ms ---
-    @dark 720x720 heavy { center: "PULSE" } |> clean : 600ms
-    --- fadeBlack 100ms ---
-    @dark 720x720 ember { center: "PULSE" } |> burn : 500ms
-    --- crossfade 80ms ---
-    @dark 720x720 ember { center: "PULSE" } |> ghost : 400ms
+
+    // == Chapter 1: THE SURFACE ==
+    // Cool blues, gentle transitions, wide calm framing
+
+    @dark 800x450 whisper { center: "..." } |> brightness(0.2) : 1.2s
+    --- crossfade 600ms easeIn ---
+
+    make_title("THE SURFACE", s1, surface) : 2s
+    --- slideDown 500ms easeOut ---
+
+    make_split("still water", "clear sky", s1, surface) : 1.5s
+    --- crossfade 400ms easeInOut ---
+    make_wide("horizon line", s1, surface) : 1.5s
+    --- crossfade 400ms easeInOut ---
+
+    make_title("what's below?", s1, descend) : 1.5s
+    --- slideDown 600ms easeIn ---
+
+
+    // == Chapter 2: THE DESCENT ==
+    // Greens darkening, downward slides, increasing distortion
+
+    make_title("DESCENT", s2, descend) : 1.5s
+    --- slideDown 400ms easeIn ---
+
+    make_split("10m", "light fades", s2, descend) : 1s
+    --- slideDown 300ms ---
+    make_split("50m", "silence grows", s2, deep) : 1s
+    --- slideDown 300ms ---
+    make_split("200m", "pressure builds", s2, deep) : 1s
+    --- slideDown 200ms easeIn ---
+    make_split("1000m", "midnight zone", s2, abyss) : 1.2s
+    --- fadeBlack 500ms ---
+
+
+    // == Chapter 3: THE DISCOVERY ==
+    // Hot pinks, zoom and wipe transitions, intense effects
+
+    @dark 800x450 mono { center: "." } |> abyss : 600ms
+    @dark 800x450 mono { center: ". ." } |> abyss : 400ms
+    @dark 800x450 mono { center: ". . ." } |> deep : 400ms
+    --- zoom 300ms bounce ---
+
+    make_title("FOUND", s3, discovery) : 1.5s
+    --- wipe 400ms ---
+
+    make_title("it glows", s3, discovery) : 500ms
+    make_title("it moves", s3, transform) : 500ms
+    make_title("it knows", s3, transform) : 500ms
+    --- zoom 200ms bounce ---
+
+    make_title("CONTACT", s3, shatter) : 800ms
     --- fadeBlack 200ms ---
-    @blank 720x720 void { center: "P U L S E" } |> glitch : 300ms
-    @dark 720x720 void { center: "P U L S E" } |> glitch : 300ms
-    @blank 720x720 void { center: "P U L S E" } |> glitch : 200ms
-    --- fadeBlack 150ms ---
-    @dark 720x720 electric { center: "P" } |> overload : 250ms
-    @dark 720x720 electric { center: "PU" } |> overload : 200ms
-    @dark 720x720 electric { center: "PUL" } |> overload : 200ms
-    @dark 720x720 electric { center: "PULS" } |> overload : 200ms
-    @dark 720x720 electric { center: "PULSE" } |> overload : 500ms
-    --- crossfade 300ms easeOut ---
-    @dark 720x720 mono { center: "PULSE" } |> clean : 1s
-    --- crossfade 400ms easeInOut ---
-    @dark 720x720 flicker { top: "every" center: "system" bottom: "has one" } |> glow(6) : 1.5s
-    --- fadeBlack 500ms ---
-    @dark 720x720 mono { center: "________" } |> fade_out : 1.2s
-    --- crossfade 300ms ---
-    @dark 720x720 ember { center: "." } |> burn : 400ms
-    --- fadeBlack 600ms ---
-} => "pulse.gif";
+    make_wide("everything changes", s3, transform) : 1.5s
+    --- slideRight 400ms easeOut ---
 
 
-// ============================================================
-// "Chromatic Decay" - procedural animation via functional pipes
-// Techniques: data-driven frames, spread grids, expression blocks
-// ============================================================
+    // == Chapter 4: THE RETURN ==
+    // Golds, upward slides, clarity emerging from chaos
 
-val palette = [
-    { fg: "#00FF88", bg: "#001a0d", glow: "#00FF8877" },
-    { fg: "#FF0066", bg: "#1a000a", glow: "#FF006677" },
-    { fg: "#8844FF", bg: "#0d0022", glow: "#8844FF77" },
-    { fg: "#FF8800", bg: "#1a0e00", glow: "#FF880077" },
-];
+    make_title("ASCENT", s4, emerge) : 1.5s
+    --- slideUp 500ms easeOut ---
 
-val effects = [
-    glow(6) >> contrast(1.4),
-    chromatic(6) >> glow(8) >> saturate(2.0),
-    pixelate(2) >> noise(0.12) >> contrast(1.6),
-    saturate(2.5) >> glow(10) >> contrast(1.8),
-];
+    make_split("1000m", "carrying light", s4, deep) : 800ms
+    --- slideUp 300ms ---
+    make_split("200m", "warmth returns", s4, descend) : 800ms
+    --- slideUp 300ms ---
+    make_split("50m", "colors return", s4, emerge) : 800ms
+    --- slideUp 300ms easeOut ---
+    make_split("10m", "almost there", s4, surface) : 800ms
+    --- slideUp 400ms easeOut ---
 
-val phases = ["SIGNAL", "DRIFT", "STATIC", "THERMAL"];
-val sub = ["locked", "unstable", "breaking", "critical"];
+    make_title("SURFACE", s4, corona) : 1.5s
+    --- crossfade 600ms easeInOut ---
 
-val frames = range(4) |> map(i -> {
-    val p = palette[i];
-    style s {
-        color: p["fg"]
-        outline: 3
-        outlineColor: p["bg"]
-        shadow: 6
-        shadowColor: p["glow"]
-    }
-    @dark 700x700 s {
-        top: phases[i]
-        bottom: sub[i]
-    } |> effects[i]
-});
+    make_wide("changed", s4, clarity) : 2s
+    --- fadeBlack 400ms ---
 
-gif {
-    frames[0] : 1.5s
-    --- crossfade 400ms easeInOut ---
-    frames[1] : 1.5s
-    --- slideLeft 300ms easeOut ---
-    frames[2] : 1.5s
-    --- zoom 400ms bounce ---
-    frames[3] : 1.5s
-    --- fadeBlack 500ms ---
-    frames[0] : 200ms
-    frames[1] : 200ms
-    frames[2] : 200ms
-    frames[3] : 200ms
-    --- fadeBlack 300ms ---
-    @dark 700x700 mono { center: "entropy wins" } |> brightness(0.5) >> vignette : 2s
+    @dark 800x450 whisper { center: "but the deep remembers" } |> brightness(0.4) >> glow(3) : 2.5s
     --- fadeBlack 800ms ---
-} => "chromatic_decay.gif";
 
+} => "deep.gif";
 
-// ============================================================
-// "Frequencies" - a data-driven visual synthesizer
-// Techniques: array spread, reduce+Gif, programmatic concat
-// ============================================================
-
-val bands = [
-    { hz: "60",   label: "SUB",   color: "#FF0044", glow: "#FF004488", fx: blur(3) >> glow(12) >> saturate(2.0) },
-    { hz: "250",  label: "LOW",   color: "#FF6600", glow: "#FF660088", fx: glow(8) >> contrast(1.6) >> noise(0.05) },
-    { hz: "1K",   label: "MID",   color: "#FFCC00", glow: "#FFCC0088", fx: contrast(1.8) >> sharpen >> glow(4) },
-    { hz: "4K",   label: "HIGH",  color: "#00FF88", glow: "#00FF8888", fx: chromatic(4) >> glow(6) >> saturate(1.8) },
-    { hz: "12K",  label: "AIR",   color: "#00CCFF", glow: "#00CCFF88", fx: chromatic(8) >> glow(10) >> brightness(1.1) },
-    { hz: "20K",  label: "ULTRA", color: "#AA44FF", glow: "#AA44FF88", fx: pixelate(2) >> chromatic(6) >> glow(8) },
-];
-
-val band_frames = bands |> map(b -> {
-    style freq {
-        color: b["color"]
-        outline: 3
-        outlineColor: "#000000"
-        shadow: 5
-        shadowColor: b["glow"]
-    }
-    @dark 720x400 freq {
-        top: "{b[\"hz\"]} Hz"
-        bottom: b["label"]
-    } |> b["fx"]
-});
-
-// Sweep: each band crossfades in sequence
-gif {
-    @dark 720x400 mono { center: "..." } |> brightness(0.3) : 600ms
-    --- fadeBlack 200ms ---
-    band_frames[0] : 500ms
-    --- crossfade 150ms ---
-    band_frames[1] : 500ms
-    --- crossfade 150ms ---
-    band_frames[2] : 500ms
-    --- crossfade 150ms ---
-    band_frames[3] : 500ms
-    --- crossfade 150ms ---
-    band_frames[4] : 500ms
-    --- crossfade 150ms ---
-    band_frames[5] : 500ms
-    --- fadeBlack 300ms ---
-} => "frequencies_sweep.gif";
-
-// Strobe: forward + reverse bounce via array spread + reduce
-val strobe = [...band_frames, ...reverse(band_frames)]
-    |> reduce((g, f) -> g.frame(f, Duration(120)), Gif());
-
-strobe
-    .frame(@dark 720x400 mono { center: "FULL SPECTRUM" } |> glow(6) >> contrast(1.4), Duration(1200))
-    .frame(@dark 720x400 mono { center: "~" } |> noise(0.4) >> brightness(0.4), Duration(800))
-    .save("frequencies_strobe.gif");
-
-print "3 animations saved: pulse.gif, chromatic_decay.gif, frequencies_sweep.gif, frequencies_strobe.gif";
+print "deep.gif saved";
