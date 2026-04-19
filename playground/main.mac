@@ -1,4 +1,71 @@
 // ============================================================
+//  ADVANCED MAC ANIMATION GUIDE
+//  Techniques for creating cinematic, data-driven graphics
+// ============================================================
+//
+//  1. STYLE AS IDENTITY
+//     Define styles as visual characters, not just formatting.
+//     Each style should evoke a mood - name them by feeling,
+//     not by appearance. Pair complementary outline/shadow
+//     colors with the text color for depth.
+//
+//     style ember { color: "#FF3300" outline: 3
+//         outlineColor: "#330000" shadow: 8
+//         shadowColor: "#FF330099" }
+//
+//  2. EFFECTS AS VERBS
+//     Compose effects into named pipelines that describe
+//     what they DO, not what they ARE. Chain 3-4 effects
+//     max - more becomes mud.
+//
+//     effect burn = saturate(3.0) >> contrast(2.2) >> glow(12);
+//     effect ghost = brightness(0.6) >> blur(2) >> glow(6);
+//
+//  3. DATA-DRIVEN FRAMES
+//     Store visual parameters in arrays of maps. Generate
+//     frames with range() |> map(). Each frame gets its own
+//     style defined inline from the data.
+//
+//     val palette = [{ fg: "#00FF88", bg: "#001a0d" }, ...];
+//     val frames = range(4) |> map(i -> {
+//         val p = palette[i];
+//         style s { color: p["fg"] outlineColor: p["bg"] }
+//         @dark 700x700 s { center: labels[i] } |> effects[i]
+//     });
+//
+//  4. SPREAD FOR COMPOSITION
+//     Use ... to spread arrays into grids and array literals.
+//     Auto-dimensions infer layout from data shape.
+//
+//     grid 2x2 { ...frames } => "grid.png";
+//     val bounce = [...frames, ...reverse(frames)];
+//
+//  5. PROGRAMMATIC GIFS
+//     Use reduce() + Gif() + .frame() to build animations
+//     from arrays. Chain .frame() for closing scenes.
+//
+//     val anim = frames
+//         |> reduce((g, f) -> g.frame(f, Duration(200)), Gif());
+//     anim.frame(@dark "fin", Duration(1000)).save("out.gif");
+//
+//  6. PACING AND RHYTHM
+//     Vary frame durations for rhythm. Use short durations
+//     (100-200ms) for strobes, medium (500ms-1s) for beats,
+//     long (1.5-3s) for holds. Transitions create flow
+//     between scenes - crossfade for smooth, fadeBlack for
+//     dramatic, zoom bounce for emphasis.
+//
+//  7. CONTRAST DRIVES INTEREST
+//     Alternate between visual density and emptiness.
+//     Follow a busy glitch frame with a clean dark one.
+//     End with simplicity - a single dot, a flat line.
+//
+// ============================================================
+//  Below: three complete animations demonstrating these ideas
+// ============================================================
+
+
+// ============================================================
 // "Pulse" - kinetic typography as motion design
 // A visual sequence treating text as material, not message.
 // ============================================================
@@ -178,14 +245,7 @@ gif {
     --- fadeBlack 800ms ---
 } => "chromatic_decay.gif";
 
-// -- Bonus: individual phase renders --
-frames[0] => "signal.png";
-frames[1] => "drift.png";
-frames[2] => "static.png";
-frames[3] => "thermal.png";
-
 print "chromatic_decay.gif saved";
-print "decay_grid.png saved";
 
 
 // ============================================================
@@ -256,4 +316,3 @@ frequencies.save("frequencies.gif");
 grid 3x2 { ...band_frames } |> pad(4) |> border(2) => "spectrum.png";
 
 print "frequencies.gif saved";
-print "spectrum.png saved";
