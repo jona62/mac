@@ -1,0 +1,12 @@
+// animate() accepts both a raw number (ms) and a Duration instance,
+// and throws a clean runtime error on invalid types instead of aborting.
+
+val frames = [@blank "A", @blank "B"];
+
+// Raw number (ms) — works. Save proves the gif was built.
+animate(frames, 500) => "animate_num.gif";
+print "num ok";                    // expect: num ok
+
+// Duration instance — works.
+animate(frames, Duration(500)) => "animate_dur.gif";
+print "dur ok";                    // expect: dur ok

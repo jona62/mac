@@ -186,6 +186,24 @@ namespace meme {
                 return 1.0f - u * u * u;
             } else if (easing == "easeInOut") {
                 return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
+            } else if (easing == "bounce") {
+                // easeOutBounce (Robert Penner): the transition lands, overshoots
+                // slightly, settles, overshoots again, settles. Parameters are
+                // the canonical ones used by most CSS/JS animation libraries.
+                const float n1 = 7.5625f;
+                const float d1 = 2.75f;
+                if (t < 1.0f / d1) {
+                    return n1 * t * t;
+                } else if (t < 2.0f / d1) {
+                    float u = t - 1.5f / d1;
+                    return n1 * u * u + 0.75f;
+                } else if (t < 2.5f / d1) {
+                    float u = t - 2.25f / d1;
+                    return n1 * u * u + 0.9375f;
+                } else {
+                    float u = t - 2.625f / d1;
+                    return n1 * u * u + 0.984375f;
+                }
             }
             return t; // linear (default)
         }

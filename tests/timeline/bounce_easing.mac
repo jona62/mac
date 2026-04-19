@@ -1,0 +1,9 @@
+// bounce easing is accepted by the parser AND implemented in the timeline.
+// Previously the parser accepted it but applyEasing() fell through to linear.
+gif {
+    @blank 200x200 "A" : 300ms
+    --- crossfade 600ms bounce ---
+    @blank 200x200 "B" : 300ms
+} => "bounce_easing.gif";
+
+print "bounce ok";                 // expect: bounce ok
