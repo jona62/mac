@@ -38,7 +38,7 @@ These take a numeric argument and return a function that transforms a meme.
 
 | Effect | Parameter | Description |
 |--------|-----------|-------------|
-| `blur(radius)` | 1-20 | Gaussian blur |
+| `blur(radius)` | 1-20 | Box blur |
 | `pixelate(blockSize)` | 2-50 | Pixelation |
 | `noise(amount)` | 0.0-1.0 | Random noise overlay |
 | `saturate(factor)` | 0.0-5.0 | Color saturation (1.0 = normal) |
@@ -49,12 +49,18 @@ These take a numeric argument and return a function that transforms a meme.
 | `posterize(levels)` | 2-32 | Reduce color levels |
 | `chromatic(offset)` | 1-20 | RGB channel displacement |
 | `threshold(level)` | 0-255 | Black/white binarization |
-| `tint(hexColor)` | hex string | Color tint overlay |
 | `jpeg(quality)` | 1-100 | JPEG compression artifacts |
+
+> `tint()` is currently not usable from Mac source code. It exists in the
+> registry but requires a numeric parameter and hardcodes alpha to 0.5;
+> the previously-documented `tint("#RRGGBBAA")` form rejects strings.
+> Until this is fixed, prefer `hueShift`, `saturate`, or a `background`
+> color on a style for similar effects. See the tracking issue for
+> `tint()` before using it.
 
 ```
 @blank "Blurry" |> blur(5) => "blurred.png";
-@blank "Warm" |> tint("#FF880044") => "tinted.png";
+@blank "Posterized" |> posterize(4) => "poster.png";
 ```
 
 ## Named Effects

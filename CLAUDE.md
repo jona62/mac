@@ -111,7 +111,7 @@ Compose: `effect name = sepia >> contrast(1.5) >> vignette;`
 
 Types: `crossfade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `wipe`, `fadeBlack`, `zoom`
 
-Easing: `linear`, `easeIn`, `easeOut`, `easeInOut`, `bounce`
+Easing: `linear`, `easeIn`, `easeOut`, `easeInOut`
 
 Syntax: `--- crossfade 300ms easeInOut ---` between gif entries
 
@@ -194,7 +194,7 @@ Version lives in the `VERSION` file (single source of truth). CMake injects it a
 - `MAC_OUTPUT_DIR` env var overrides default output directory (`~/mac/output/`)
 - Output paths are sanitized (directory components stripped) to prevent path traversal
 - Template resolution validates canonical paths stay under script/binary directories
-- Max image dimensions clamped to 4096x4096, max GIF frames capped at 200
+- Max image dimensions clamped to 4096x4096, max GIF frames capped at 500
 
 ## Code Style
 
@@ -222,7 +222,7 @@ Version lives in the `VERSION` file (single source of truth). CMake injects it a
 | `include/MacEnum.h` | Enum sum type (MacEnumDef, MacEnum) |
 | `include/MacLambda.h` | Lambda/closure with tail expression support |
 | `include/MacMeme.h` | Template map, resolveTemplate, path traversal protection |
-| `include/MacGif.h` | GIF frame storage, frame limit (200 max) |
+| `include/MacGif.h` | GIF frame storage, frame limit (500 max) |
 | `include/GifLimits.h` | `MAX_GIF_FRAMES` constant |
 | `include/MacAnalyzer.h` | Semantic analyzer entry point |
 | `include/AnalyzerWalk.h` | AST walk for analysis (match binding scope fix) |
