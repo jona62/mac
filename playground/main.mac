@@ -318,3 +318,50 @@ val prism_loop = [...forward, ...backward]
 prism_loop.save("prism.gif");
 
 print "prism.gif saved";
+
+
+// ============================================================
+// "WITNESS" - reaction GIF template
+// Techniques: customizable template, meme assets,
+//   effect intensification, minimal code
+//
+// Customize: setup_text, punch_text, reaction asset
+// ============================================================
+
+val setup_text = "when the code compiles";
+val punch_text = "on the first try";
+
+style setup_style {
+    color: "#FFFFFF"
+    outline: 3
+    outlineColor: "#000000"
+    shadow: 2
+    shadowColor: "#FFFFFF33"
+}
+
+style punch_style {
+    color: "#FFD700"
+    outline: 4
+    outlineColor: "#332b00"
+    shadow: 6
+    shadowColor: "#FFD70088"
+}
+
+effect punch_hit = saturate(2.0) >> glow(8) >> contrast(1.4);
+effect punch_hard = saturate(3.0) >> glow(14) >> contrast(1.8) >> chromatic(3);
+
+gif {
+    // Setup
+    @dark 600x600 setup_style { center: setup_text } : 1.5s
+    --- fadeBlack 300ms ---
+
+    // Reaction
+    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hit : 1.5s
+    --- zoom 200ms bounce ---
+
+    // Emphasis - same reaction, harder effects
+    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hard : 1s
+    --- fadeBlack 400ms ---
+} => "witness.gif";
+
+print "witness.gif saved";
