@@ -5,9 +5,8 @@
 //
 //  1. STYLE AS IDENTITY
 //     Define styles as visual characters, not just formatting.
-//     Each style should evoke a mood - name them by feeling,
-//     not by appearance. Pair complementary outline/shadow
-//     colors with the text color for depth.
+//     Name them by mood, not appearance. Pair complementary
+//     outline/shadow colors with the text color for depth.
 //
 //     style ember { color: "#FF3300" outline: 3
 //         outlineColor: "#330000" shadow: 8
@@ -15,21 +14,19 @@
 //
 //  2. EFFECTS AS VERBS
 //     Compose effects into named pipelines that describe
-//     what they DO, not what they ARE. Chain 3-4 effects
-//     max - more becomes mud.
+//     what they DO. Chain 3-4 effects max.
 //
 //     effect burn = saturate(3.0) >> contrast(2.2) >> glow(12);
 //     effect ghost = brightness(0.6) >> blur(2) >> glow(6);
 //
 //  3. DATA-DRIVEN FRAMES
 //     Store visual parameters in arrays of maps. Generate
-//     frames with range() |> map(). Each frame gets its own
-//     style defined inline from the data.
+//     frames with range() |> map(). Define styles inline
+//     from the data inside the lambda.
 //
 //     val palette = [{ fg: "#00FF88", bg: "#001a0d" }, ...];
 //     val frames = range(4) |> map(i -> {
-//         val p = palette[i];
-//         style s { color: p["fg"] outlineColor: p["bg"] }
+//         style s { color: palette[i]["fg"] }
 //         @dark 700x700 s { center: labels[i] } |> effects[i]
 //     });
 //
@@ -49,25 +46,21 @@
 //     anim.frame(@dark "fin", Duration(1000)).save("out.gif");
 //
 //  6. PACING AND RHYTHM
-//     Vary frame durations for rhythm. Use short durations
-//     (100-200ms) for strobes, medium (500ms-1s) for beats,
-//     long (1.5-3s) for holds. Transitions create flow
-//     between scenes - crossfade for smooth, fadeBlack for
-//     dramatic, zoom bounce for emphasis.
+//     Short durations (100-200ms) for strobes, medium
+//     (500ms-1s) for beats, long (1.5-3s) for holds.
+//     Transitions create flow - crossfade for smooth,
+//     fadeBlack for dramatic, zoom bounce for emphasis.
 //
 //  7. CONTRAST DRIVES INTEREST
-//     Alternate between visual density and emptiness.
-//     Follow a busy glitch frame with a clean dark one.
-//     End with simplicity - a single dot, a flat line.
+//     Alternate density with emptiness. Follow a glitch
+//     frame with a clean one. End with simplicity.
 //
-// ============================================================
-//  Below: three complete animations demonstrating these ideas
 // ============================================================
 
 
 // ============================================================
 // "Pulse" - kinetic typography as motion design
-// A visual sequence treating text as material, not message.
+// Techniques: style contrast, effect pipelines, pacing
 // ============================================================
 
 style mono {
@@ -117,80 +110,54 @@ effect clean = contrast(1.0);
 effect burn = saturate(3.0) >> contrast(2.2) >> glow(12) >> noise(0.08);
 effect ghost = brightness(0.6) >> blur(2) >> glow(6) >> contrast(1.3);
 effect overload = chromatic(8) >> contrast(2.0) >> saturate(3.0) >> glow(8);
-effect static = noise(0.3) >> contrast(1.8) >> pixelate(3);
+effect glitch = noise(0.3) >> contrast(1.8) >> pixelate(3);
 effect fade_out = brightness(0.3) >> contrast(0.8);
 
 gif {
-    // Silence
     @dark 720x720 mono { center: "." } |> clean : 800ms
     --- crossfade 200ms ---
-
-    // Inhale
     @dark 720x720 mono { center: ". ." } |> clean : 400ms
     @dark 720x720 mono { center: ". . ." } |> clean : 400ms
     --- crossfade 150ms ---
-
-    // Arrival
     @dark 720x720 heavy { center: "PULSE" } |> clean : 600ms
     --- fadeBlack 100ms ---
-
-    // Ignition
     @dark 720x720 ember { center: "PULSE" } |> burn : 500ms
     --- crossfade 80ms ---
-
-    // Afterimage
     @dark 720x720 ember { center: "PULSE" } |> ghost : 400ms
     --- fadeBlack 200ms ---
-
-    // Fragmentation
-    @blank 720x720 void { center: "P U L S E" } |> static : 300ms
-    @dark 720x720 void { center: "P U L S E" } |> static : 300ms
-    @blank 720x720 void { center: "P U L S E" } |> static : 200ms
+    @blank 720x720 void { center: "P U L S E" } |> glitch : 300ms
+    @dark 720x720 void { center: "P U L S E" } |> glitch : 300ms
+    @blank 720x720 void { center: "P U L S E" } |> glitch : 200ms
     --- fadeBlack 150ms ---
-
-    // Electric rebuild
     @dark 720x720 electric { center: "P" } |> overload : 250ms
     @dark 720x720 electric { center: "PU" } |> overload : 200ms
     @dark 720x720 electric { center: "PUL" } |> overload : 200ms
     @dark 720x720 electric { center: "PULS" } |> overload : 200ms
     @dark 720x720 electric { center: "PULSE" } |> overload : 500ms
     --- crossfade 300ms easeOut ---
-
-    // Calm
     @dark 720x720 mono { center: "PULSE" } |> clean : 1s
     --- crossfade 400ms easeInOut ---
-
-    // Meaning
     @dark 720x720 flicker { top: "every" center: "system" bottom: "has one" } |> glow(6) : 1.5s
     --- fadeBlack 500ms ---
-
-    // Flatline
     @dark 720x720 mono { center: "________" } |> fade_out : 1.2s
     --- crossfade 300ms ---
-
-    // One last beat
     @dark 720x720 ember { center: "." } |> burn : 400ms
     --- fadeBlack 600ms ---
 } => "pulse.gif";
 
-print "pulse.gif saved";
-
 
 // ============================================================
 // "Chromatic Decay" - procedural animation via functional pipes
-// Pushes Mac's data-driven generation, effect composition,
-// grids, expression blocks, enums, and lambdas.
+// Techniques: data-driven frames, spread grids, expression blocks
 // ============================================================
 
-// -- Palette as data --
 val palette = [
-    { name: "signal",  fg: "#00FF88", bg: "#001a0d", glow: "#00FF8877" },
-    { name: "drift",   fg: "#FF0066", bg: "#1a000a", glow: "#FF006677" },
-    { name: "static",  fg: "#8844FF", bg: "#0d0022", glow: "#8844FF77" },
-    { name: "thermal", fg: "#FF8800", bg: "#1a0e00", glow: "#FF880077" },
+    { fg: "#00FF88", bg: "#001a0d", glow: "#00FF8877" },
+    { fg: "#FF0066", bg: "#1a000a", glow: "#FF006677" },
+    { fg: "#8844FF", bg: "#0d0022", glow: "#8844FF77" },
+    { fg: "#FF8800", bg: "#1a0e00", glow: "#FF880077" },
 ];
 
-// -- Effect pipeline per mood --
 val effects = [
     glow(6) >> contrast(1.4),
     chromatic(6) >> glow(8) >> saturate(2.0),
@@ -198,30 +165,24 @@ val effects = [
     saturate(2.5) >> glow(10) >> contrast(1.8),
 ];
 
-// -- Phases of decay --
 val phases = ["SIGNAL", "DRIFT", "STATIC", "THERMAL"];
 val sub = ["locked", "unstable", "breaking", "critical"];
 
-// -- Generate styled frames from data --
 val frames = range(4) |> map(i -> {
     val p = palette[i];
-    style phase_style {
+    style s {
         color: p["fg"]
         outline: 3
         outlineColor: p["bg"]
         shadow: 6
         shadowColor: p["glow"]
     }
-    @dark 700x700 phase_style {
+    @dark 700x700 s {
         top: phases[i]
         bottom: sub[i]
     } |> effects[i]
 });
 
-// -- Composite: 2x2 grid of all phases --
-grid 2x2 { ...frames } |> pad(6) |> border(3) => "decay_grid.png";
-
-// -- Animate: each phase as a scene with transitions --
 gif {
     frames[0] : 1.5s
     --- crossfade 400ms easeInOut ---
@@ -231,40 +192,30 @@ gif {
     --- zoom 400ms bounce ---
     frames[3] : 1.5s
     --- fadeBlack 500ms ---
-
-    // Collapse: all four phases in rapid succession
     frames[0] : 200ms
     frames[1] : 200ms
     frames[2] : 200ms
     frames[3] : 200ms
     --- fadeBlack 300ms ---
-
-    // Resolution
     @dark 700x700 mono { center: "entropy wins" } |> brightness(0.5) >> vignette : 2s
-
     --- fadeBlack 800ms ---
 } => "chromatic_decay.gif";
-
-print "chromatic_decay.gif saved";
 
 
 // ============================================================
 // "Frequencies" - a data-driven visual synthesizer
-// One animation, three layers: rhythm, color, and texture
-// built entirely from arrays, lambdas, and pipes.
+// Techniques: array spread, reduce+Gif, programmatic concat
 // ============================================================
 
-// -- Frequency bands as data --
 val bands = [
-    { hz: "60",   label: "SUB",  color: "#FF0044", glow: "#FF004488", fx: blur(3) >> glow(12) >> saturate(2.0) },
-    { hz: "250",  label: "LOW",  color: "#FF6600", glow: "#FF660088", fx: glow(8) >> contrast(1.6) >> noise(0.05) },
-    { hz: "1K",   label: "MID",  color: "#FFCC00", glow: "#FFCC0088", fx: contrast(1.8) >> sharpen >> glow(4) },
-    { hz: "4K",   label: "HIGH", color: "#00FF88", glow: "#00FF8888", fx: chromatic(4) >> glow(6) >> saturate(1.8) },
-    { hz: "12K",  label: "AIR",  color: "#00CCFF", glow: "#00CCFF88", fx: chromatic(8) >> glow(10) >> brightness(1.1) },
-    { hz: "20K",  label: "ULTRA",color: "#AA44FF", glow: "#AA44FF88", fx: pixelate(2) >> chromatic(6) >> glow(8) },
+    { hz: "60",   label: "SUB",   color: "#FF0044", glow: "#FF004488", fx: blur(3) >> glow(12) >> saturate(2.0) },
+    { hz: "250",  label: "LOW",   color: "#FF6600", glow: "#FF660088", fx: glow(8) >> contrast(1.6) >> noise(0.05) },
+    { hz: "1K",   label: "MID",   color: "#FFCC00", glow: "#FFCC0088", fx: contrast(1.8) >> sharpen >> glow(4) },
+    { hz: "4K",   label: "HIGH",  color: "#00FF88", glow: "#00FF8888", fx: chromatic(4) >> glow(6) >> saturate(1.8) },
+    { hz: "12K",  label: "AIR",   color: "#00CCFF", glow: "#00CCFF88", fx: chromatic(8) >> glow(10) >> brightness(1.1) },
+    { hz: "20K",  label: "ULTRA", color: "#AA44FF", glow: "#AA44FF88", fx: pixelate(2) >> chromatic(6) >> glow(8) },
 ];
 
-// -- Build a frame per band using data-driven styles --
 val band_frames = bands |> map(b -> {
     style freq {
         color: b["color"]
@@ -279,13 +230,10 @@ val band_frames = bands |> map(b -> {
     } |> b["fx"]
 });
 
-// -- The sweep: low to high, one band at a time --
+// Sweep: each band crossfades in sequence
 gif {
-    // Intro - silence
     @dark 720x400 mono { center: "..." } |> brightness(0.3) : 600ms
     --- fadeBlack 200ms ---
-
-    // Each band hits in sequence
     band_frames[0] : 500ms
     --- crossfade 150ms ---
     band_frames[1] : 500ms
@@ -298,21 +246,15 @@ gif {
     --- crossfade 150ms ---
     band_frames[5] : 500ms
     --- fadeBlack 300ms ---
-
 } => "frequencies_sweep.gif";
 
-// Rapid strobe - forward then reverse, built from data
+// Strobe: forward + reverse bounce via array spread + reduce
 val strobe = [...band_frames, ...reverse(band_frames)]
     |> reduce((g, f) -> g.frame(f, Duration(120)), Gif());
 
-// Append closing scenes
-val frequencies = strobe
+strobe
     .frame(@dark 720x400 mono { center: "FULL SPECTRUM" } |> glow(6) >> contrast(1.4), Duration(1200))
-    .frame(@dark 720x400 mono { center: "~" } |> noise(0.4) >> brightness(0.4), Duration(800));
+    .frame(@dark 720x400 mono { center: "~" } |> noise(0.4) >> brightness(0.4), Duration(800))
+    .save("frequencies_strobe.gif");
 
-frequencies.save("frequencies.gif");
-
-// -- Spectrum grid: all 6 bands in a 3x2 layout --
-grid 3x2 { ...band_frames } |> pad(4) |> border(2) => "spectrum.png";
-
-print "frequencies.gif saved";
+print "3 animations saved: pulse.gif, chromatic_decay.gif, frequencies_sweep.gif, frequencies_strobe.gif";
