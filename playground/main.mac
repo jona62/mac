@@ -98,11 +98,6 @@ style mono {
 }
 
 
-// ============================================================
-// Chapter 1: THE SURFACE
-// Cool blues, gentle transitions, wide calm framing
-// ============================================================
-
 val s1 = chapter_style(ch1, 3);
 val s2 = chapter_style(ch2, 3);
 val s3 = chapter_style(ch3, 4);
@@ -111,83 +106,81 @@ val s4 = chapter_style(ch4, 4);
 gif {
 
     // == Chapter 1: THE SURFACE ==
-    // Cool blues, gentle transitions, wide calm framing
 
-    @dark 800x450 whisper { center: "..." } |> brightness(0.2) : 1.2s
+    @dark 800x450 whisper { center: "..." } |> brightness(0.2) : 1.5s
     --- crossfade 600ms easeIn ---
 
-    make_title("THE SURFACE", s1, surface) : 2s
-    --- slideDown 500ms easeOut ---
+    make_title("THE SURFACE", s1, surface) : 2.5s
+    --- slideDown 600ms easeOut ---
 
-    make_split("still water", "clear sky", s1, surface) : 1.5s
-    --- crossfade 400ms easeInOut ---
-    make_wide("horizon line", s1, surface) : 1.5s
-    --- crossfade 400ms easeInOut ---
+    make_split("still water", "clear sky", s1, surface) : 2s
+    --- crossfade 500ms easeInOut ---
+    make_wide("horizon line", s1, surface) : 2s
+    --- crossfade 500ms easeInOut ---
 
-    make_title("what's below?", s1, descend) : 1.5s
+    make_title("what's below?", s1, descend) : 2s
     --- slideDown 600ms easeIn ---
 
 
     // == Chapter 2: THE DESCENT ==
-    // Greens darkening, downward slides, increasing distortion
 
     make_title("DESCENT", s2, descend) : 1.5s
-    --- slideDown 400ms easeIn ---
+    --- slideDown 500ms easeIn ---
 
     make_split("10m", "light fades", s2, descend) : 1s
-    --- slideDown 300ms ---
+    --- slideDown 400ms easeInOut ---
     make_split("50m", "silence grows", s2, deep) : 1s
-    --- slideDown 300ms ---
+    --- slideDown 400ms easeInOut ---
     make_split("200m", "pressure builds", s2, deep) : 1s
-    --- slideDown 200ms easeIn ---
-    make_split("1000m", "midnight zone", s2, abyss) : 1.2s
-    --- fadeBlack 500ms ---
+    --- slideDown 400ms easeIn ---
+    make_split("1000m", "midnight zone", s2, abyss) : 1.5s
+    --- fadeBlack 600ms ---
 
 
     // == Chapter 3: THE DISCOVERY ==
-    // Hot pinks, zoom and wipe transitions, intense effects
 
-    @dark 800x450 mono { center: "." } |> abyss : 600ms
-    @dark 800x450 mono { center: ". ." } |> abyss : 400ms
-    @dark 800x450 mono { center: ". . ." } |> deep : 400ms
-    --- zoom 300ms bounce ---
+    @dark 800x450 mono { center: "." } |> abyss : 800ms
+    @dark 800x450 mono { center: ". ." } |> abyss : 600ms
+    @dark 800x450 mono { center: ". . ." } |> deep : 600ms
+    --- zoom 400ms bounce ---
 
-    make_title("FOUND", s3, discovery) : 1.5s
-    --- wipe 400ms ---
+    make_title("FOUND", s3, discovery) : 2s
+    --- wipe 500ms ---
 
-    make_title("it glows", s3, discovery) : 500ms
-    make_title("it moves", s3, transform) : 500ms
-    make_title("it knows", s3, transform) : 500ms
-    --- zoom 200ms bounce ---
+    make_title("it glows", s3, discovery) : 700ms
+    --- crossfade 300ms ---
+    make_title("it moves", s3, transform) : 700ms
+    --- crossfade 300ms ---
+    make_title("it knows", s3, transform) : 700ms
+    --- zoom 400ms bounce ---
 
-    make_title("CONTACT", s3, shatter) : 800ms
-    --- fadeBlack 200ms ---
-    make_wide("everything changes", s3, transform) : 1.5s
-    --- slideRight 400ms easeOut ---
+    make_title("CONTACT", s3, shatter) : 1.2s
+    --- fadeBlack 400ms ---
+    make_wide("everything changes", s3, transform) : 2s
+    --- slideRight 500ms easeOut ---
 
 
     // == Chapter 4: THE RETURN ==
-    // Golds, upward slides, clarity emerging from chaos
 
-    make_title("ASCENT", s4, emerge) : 1.5s
+    make_title("ASCENT", s4, emerge) : 2s
+    --- slideUp 600ms easeOut ---
+
+    make_split("1000m", "carrying light", s4, deep) : 1s
+    --- slideUp 400ms easeInOut ---
+    make_split("200m", "warmth returns", s4, descend) : 1s
+    --- slideUp 400ms easeInOut ---
+    make_split("50m", "colors return", s4, emerge) : 1s
+    --- slideUp 400ms easeOut ---
+    make_split("10m", "almost there", s4, surface) : 1s
     --- slideUp 500ms easeOut ---
 
-    make_split("1000m", "carrying light", s4, deep) : 800ms
-    --- slideUp 300ms ---
-    make_split("200m", "warmth returns", s4, descend) : 800ms
-    --- slideUp 300ms ---
-    make_split("50m", "colors return", s4, emerge) : 800ms
-    --- slideUp 300ms easeOut ---
-    make_split("10m", "almost there", s4, surface) : 800ms
-    --- slideUp 400ms easeOut ---
-
-    make_title("SURFACE", s4, corona) : 1.5s
+    make_title("SURFACE", s4, corona) : 2s
     --- crossfade 600ms easeInOut ---
 
-    make_wide("changed", s4, clarity) : 2s
-    --- fadeBlack 400ms ---
+    make_wide("changed", s4, clarity) : 2.5s
+    --- fadeBlack 500ms ---
 
-    @dark 800x450 whisper { center: "but the deep remembers" } |> brightness(0.4) >> glow(3) : 2.5s
+    @dark 800x450 whisper { center: "but the deep remembers" } |> brightness(0.4) >> glow(3) : 3s
     --- fadeBlack 800ms ---
 
 } => "deep.gif";
@@ -254,15 +247,15 @@ val feature_frames = range(len(features)) |> map(i -> {
 
 // Build the full animation
 val launch_intro = name_frames
-    |> reduce((g, f) -> g.frame(f, Duration(200)), Gif());
+    |> reduce((g, f) -> g.frame(f, Duration(250)), Gif());
 
 // Add tagline hold
 val with_tagline = launch_intro
-    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(4), Duration(1500));
+    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(4), Duration(2000));
 
 // Add feature cards
 val with_features = feature_frames
-    |> reduce((g, f) -> g.frame(f, Duration(1200)), with_tagline);
+    |> reduce((g, f) -> g.frame(f, Duration(1500)), with_tagline);
 
 // Date reveal + closing
 style date_style {
@@ -274,8 +267,8 @@ style date_style {
 }
 
 with_features
-    .frame(@dark 800x450 date_style { center: launch_date } |> grand, Duration(1500))
-    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(3) >> brightness(0.6), Duration(2000))
+    .frame(@dark 800x450 date_style { center: launch_date } |> grand, Duration(2000))
+    .frame(@dark 800x450 brand_whisper { center: tagline } |> glow(3) >> brightness(0.6), Duration(2500))
     .save("launch.gif");
 
 print "launch.gif saved";
@@ -313,7 +306,7 @@ val backward = range(24) |> map(i ->
 
 // Bounce loop: forward + reverse
 val prism_loop = [...forward, ...backward]
-    |> reduce((g, f) -> g.frame(f, Duration(130)), Gif());
+    |> reduce((g, f) -> g.frame(f, Duration(180)), Gif());
 
 prism_loop.save("prism.gif");
 
@@ -352,16 +345,16 @@ effect punch_hard = saturate(3.0) >> glow(14) >> contrast(1.8) >> chromatic(3);
 
 gif {
     // Setup
-    @dark 600x600 setup_style { center: setup_text } : 1.5s
-    --- fadeBlack 300ms ---
+    @dark 600x600 setup_style { center: setup_text } : 2s
+    --- fadeBlack 500ms ---
 
     // Reaction
-    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hit : 1.5s
-    --- zoom 200ms bounce ---
+    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hit : 2s
+    --- zoom 400ms bounce ---
 
     // Emphasis - same reaction, harder effects
-    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hard : 1s
-    --- fadeBlack 400ms ---
+    @meme.shrek_smirk punch_style { bottom: punch_text } |> punch_hard : 1.5s
+    --- fadeBlack 600ms ---
 } => "witness.gif";
 
 print "witness.gif saved";
@@ -424,24 +417,24 @@ effect winner_glow = saturate(3.0) >> glow(16) >> contrast(1.5) >> chromatic(2);
 
 gif {
     // Title
-    @dark 700x400 title_bar { center: board_title } |> board_base : 1.5s
-    --- wipe 400ms ---
+    @dark 700x400 title_bar { center: board_title } |> board_base : 2s
+    --- wipe 600ms ---
 
     // Reveal each stat
-    stat_frames[0] : 1s
-    --- slideRight 300ms easeOut ---
-    stat_frames[1] : 1s
-    --- slideRight 300ms easeOut ---
-    stat_frames[2] : 1s
-    --- slideRight 300ms easeOut ---
-    stat_frames[3] : 1s
-    --- fadeBlack 400ms ---
+    stat_frames[0] : 1.2s
+    --- slideRight 500ms easeOut ---
+    stat_frames[1] : 1.2s
+    --- slideRight 500ms easeOut ---
+    stat_frames[2] : 1.2s
+    --- slideRight 500ms easeOut ---
+    stat_frames[3] : 1.2s
+    --- fadeBlack 600ms ---
 
     // Winner highlight
-    @dark 700x400 winner_style { top: winner["label"] bottom: winner["value"] } |> winner_glow : 2s
-    --- zoom 300ms bounce ---
-    @dark 700x400 winner_style { center: winner["value"] } |> winner_glow : 1.5s
-    --- fadeBlack 600ms ---
+    @dark 700x400 winner_style { top: winner["label"] bottom: winner["value"] } |> winner_glow : 2.5s
+    --- zoom 500ms bounce ---
+    @dark 700x400 winner_style { center: winner["value"] } |> winner_glow : 2s
+    --- fadeBlack 800ms ---
 } => "scoreboard.gif";
 
 print "scoreboard.gif saved";
