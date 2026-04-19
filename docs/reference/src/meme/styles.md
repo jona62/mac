@@ -80,21 +80,18 @@ style subtitle {
 
 ## Inline Style
 
-Styles can also be applied using keyword modifiers after the template:
+Styles can be applied after the template (and after any dimensions):
 
 ```
-@blank cinematic { top: "Movie Style" }
+// Quick form: dimensions are optional
+@blank cinematic "Movie Style" => "movie.png";
+
+// Block form: dimensions are required when a style is used
+@blank 720x720 cinematic { top: "Movie Style" } => "movie.png";
 ```
 
-Built-in style keywords:
-
-| Keyword | Effect |
-|---------|--------|
-| `impact` | White text, black outline, bold, uppercase |
-| `cinematic` | Letter-boxed look |
-| `shout` | Large bold uppercase |
-| `whisper` | Small, normal weight |
-| `panic` | Red text, heavy outline |
+A style must be defined with `style name { ... }` before it can be
+referenced this way. There are no pre-defined style keywords.
 
 ## See Also
 

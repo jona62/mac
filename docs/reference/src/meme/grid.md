@@ -72,6 +72,39 @@ grid 1x2 {
 } => "nested.png";
 ```
 
+## Spread from an Array
+
+When the entries are already in an array, use `...` to spread them into
+the grid body, or omit the body entirely and let `grid` derive the shape
+from the array's length.
+
+```
+var memes = data |> map(d -> @two_panel { top: d[0] bottom: d[1] });
+
+grid 2x2 { ...memes } => "explicit.png";  // explicit shape
+grid memes => "auto.png";                  // auto-dimensioned
+```
+
+If an explicit `COLSxROWS` is given and the array size doesn't match,
+extras are truncated and missing cells are filled with blank.
+
+## Programmatic Composition
+
+For cases where a literal `grid { }` block is awkward, three native
+functions compose memes without syntax sugar:
+
+| Function | Description |
+|----------|-------------|
+| `beside(a, b)` | Place two memes side by side |
+| `stack(a, b)` | Stack two memes vertically |
+| `toGrid(arr, cols, rows)` | Arrange an array of memes into a grid |
+
+```
+beside(@blank "before", @blank "after") => "compare.png";
+stack(@blank "setup", @blank "punchline") => "bit.png";
+toGrid(memes, 3, 2) => "dashboard.png";
+```
+
 ## Composition Type
 
 `grid` produces a frame type (Meme), which means it can be used inside:

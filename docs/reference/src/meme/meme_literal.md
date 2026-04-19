@@ -100,13 +100,40 @@ Pipe memes through effect functions.
 
 ## With Positioned Text
 
-Use `x` and `y` for absolute text positioning.
+Use `text:` followed by `x:` and `y:` to place text at absolute pixel
+coordinates. Multiple positioned entries are allowed and can mix with
+the named positions (`top:`, `bottom:`, `center:`).
 
 ```
 @blank 720x720 {
-    text: "Anywhere" x: 100 y: 200
+    top: "HEADER"
+    text: "label A" x: 120 y: 200 fontSize: "sm"
+    text: "label B" x: 520 y: 200 fontSize: 64
+    bottom: "footer"
 }
 ```
+
+`fontSize` accepts either a pixel number or one of the size tier strings
+`"sm"`, `"md"`, `"lg"`, `"xlg"`. If omitted, the meme's default sizing
+applies.
+
+All positioned text on a single meme shares the meme's outer style
+(color, outline, weight, etc.). Per-entry colors are not currently
+supported — use `beside`, `stack`, or `grid` to combine memes with
+different styles.
+
+## Meme Assets
+
+The `@meme.<name>` syntax resolves to a built-in meme asset image.
+
+```
+@meme.shrek_smirk "When your code compiles" => "shrek.png";
+@meme.girl_side_eye { bottom: "QA finds a bug" } => "qa.png";
+```
+
+Available assets: `shrek_smirk`, `shrek_side_eye`, `girl_side_eye`,
+`king_bach_stare`, `jordan_crying`, `kid_crying`, `window_despair`,
+`guy_crying`, `idk_about_that`.
 
 ## See Also
 

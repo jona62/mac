@@ -87,7 +87,6 @@ gif {
 | `easeIn` | Accelerate from rest |
 | `easeOut` | Decelerate to rest |
 | `easeInOut` | Accelerate then decelerate |
-| `bounce` | Bouncing effect at end |
 
 ### Loop-Back Transition
 
@@ -138,7 +137,7 @@ Frames with transitions can also have effects:
 gif {
     @blank "Day" : 2s
     --- crossfade 500ms ---
-    @blank "Night" |> tint("#000044AA") |> vignette : 2s
+    @blank "Night" |> vignette |> brightness(0.5) : 2s
 } => "day_night.gif";
 ```
 
@@ -156,7 +155,9 @@ gif {
 
 ## Programmatic GIFs
 
-Use the `animate()` function to create GIFs from arrays:
+Use the `animate()` function to create GIFs from an array of frames where
+every frame has the same duration. The duration argument must be a
+`Duration` instance, not a raw number.
 
 ```
 var frames = [
@@ -164,7 +165,15 @@ var frames = [
     @blank "Two",
     @blank "Three"
 ];
-animate(frames, 500) => "uniform.gif";
+animate(frames, Duration(500)) => "uniform.gif";
+```
+
+For GIFs with per-frame durations, build up a `Gif` with `reduce`:
+
+```
+var gif = frames
+    |> reduce((g, m) -> g.frame(m, Duration(500)), Gif());
+gif.save("uniform.gif");
 ```
 
 ## Looping
@@ -177,6 +186,16 @@ GIFs loop infinitely by default.
 - Can be saved directly
 - Cannot be placed inside grids or other frames
 - Cannot be nested inside other gifs
+
+## Operational Limits
+
+- **Frame cap: 500 total frames per GIF.** This includes transition
+  frames, which are rendered at 15 fps. A 500ms `crossfade` between two
+  keyframes contributes ~7 interpolated frames on top of the keyframes
+  themselves. Exceeding 500 frames raises `GIF frame limit exceeded`.
+- **Transition frame rate: 15 fps.** A 200ms transition is only 3 frames
+  and will look stepped; target 400-800ms for smooth transitions.
+- **Image dimensions capped at 4096x4096.** Larger values are clamped.
 
 ## See Also
 
