@@ -1,0 +1,4 @@
+// Array index out of bounds
+val a = [1, 2, 3];
+print a[10];
+// expect runtime error: Array index out of bounds

@@ -1,0 +1,3 @@
+// Modulo by zero
+10 % 0;
+// expect runtime error: Modulo by zero

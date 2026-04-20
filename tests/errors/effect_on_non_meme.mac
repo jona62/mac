@@ -1,0 +1,3 @@
+// Applying effect to non-meme value
+42 |> sepia;
+// expect runtime error: Expected a Meme instance

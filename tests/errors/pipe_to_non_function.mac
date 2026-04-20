@@ -1,0 +1,3 @@
+// Pipe to a non-callable value
+42 |> 99;
+// expect runtime error: Pipe target must be callable

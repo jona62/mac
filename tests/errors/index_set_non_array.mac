@@ -1,0 +1,4 @@
+// Index assignment on non-indexable value
+var x = "hello";
+x[0] = "H";
+// expect runtime error: Only arrays and maps support index assignment

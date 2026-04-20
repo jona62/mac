@@ -1,0 +1,3 @@
+// Unary minus on non-number
+print -"hello";
+// expect runtime error: Operand must be a number

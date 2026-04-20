@@ -1,0 +1,4 @@
+// Set property on non-instance
+val x = 42;
+x.foo = 5;
+// expect runtime error: Only instances and maps have fields

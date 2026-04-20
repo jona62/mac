@@ -1,0 +1,4 @@
+// Undefined property on instance
+class Foo { init() {} }
+print Foo().bar;
+// expect runtime error: Undefined property 'bar'

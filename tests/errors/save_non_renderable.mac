@@ -1,0 +1,3 @@
+// Save operator on non-renderable value
+42 => "out.png";
+// expect runtime error: save() expects a Meme, Gif, Timeline, or rendered result
