@@ -1,0 +1,3 @@
+// Accessing undefined variable
+print does_not_exist;
+// expect error: Undefined variable 'does_not_exist'

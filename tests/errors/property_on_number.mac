@@ -1,0 +1,4 @@
+// Property access on non-instance
+val x = 42;
+print x.foo;
+// expect runtime error: Only instances and maps have properties

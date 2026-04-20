@@ -1,0 +1,3 @@
+// Comparing non-numbers with ordering operators
+val x = "hello" > 5;
+// expect runtime error: Operands must be numbers

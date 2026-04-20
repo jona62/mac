@@ -1,0 +1,4 @@
+// Calling a non-callable value
+val x = 42;
+x();
+// expect runtime error: Can only call functions and classes

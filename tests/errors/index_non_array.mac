@@ -1,0 +1,4 @@
+// Indexing a non-indexable value
+val x = "hello";
+print x[0];
+// expect runtime error: Only arrays and maps support indexing

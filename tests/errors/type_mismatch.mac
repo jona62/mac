@@ -1,0 +1,5 @@
+// Type mismatch errors - operations on wrong types
+
+// Passing wrong type to native function
+map("not an array", x -> x);
+// expect runtime error: Type mismatch
