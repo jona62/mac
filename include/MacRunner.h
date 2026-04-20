@@ -118,6 +118,7 @@ namespace runner {
         }
         rt.run(source);
         callable::cleanupTempFiles();
+        if (rt.interp->hadError) std::exit(1);
     }
 
     // Interactive REPL or piped stdin
@@ -139,6 +140,7 @@ namespace runner {
             while (!trimmed.empty() && std::isspace(static_cast<unsigned char>(trimmed.back()))) trimmed.pop_back();
             if (!trimmed.empty() && trimmed.back() != ';' && trimmed.back() != '}') src += ";";
             rt.run(src);
+            if (rt.interp->hadError) std::exit(1);
             return;
         }
 

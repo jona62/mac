@@ -79,6 +79,8 @@ namespace interpreter {
                         public stmt::StmtVisitor<MacValue>,
                         public std::enable_shared_from_this<Interpreter> {
     public:
+        bool hadError = false;
+
         Interpreter() : globals(make_shared<environment::Environment>()), env(globals) {
             for (const auto& def : native_registry::all()) {
                 globals->define(def.name, MacValue(def.factory()));
@@ -989,6 +991,19 @@ namespace interpreter {
                 }
             } catch (const errors::RuntimeError& error) {
                 std::cerr << error.what() << std::endl;
+                hadError = true;
+            } catch (const std::bad_variant_access&) {
+                std::cerr << "Runtime Error: Type mismatch - operation applied to wrong value type." << std::endl;
+                hadError = true;
+            } catch (const std::out_of_range&) {
+                std::cerr << "Runtime Error: Index out of range." << std::endl;
+                hadError = true;
+            } catch (const std::runtime_error& e) {
+                std::cerr << "Runtime Error: " << e.what() << std::endl;
+                hadError = true;
+            } catch (const std::exception& e) {
+                std::cerr << "Internal Error: " << e.what() << std::endl;
+                hadError = true;
             }
         }
 
