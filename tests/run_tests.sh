@@ -5,6 +5,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 MAC="$PROJECT_DIR/build/mac"
+JOBS=${MAC_TEST_JOBS:-8}
 
 # Build first
 echo "Building..."
@@ -14,20 +15,17 @@ if [ ${PIPESTATUS[0]} -ne 0 ]; then
     exit 1
 fi
 
-PASS=0
-FAIL=0
-TOTAL=0
 BUILD_DIR="$PROJECT_DIR/build"
+RESULTS_DIR=$(mktemp -d "${TMPDIR:-/tmp}/mac-test-results.XXXXXX")
+trap 'rm -rf "$RESULTS_DIR"' EXIT
 
-# Find all .mac files in test subdirectories (skip analyzer/ which has its own runner)
-for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/analyzer/*" | sort); do
-    TOTAL=$((TOTAL + 1))
-    rel_path="${test_file#$SCRIPT_DIR/}"
+run_one_test() {
+    local test_file="$1"
+    local rel_path="${test_file#$SCRIPT_DIR/}"
+    local result_file="$RESULTS_DIR/$(echo "$rel_path" | tr '/' '_')"
 
     # Extract expected output lines
-    expected=""
-    expect_error=""
-
+    local expected="" expect_error=""
     while IFS= read -r line; do
         if echo "$line" | grep -q '// expect: '; then
             val=$(echo "$line" | sed 's/.*\/\/ expect: //')
@@ -44,25 +42,28 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/an
         fi
     done < "$test_file"
 
-    # Run the test from build dir so generated files stay out of the project root
-    actual_stdout=$(cd "$BUILD_DIR" && "$MAC" "$test_file" 2>/tmp/mac_stderr)
-    actual_stderr=$(cat /tmp/mac_stderr)
+    # Run the test
+    local stderr_file="$RESULTS_DIR/stderr_$$_$RANDOM"
+    local actual_stdout
+    actual_stdout=$(cd "$BUILD_DIR" && "$MAC" "$test_file" 2>"$stderr_file")
+    local actual_stderr
+    actual_stderr=$(cat "$stderr_file")
+    rm -f "$stderr_file"
 
-    # Compare stdout expectations
-    passed=true
+    # Compare
+    local passed=true
 
     if [ -n "$expected" ]; then
-        # Remove trailing newline for comparison
+        local expected_trimmed actual_trimmed
         expected_trimmed=$(echo "$expected" | sed '/^$/d')
         actual_trimmed=$(echo "$actual_stdout" | sed '/^$/d')
-
         if [ "$expected_trimmed" != "$actual_trimmed" ]; then
             passed=false
         fi
     fi
 
-    # Compare error expectations
     if [ -n "$expect_error" ]; then
+        local error_trimmed
         error_trimmed=$(echo "$expect_error" | sed '/^$/d')
         while IFS= read -r err_line; do
             if ! echo "$actual_stderr" | grep -qF "$err_line"; then
@@ -72,10 +73,10 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/an
     fi
 
     if $passed; then
-        PASS=$((PASS + 1))
+        echo "PASS" > "$result_file"
         echo "  PASS  $rel_path"
     else
-        FAIL=$((FAIL + 1))
+        echo "FAIL" > "$result_file"
         echo "  FAIL  $rel_path"
         if [ -n "$expected" ] && [ "$expected_trimmed" != "$actual_trimmed" ]; then
             echo "        Expected stdout:"
@@ -92,24 +93,36 @@ for test_file in $(find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/an
             done <<< "$error_trimmed"
         fi
     fi
-done
+}
 
+export -f run_one_test
+export SCRIPT_DIR BUILD_DIR MAC RESULTS_DIR
+
+# Run .mac tests in parallel
+find "$SCRIPT_DIR" -mindepth 2 -name "*.mac" -not -path "*/analyzer/*" | sort | \
+    xargs -P "$JOBS" -I {} bash -c 'run_one_test "$@"' _ {}
+
+# Run integration tests sequentially (they use shared state)
 for integration_test in "$SCRIPT_DIR"/integration/*.sh; do
     test_name="integration/$(basename "$integration_test")"
-    TOTAL=$((TOTAL + 1))
     if bash "$integration_test" "$MAC"; then
-        PASS=$((PASS + 1))
+        echo "PASS" > "$RESULTS_DIR/$(echo "$test_name" | tr '/' '_')"
         echo "  PASS  $test_name"
     else
-        FAIL=$((FAIL + 1))
+        echo "FAIL" > "$RESULTS_DIR/$(echo "$test_name" | tr '/' '_')"
         echo "  FAIL  $test_name"
     fi
 done
 
+# Count results
+PASS=$(grep -rl "PASS" "$RESULTS_DIR" | wc -l | tr -d ' ')
+FAIL=$(grep -rl "FAIL" "$RESULTS_DIR" | wc -l | tr -d ' ')
+TOTAL=$((PASS + FAIL))
+
 echo ""
 echo "Results: $PASS passed, $FAIL failed, $TOTAL total"
 
-# Clean up generated test artifacts from build dir (only root-level images, not assets/)
+# Clean up generated test artifacts
 find "$BUILD_DIR" -maxdepth 1 \( -name '*.gif' -o -name '*.png' -o -name '*.jpg' \) -delete 2>/dev/null
 
 if [ $FAIL -gt 0 ]; then
