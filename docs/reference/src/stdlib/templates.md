@@ -43,9 +43,19 @@ Additional templates from `assets/templates/meme/` are available with the `meme.
 ```
 @meme.shrek_smirk "When the code compiles";
 @meme.kid_crying "Production is down";
+@meme.distracted_boyfriend "The old plan";
+@meme.cat_explosion "Deploying on Friday";
 ```
 
-Available meme templates depend on the installed asset pack.
+Bundled meme templates include the original reaction pack plus additional
+templates such as `distracted_boyfriend`, `will_smith_presenting`,
+`thousand_yard_stare`, `cat_explosion`, `drake_reaction_grid`,
+`cow_dolphin_jump`, `evil_cat_throne`, `shaq_timeout`,
+`this_is_fine_empty_room`, `stonks_arrow`, and `empty_oval_office`,
+plus newer additions such as `windows_xp_bliss`,
+`spongebob_group_stare`, `squidward_window_stare`, `rock_bliss_peek`,
+`mona_lisa_side_eye`, `krusty_krab_kitchen`, `doge_windows_hill`, and
+`tube_dogs_hill`. Available templates depend on the installed asset pack.
 
 ## See Also
 

@@ -133,7 +133,26 @@ The `@meme.<name>` syntax resolves to a built-in meme asset image.
 
 Available assets: `shrek_smirk`, `shrek_side_eye`, `girl_side_eye`,
 `king_bach_stare`, `jordan_crying`, `kid_crying`, `window_despair`,
-`guy_crying`, `idk_about_that`.
+`guy_crying`, `idk_about_that`, `distracted_boyfriend`,
+`will_smith_presenting`, `thousand_yard_stare`, `height_chart_lineup`,
+`horse_head_wedding`, `bliss_ferret_stare`, `cat_explosion`,
+`drake_reaction_grid`, `cow_dolphin_jump`, `kcat_stare`,
+`evil_cat_throne`, `shrek_sun_donkey`, `shaq_timeout`, `cat_hill_peek`,
+`dog_earbuds_bliss`, `breaking_news_alert`,
+`shrek_xp_hill`, `fallon_staring`, `bubbles_chopsticks`,
+`blossom_angry_fire`, `this_is_fine_empty_room`, `window_bars`,
+`empty_stage_spotlight`, `kpop_shush`, `cardi_blue_hair`,
+`t_rex_car_window`, `stonks_arrow`,
+`breaking_news_mic`, `bathroom_throne`, `empty_press_conference`,
+`bright_sun_day`, `many_bald_men`, `pepe_clouds`, `empty_oval_office`,
+`windows_xp_bliss`, `spongebob_flower_hills`,
+`krusty_krab_red_chair`, `barbie_car_fire`, `guy_holding_rose`,
+`sid_closeup`, `spongebob_group_stare`, `squidward_window_stare`,
+`rock_bliss_peek`, `bubbles_unimpressed`, `bubbles_scheming`,
+`gary_disguise`, `spongebob_houses_sunset`, `spongebob_war_room`,
+`beach_dog_sitting`, `mona_lisa_side_eye`, `three_matching_guys`,
+`lonely_desk_worker`, `peanuts_crosswalk`, `angry_alarm_clock`,
+`krusty_krab_kitchen`, `doge_windows_hill`, `tube_dogs_hill`.
 
 ## See Also
 
