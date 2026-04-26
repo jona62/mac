@@ -117,383 +117,383 @@
   ],
   "templates": [
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Plain white canvas.",
       "name": "blank"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Poster-style with a heavy caption block.",
       "name": "bottom_text"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Image-heavy composition with a clean caption zone.",
       "name": "caption_bar"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Dark background for neon and high-contrast text.",
       "name": "dark"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "2x2 grid with dividers.",
       "name": "four_panel"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: angry_alarm_clock",
       "name": "meme.angry_alarm_clock"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: barbie_car_fire",
       "name": "meme.barbie_car_fire"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bathroom_throne",
       "name": "meme.bathroom_throne"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: beach_dog_sitting",
       "name": "meme.beach_dog_sitting"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bliss_ferret_stare",
       "name": "meme.bliss_ferret_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: blossom_angry_fire",
       "name": "meme.blossom_angry_fire"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: breaking_news_alert",
       "name": "meme.breaking_news_alert"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: breaking_news_mic",
       "name": "meme.breaking_news_mic"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bright_sun_day",
       "name": "meme.bright_sun_day"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bubbles_chopsticks",
       "name": "meme.bubbles_chopsticks"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bubbles_scheming",
       "name": "meme.bubbles_scheming"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: bubbles_unimpressed",
       "name": "meme.bubbles_unimpressed"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: cardi_blue_hair",
       "name": "meme.cardi_blue_hair"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: cat_explosion",
       "name": "meme.cat_explosion"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: cat_hill_peek",
       "name": "meme.cat_hill_peek"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: cow_dolphin_jump",
       "name": "meme.cow_dolphin_jump"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: distracted_boyfriend",
       "name": "meme.distracted_boyfriend"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: dog_earbuds_bliss",
       "name": "meme.dog_earbuds_bliss"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: doge_windows_hill",
       "name": "meme.doge_windows_hill"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: drake_reaction_grid",
       "name": "meme.drake_reaction_grid"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: empty_oval_office",
       "name": "meme.empty_oval_office"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: empty_press_conference",
       "name": "meme.empty_press_conference"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: empty_stage_spotlight",
       "name": "meme.empty_stage_spotlight"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: evil_cat_throne",
       "name": "meme.evil_cat_throne"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: fallon_staring",
       "name": "meme.fallon_staring"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: gary_disguise",
       "name": "meme.gary_disguise"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: girl_side_eye",
       "name": "meme.girl_side_eye"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: guy_crying",
       "name": "meme.guy_crying"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: guy_holding_rose",
       "name": "meme.guy_holding_rose"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: height_chart_lineup",
       "name": "meme.height_chart_lineup"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: horse_head_wedding",
       "name": "meme.horse_head_wedding"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: idk_about_that",
       "name": "meme.idk_about_that"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: jordan_crying",
       "name": "meme.jordan_crying"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: kcat_stare",
       "name": "meme.kcat_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: kid_crying",
       "name": "meme.kid_crying"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: king_bach_stare",
       "name": "meme.king_bach_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: kpop_shush",
       "name": "meme.kpop_shush"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: krusty_krab_kitchen",
       "name": "meme.krusty_krab_kitchen"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: krusty_krab_red_chair",
       "name": "meme.krusty_krab_red_chair"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: lonely_desk_worker",
       "name": "meme.lonely_desk_worker"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: many_bald_men",
       "name": "meme.many_bald_men"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: mona_lisa_side_eye",
       "name": "meme.mona_lisa_side_eye"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: peanuts_crosswalk",
       "name": "meme.peanuts_crosswalk"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: pepe_clouds",
       "name": "meme.pepe_clouds"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: rock_bliss_peek",
       "name": "meme.rock_bliss_peek"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: shaq_timeout",
       "name": "meme.shaq_timeout"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: shrek_side_eye",
       "name": "meme.shrek_side_eye"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: shrek_smirk",
       "name": "meme.shrek_smirk"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: shrek_sun_donkey",
       "name": "meme.shrek_sun_donkey"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: shrek_xp_hill",
       "name": "meme.shrek_xp_hill"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: sid_closeup",
       "name": "meme.sid_closeup"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: spongebob_flower_hills",
       "name": "meme.spongebob_flower_hills"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: spongebob_group_stare",
       "name": "meme.spongebob_group_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: spongebob_houses_sunset",
       "name": "meme.spongebob_houses_sunset"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: spongebob_war_room",
       "name": "meme.spongebob_war_room"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: squidward_window_stare",
       "name": "meme.squidward_window_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: stonks_arrow",
       "name": "meme.stonks_arrow"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: t_rex_car_window",
       "name": "meme.t_rex_car_window"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: this_is_fine_empty_room",
       "name": "meme.this_is_fine_empty_room"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: thousand_yard_stare",
       "name": "meme.thousand_yard_stare"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: three_matching_guys",
       "name": "meme.three_matching_guys"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: tube_dogs_hill",
       "name": "meme.tube_dogs_hill"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: will_smith_presenting",
       "name": "meme.will_smith_presenting"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: window_bars",
       "name": "meme.window_bars"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: window_despair",
       "name": "meme.window_despair"
     },
     {
       "category": "meme",
-      "description": "Meme image",
+      "description": "Meme template: windows_xp_bliss",
       "name": "meme.windows_xp_bliss"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Square format for social posts.",
       "name": "square"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Portrait format for stories and reels.",
       "name": "tall"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Three beats with escalating energy.",
       "name": "three_panel"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Classic split-screen for before-and-after or expectation-vs-reality.",
       "name": "two_panel"
     },
     {
-      "category": "",
-      "description": "Built-in template",
+      "category": "canvas",
+      "description": "Landscape format for thumbnails and banners.",
       "name": "wide"
     }
   ]

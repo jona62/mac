@@ -38,6 +38,17 @@ def analyze(source: str) -> dict:
         tmp.unlink(missing_ok=True)
 
 
+def catalog(selector: str | None = None) -> dict:
+    """Run --catalog and return parsed JSON."""
+    args = [str(MAC), "--catalog" if selector is None else f"--catalog={selector}"]
+    result = subprocess.run(args, capture_output=True, text=True, timeout=10)
+    if result.returncode != 0:
+        raise AssertionError(
+            f"--catalog failed with {result.returncode}: {result.stdout} {result.stderr}"
+        )
+    return json.loads(result.stdout)
+
+
 def user_items(data: dict, category: str) -> list[dict]:
     """Filter to source='user' items (except templates which have no source)."""
     items = data.get(category, [])
@@ -633,6 +644,68 @@ def templates_builtins_registered():
     tmpls = data["templates"]
     for name in ("two_panel", "three_panel", "bottom_text", "blank", "dark"):
         assert_true(find(tmpls, name=name) is not None, f"template {name} should exist")
+
+
+# ── Catalog tests ─────────────────────────────────────────
+
+@test
+def catalog_full_registered():
+    """Full catalog includes the stable top-level sections."""
+    data = catalog()
+    for key in (
+        "schema_version", "mac_version", "catalog_fingerprint", "included",
+        "templates", "assets", "effects", "effect_definitions",
+        "layouts", "style_presets", "limits", "allowed_names",
+    ):
+        assert_true(key in data, f"catalog should include {key}")
+    assert_eq(data["schema_version"], 1)
+
+
+@test
+def catalog_comma_selectors_registered():
+    """Comma selectors return only requested sections plus metadata."""
+    data = catalog("layouts,style_presets,allowed_names")
+    assert_eq(data["included"], ["layouts", "style_presets", "allowed_names"])
+    assert_true("layouts" in data)
+    assert_true("style_presets" in data)
+    assert_true("allowed_names" in data)
+    assert_true("effects" not in data)
+
+
+@test
+def catalog_asset_selector_registered():
+    """Asset category selector exposes meme templates by stable id."""
+    data = catalog("assets:meme")
+    assets = data["assets"]["meme"]
+    assert_true(find(assets, id="meme.distracted_boyfriend") is not None)
+    template = find(assets, id="meme.distracted_boyfriend")
+    assert_true(template["assetPath"].endswith("assets/templates/meme/distracted_boyfriend.jpg"))
+
+
+@test
+def catalog_unknown_selector_errors():
+    """Unknown selectors fail loudly with JSON guidance."""
+    result = subprocess.run(
+        [str(MAC), "--catalog=missing"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert_eq(result.returncode, 2)
+    data = json.loads(result.stdout)
+    assert_eq(data["ok"], False)
+    assert_eq(data["error"], "unknown_catalog_selector")
+    assert_true("available" in data)
+
+
+@test
+def analyzer_templates_match_catalog_templates():
+    """Analyzer template metadata is sourced from the catalog."""
+    analyzed = analyze("var x = 1;\n")
+    cataloged = catalog("templates")
+    analyzer_names = sorted(t["name"] for t in analyzed["templates"])
+    catalog_names = sorted(t["id"] for t in cataloged["templates"])
+    assert_eq(analyzer_names, catalog_names)
 
 
 # ── Scoping tests ─────────────────────────────────────────

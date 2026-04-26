@@ -13,6 +13,7 @@
 #include "Parser.h"             // parser::Parser (syntactic analysis)
 #include "Resolver.h"           // resolver::Resolver (variable resolution)
 #include "MacAnalyzer.h"        // analyzer::MacAnalyzer (semantic analysis for LSP)
+#include "MacCatalog.h"         // mac_catalog::templateEntries (shared template metadata)
 #include "NativeFunctions.h"    // callable::cleanupTempFiles
 #include "nlohmann/json.hpp"    // nlohmann::json (analyzer error output)
 
@@ -247,17 +248,8 @@ namespace runner {
         auto statements = parser.parse<MV>();
         macAnalyzer.analyze(statements, "user");
 
-        for (auto& [name, tmplPath] : meme::MacMeme::templateMap()) {
-            macAnalyzer.addTemplate(name, "", "Built-in template");
-        }
-
-        auto memeDir = resolvePath(binaryDir, "assets/templates/meme");
-        if (std::filesystem::is_directory(memeDir)) {
-            for (auto& entry : std::filesystem::directory_iterator(memeDir)) {
-                if (!entry.is_regular_file()) continue;
-                auto stem = entry.path().stem().string();
-                macAnalyzer.addTemplate("meme." + stem, "meme", "Meme image");
-            }
+        for (const auto& tmpl : mac_catalog::templateEntries(binaryDir)) {
+            macAnalyzer.addTemplate(tmpl.id, tmpl.category, tmpl.description);
         }
 
         std::cout << macAnalyzer.toJson() << std::endl;

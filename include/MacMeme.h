@@ -9,6 +9,7 @@
 #include <sstream>              // ostringstream (toString)
 #include <unordered_map>        // unordered_map (template registry)
 #include <vector>               // vector (positioned texts, panels)
+#include "MacTemplateRegistry.h" // mac_catalog::builtInTemplates
 
 namespace meme {
 
@@ -52,18 +53,13 @@ namespace meme {
 
         // Known template map + custom templates
         static std::unordered_map<std::string, std::string>& templateMap() {
-            static std::unordered_map<std::string, std::string> map = {
-                {"two_panel",      "assets/templates/two_panel.png"},
-                {"three_panel",    "assets/templates/three_panel.png"},
-                {"bottom_text",    "assets/templates/bottom_text.png"},
-                {"blank",          "assets/templates/blank.png"},
-                {"caption_bar",    "assets/templates/caption_bar.png"},
-                {"four_panel",     "assets/templates/four_panel.png"},
-                {"wide",           "assets/templates/wide.png"},
-                {"tall",           "assets/templates/tall.png"},
-                {"square",         "assets/templates/square.png"},
-                {"dark",           "assets/templates/dark.png"},
-            };
+            static std::unordered_map<std::string, std::string> map = [] {
+                std::unordered_map<std::string, std::string> values;
+                for (const auto& tmpl : mac_catalog::builtInTemplates()) {
+                    values[tmpl.id] = tmpl.assetPath;
+                }
+                return values;
+            }();
             return map;
         }
 

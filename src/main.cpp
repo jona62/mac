@@ -1,5 +1,7 @@
 #include <cstring>                  // strcmp
 #include <iostream>             // cout, endl
+#include <string>               // string
+#include "MacCatalog.h"             // mac_catalog::printCatalog
 #include "MacRunner.h"              // runner::Runtime, getBinaryDir, runFile, runPrompt, analyzeFile
 #include "UpdateCheck.h"            // updateCheck::checkForUpdate
 
@@ -13,6 +15,18 @@ int main(int argc, char **argv) {
     if (argc == 3 && strcmp(argv[1], "--analyze") == 0) {
         runner::analyzeFile(binaryDir, argv[2]);
         return 0;
+    }
+
+    // --catalog mode: output runtime/catalog metadata as JSON
+    if (argc == 2) {
+        std::string arg = argv[1];
+        if (arg == "--catalog") {
+            return mac_catalog::printCatalog(binaryDir);
+        }
+        const std::string prefix = "--catalog=";
+        if (arg.rfind(prefix, 0) == 0) {
+            return mac_catalog::printCatalog(binaryDir, arg.substr(prefix.size()));
+        }
     }
 
     // --uninstall: remove mac installation
@@ -77,6 +91,7 @@ int main(int argc, char **argv) {
     if (argc > 2) {
         cout << "Usage: mac [script]" << endl;
         cout << "       mac --analyze <file>" << endl;
+        cout << "       mac --catalog[=<selector[,selector]>]" << endl;
         cout << "       mac --uninstall" << endl;
         cout << "       mac --version" << endl;
         return 1;
