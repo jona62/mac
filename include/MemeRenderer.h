@@ -423,17 +423,42 @@ namespace meme {
             if (cached != cache.wraps.end()) return cached->second;
 
             std::vector<std::string> lines;
+            std::string paragraph;
+            for (size_t i = 0; i < text.size(); ++i) {
+                char c = text[i];
+                if (c == '\r' || c == '\n') {
+                    appendWrappedParagraph(paragraph, fontSize, maxWidth, cache, lines);
+                    paragraph.clear();
+                    if (c == '\r' && i + 1 < text.size() && text[i + 1] == '\n') ++i;
+                } else {
+                    paragraph += c;
+                }
+            }
+            appendWrappedParagraph(paragraph, fontSize, maxWidth, cache, lines);
+
+            if (lines.empty()) lines.push_back("");
+            cache.wraps.emplace(std::move(cacheKey), lines);
+            return lines;
+        }
+
+        static void appendWrappedParagraph(const std::string& text,
+                                           float fontSize, float maxWidth,
+                                           TextLayoutCache& cache,
+                                           std::vector<std::string>& lines) {
             std::vector<std::string> words;
             std::string word;
             for (char c : text) {
-                if (c == ' ') {
+                if (c == ' ' || c == '\t') {
                     if (!word.empty()) { words.push_back(word); word.clear(); }
                 } else {
                     word += c;
                 }
             }
             if (!word.empty()) words.push_back(word);
-            if (words.empty()) return lines;
+            if (words.empty()) {
+                lines.push_back("");
+                return;
+            }
 
             std::string line = words[0];
             for (size_t i = 1; i < words.size(); ++i) {
@@ -446,8 +471,6 @@ namespace meme {
                 }
             }
             lines.push_back(line);
-            cache.wraps.emplace(std::move(cacheKey), lines);
-            return lines;
         }
 
         // Draw text in a horizontal strip of the image
@@ -565,6 +588,7 @@ namespace meme {
             int emojiH = static_cast<int>(fontSize * 0.85f);
 
             for (size_t i = 0; i < cps.size(); ++i) {
+                if (cps[i] == '\n' || cps[i] == '\r') continue;
                 if (emoji.isLoaded() && EmojiAtlas::isEmojiStart(cps[i])) {
                     size_t saved = i;
                     std::string ek = emoji.matchEmoji(cps, i);
@@ -576,7 +600,7 @@ namespace meme {
                 }
                 auto [glyph, fi] = glyphForFallback(cps[i], fontSize);
                 width += glyph->advance;
-                if (i + 1 < cps.size()) {
+                if (i + 1 < cps.size() && cps[i + 1] != '\n' && cps[i + 1] != '\r') {
                     auto [nextGlyph, nfi] = glyphForFallback(cps[i + 1], fontSize);
                     if (fi == nfi) {
                         float s = stbtt_ScaleForPixelHeight(&chain[fi].info, fontSize);
@@ -607,6 +631,7 @@ namespace meme {
             float primaryScale = stbtt_ScaleForPixelHeight(&chain[0].info, fontSize);
 
             for (size_t i = 0; i < cps.size(); ++i) {
+                if (cps[i] == '\n' || cps[i] == '\r') continue;
                 if (!skipEmoji && emoji.isLoaded() && EmojiAtlas::isEmojiStart(cps[i])) {
                     size_t saved = i;
                     std::string ek = emoji.matchEmoji(cps, i);
@@ -649,7 +674,7 @@ namespace meme {
                 }
 
                 xPos += glyph->advance;
-                if (i + 1 < cps.size()) {
+                if (i + 1 < cps.size() && cps[i + 1] != '\n' && cps[i + 1] != '\r') {
                     auto [nextGlyph, nfi] = glyphForFallback(cps[i + 1], fontSize);
                     if (fi == nfi) {
                         float s = stbtt_ScaleForPixelHeight(&chain[fi].info, fontSize);

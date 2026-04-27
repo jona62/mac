@@ -1,0 +1,14 @@
+style compact_caption {
+    color: "#FFFFFF"
+    outline: 3
+    outlineColor: "#000000"
+    shadow: 2
+    shadowColor: "#00000088"
+    fontSize: "sm"
+}
+
+@blank 480x240 compact_caption {
+    center: "FIRST LINE\nSECOND LINE"
+} => "multiline_text.png";
+
+print "multiline text rendered"; // expect: multiline text rendered
