@@ -27,6 +27,18 @@ namespace mac_catalog {
 
     using json = nlohmann::json;
 
+    struct TextZone {
+        std::string id;
+        std::string label;
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        std::string anchor;
+        std::string fontSize;
+        std::string guidance;
+    };
+
     struct TemplateEntry {
         std::string id;
         std::string name;
@@ -44,6 +56,7 @@ namespace mac_catalog {
         std::string comedicName;
         std::string comedicRead;
         std::vector<std::string> antiPatterns;
+        std::vector<TextZone> textZones;
     };
 
     struct TemplateMetadata {
@@ -57,6 +70,7 @@ namespace mac_catalog {
         std::string comedicName;
         std::string comedicRead;
         std::vector<std::string> antiPatterns;
+        std::vector<TextZone> textZones;
     };
 
     inline std::string lower(std::string value) {
@@ -275,6 +289,22 @@ namespace mac_catalog {
                 "The mood is delusional confidence powered by one good song.",
                 {"generic happy dog text", "sad captions that fight the image"},
             }},
+            {"meme.drake_reaction_grid", {
+                "Two-row Drake reaction grid with image panels on the left and blank label panels on the right.",
+                "Reject/approve comparisons, bad plan vs better plan, and short two-option contrast jokes.",
+                {"meme", "reaction", "drake", "grid", "comparison", "two panel", "label panel"},
+                {"reaction", "judging", "comparison"},
+                {"drake", "grid", "blank panels"},
+                {"drake reaction grid", "drake grid", "drake approve reject"},
+                "This image already contains a two-row grid. Do not use whole-canvas top/bottom captions. Put short positioned text in the right-side blank panels: reject_option near (540,170), approve_option near (540,530).",
+                "Two Choices, One Obvious",
+                "The joke is the contrast between the rejected idea and the suspiciously satisfying alternative.",
+                {"whole-canvas top/bottom captions", "leaving the right label panels blank", "captions over Drake instead of the blank panels"},
+                {
+                    {"reject_option", "top-right label panel", 390, 40, 300, 260, "center", "sm", "Rejected option; keep to 3-7 words."},
+                    {"approve_option", "bottom-right label panel", 390, 400, 300, 260, "center", "sm", "Preferred option or punchline; keep to 3-7 words."},
+                },
+            }},
             {"meme.evil_cat_throne", {
                 "Cat seated like a tiny villain on a throne.",
                 "Scheming, petty power, snack crimes, household tyranny, and mock-grand drama.",
@@ -375,6 +405,7 @@ namespace mac_catalog {
         addAllUnique(result.subjects, override.subjects);
         addAllUnique(result.aliases, override.aliases);
         addAllUnique(result.antiPatterns, override.antiPatterns);
+        if (!override.textZones.empty()) result.textZones = override.textZones;
         result.tags = uniqueValues(result.tags);
         result.moods = uniqueValues(result.moods);
         result.subjects = uniqueValues(result.subjects);
@@ -413,6 +444,29 @@ namespace mac_catalog {
         return exts.count(lower(path.extension().string())) > 0;
     }
 
+    inline json textZoneToJson(const TextZone& zone) {
+        json item = {
+            {"id", zone.id},
+            {"label", zone.label},
+            {"x", zone.x},
+            {"y", zone.y},
+            {"width", zone.width},
+            {"height", zone.height},
+            {"anchor", zone.anchor},
+            {"fontSize", zone.fontSize},
+            {"guidance", zone.guidance},
+        };
+        return item;
+    }
+
+    inline json textZonesToJson(const std::vector<TextZone>& zones) {
+        json items = json::array();
+        for (const auto& zone : zones) {
+            items.push_back(textZoneToJson(zone));
+        }
+        return items;
+    }
+
     inline json templateToJson(const TemplateEntry& entry) {
         json item = {
             {"id", entry.id},
@@ -434,6 +488,7 @@ namespace mac_catalog {
         if (!entry.comedicName.empty()) item["comedicName"] = entry.comedicName;
         if (!entry.comedicRead.empty()) item["comedicRead"] = entry.comedicRead;
         if (!entry.antiPatterns.empty()) item["antiPatterns"] = entry.antiPatterns;
+        if (!entry.textZones.empty()) item["textZones"] = textZonesToJson(entry.textZones);
         return item;
     }
 
@@ -482,6 +537,7 @@ namespace mac_catalog {
                     metadata.comedicName,
                     metadata.comedicRead,
                     metadata.antiPatterns,
+                    metadata.textZones,
                 });
             }
         }
@@ -510,6 +566,7 @@ namespace mac_catalog {
                 metadata.comedicName,
                 metadata.comedicRead,
                 metadata.antiPatterns,
+                metadata.textZones,
             });
         }
         auto assets = assetTemplateEntries(binaryDir);
@@ -778,7 +835,7 @@ namespace mac_catalog {
             : splitSelectors(selectorText);
 
         json out = {
-            {"schema_version", 3},
+            {"schema_version", 4},
             {"mac_version", MAC_VERSION},
             {"catalog_fingerprint", catalogFingerprint(binaryDir)},
             {"included", json::array()},

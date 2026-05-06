@@ -44,7 +44,8 @@ namespace analyzer {
                          const std::vector<std::string>& tags,
                          const std::vector<std::string>& moods,
                          const std::vector<std::string>& subjects,
-                         const std::vector<std::string>& aliases) {
+                         const std::vector<std::string>& aliases,
+                         const nlohmann::json& textZones = nlohmann::json::array()) {
             result.templates.push_back({
                 name,
                 category,
@@ -55,6 +56,7 @@ namespace analyzer {
                 moods,
                 subjects,
                 aliases,
+                textZones,
             });
         }
 

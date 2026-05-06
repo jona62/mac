@@ -658,7 +658,7 @@ def catalog_full_registered():
         "layouts", "style_presets", "limits", "allowed_names",
     ):
         assert_true(key in data, f"catalog should include {key}")
-    assert_eq(data["schema_version"], 3)
+    assert_eq(data["schema_version"], 4)
 
 
 @test
@@ -688,6 +688,11 @@ def catalog_asset_selector_registered():
     assert_eq(template["name"], "Bad Priorities Walk By")
     assert_true("shiny mistake" in template["comedicRead"])
     assert_true("ME/MY RESPONSIBILITIES defaults" in template["antiPatterns"])
+    drake = find(assets, id="meme.drake_reaction_grid")
+    assert_true(drake is not None)
+    assert_true("textZones" in drake)
+    assert_eq([z["id"] for z in drake["textZones"]], ["reject_option", "approve_option"])
+    assert_true("right-side blank panels" in drake["captionGuidance"])
 
 
 @test
@@ -699,6 +704,9 @@ def analyzer_template_metadata_matches_catalog():
     catalog_template = find(cataloged, id="meme.distracted_boyfriend")
     for key in ("description", "bestFor", "captionGuidance", "tags", "moods", "subjects", "aliases"):
         assert_eq(analyzer_template[key], catalog_template[key])
+    analyzer_drake = find(analyzed["templates"], name="meme.drake_reaction_grid")
+    catalog_drake = find(cataloged, id="meme.drake_reaction_grid")
+    assert_eq(analyzer_drake["textZones"], catalog_drake["textZones"])
 
 
 @test

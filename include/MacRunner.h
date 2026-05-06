@@ -258,7 +258,8 @@ namespace runner {
                 tmpl.tags,
                 tmpl.moods,
                 tmpl.subjects,
-                tmpl.aliases
+                tmpl.aliases,
+                mac_catalog::textZonesToJson(tmpl.textZones)
             );
         }
 

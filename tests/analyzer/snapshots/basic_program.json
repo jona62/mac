@@ -788,24 +788,58 @@
     {
       "aliases": [
         "drake_reaction_grid",
-        "Drake Reaction Grid"
+        "Drake Reaction Grid",
+        "drake reaction grid",
+        "drake grid",
+        "drake approve reject"
       ],
-      "bestFor": "Readable reaction beats, labels, and short punchlines.",
-      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "bestFor": "Reject/approve comparisons, bad plan vs better plan, and short two-option contrast jokes.",
+      "captionGuidance": "This image already contains a two-row grid. Do not use whole-canvas top/bottom captions. Put short positioned text in the right-side blank panels: reject_option near (540,170), approve_option near (540,530).",
       "category": "meme",
-      "description": "Reaction meme asset showing Drake Reaction Grid.",
+      "description": "Two-row Drake reaction grid with image panels on the left and blank label panels on the right.",
       "moods": [
-        "reaction"
+        "reaction",
+        "judging",
+        "comparison"
       ],
       "name": "meme.drake_reaction_grid",
       "subjects": [
-        "drake"
+        "drake",
+        "grid",
+        "blank panels"
       ],
       "tags": [
         "meme",
         "reaction",
         "drake",
-        "grid"
+        "grid",
+        "comparison",
+        "two panel",
+        "label panel"
+      ],
+      "textZones": [
+        {
+          "anchor": "center",
+          "fontSize": "sm",
+          "guidance": "Rejected option; keep to 3-7 words.",
+          "height": 260,
+          "id": "reject_option",
+          "label": "top-right label panel",
+          "width": 300,
+          "x": 390,
+          "y": 40
+        },
+        {
+          "anchor": "center",
+          "fontSize": "sm",
+          "guidance": "Preferred option or punchline; keep to 3-7 words.",
+          "height": 260,
+          "id": "approve_option",
+          "label": "bottom-right label panel",
+          "width": 300,
+          "x": 390,
+          "y": 400
+        }
       ]
     },
     {
