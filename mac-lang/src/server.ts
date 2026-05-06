@@ -170,6 +170,12 @@ interface TemplateInfo {
     name: string;
     category: string;
     description: string;
+    bestFor?: string;
+    captionGuidance?: string;
+    tags?: string[];
+    moods?: string[];
+    subjects?: string[];
+    aliases?: string[];
 }
 
 interface AnalysisResult {

@@ -658,7 +658,7 @@ def catalog_full_registered():
         "layouts", "style_presets", "limits", "allowed_names",
     ):
         assert_true(key in data, f"catalog should include {key}")
-    assert_eq(data["schema_version"], 1)
+    assert_eq(data["schema_version"], 2)
 
 
 @test
@@ -680,6 +680,22 @@ def catalog_asset_selector_registered():
     assert_true(find(assets, id="meme.distracted_boyfriend") is not None)
     template = find(assets, id="meme.distracted_boyfriend")
     assert_true(template["assetPath"].endswith("assets/templates/meme/distracted_boyfriend.jpg"))
+    for key in ("tags", "moods", "subjects", "aliases", "captionGuidance"):
+        assert_true(key in template, f"asset metadata should include {key}")
+    assert_true("temptation" in template["tags"])
+    assert_true("boyfriend" in template["subjects"])
+    assert_true("ME/MY RESPONSIBILITIES" in template["captionGuidance"])
+
+
+@test
+def analyzer_template_metadata_matches_catalog():
+    """Analyzer template metadata is sourced from the same catalog entries."""
+    analyzed = analyze("var x = 1;\n")
+    cataloged = catalog("assets:meme")["assets"]["meme"]
+    analyzer_template = find(analyzed["templates"], name="meme.distracted_boyfriend")
+    catalog_template = find(cataloged, id="meme.distracted_boyfriend")
+    for key in ("description", "bestFor", "captionGuidance", "tags", "moods", "subjects", "aliases"):
+        assert_eq(analyzer_template[key], catalog_template[key])
 
 
 @test

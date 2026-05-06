@@ -9,6 +9,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_map>  // For curated catalog metadata lookup tables
 #include <unordered_set>
 #include <vector>
 
@@ -35,6 +36,21 @@ namespace mac_catalog {
         std::string source;
         std::string assetCategory;
         std::string assetPath;
+        std::vector<std::string> tags;
+        std::vector<std::string> moods;
+        std::vector<std::string> subjects;
+        std::vector<std::string> aliases;
+        std::string captionGuidance;
+    };
+
+    struct TemplateMetadata {
+        std::string description;
+        std::string bestFor;
+        std::vector<std::string> tags;
+        std::vector<std::string> moods;
+        std::vector<std::string> subjects;
+        std::vector<std::string> aliases;
+        std::string captionGuidance;
     };
 
     inline std::string lower(std::string value) {
@@ -59,6 +75,242 @@ namespace mac_catalog {
         return value;
     }
 
+    inline std::vector<std::string> stemWords(std::string value) {
+        std::replace(value.begin(), value.end(), '-', '_');
+        std::vector<std::string> out;
+        std::stringstream ss(value);
+        std::string item;
+        while (std::getline(ss, item, '_')) {
+            if (!item.empty()) out.push_back(lower(item));
+        }
+        return out;
+    }
+
+    inline bool hasWord(const std::vector<std::string>& words, const std::string& word) {
+        return std::find(words.begin(), words.end(), word) != words.end();
+    }
+
+    inline void addUnique(std::vector<std::string>& values, const std::string& value) {
+        if (value.empty()) return;
+        if (std::find(values.begin(), values.end(), value) == values.end()) {
+            values.push_back(value);
+        }
+    }
+
+    inline void addAllUnique(std::vector<std::string>& values, const std::vector<std::string>& more) {
+        for (const auto& value : more) addUnique(values, value);
+    }
+
+    inline std::vector<std::string> uniqueValues(std::vector<std::string> values) {
+        std::vector<std::string> out;
+        for (const auto& value : values) addUnique(out, value);
+        return out;
+    }
+
+    inline TemplateMetadata fallbackAssetMetadata(const std::string& stem, const std::string& category) {
+        auto words = stemWords(stem);
+        std::vector<std::string> tags = {category, "meme", "reaction"};
+        std::vector<std::string> moods;
+        std::vector<std::string> subjects;
+        std::vector<std::string> aliases = {stem, titleizeStem(stem)};
+
+        addAllUnique(tags, words);
+        for (const auto& word : words) {
+            if (word == "cat" || word == "dog" || word == "ferret" || word == "cow" ||
+                word == "dolphin" || word == "horse" || word == "trex" || word == "t" ||
+                word == "rex") {
+                addUnique(subjects, word == "t" || word == "rex" ? "t-rex" : word);
+            } else if (word == "desk" || word == "worker" || word == "office" ||
+                       word == "terminal" || word == "kitchen" || word == "window" ||
+                       word == "stage" || word == "press" || word == "conference" ||
+                       word == "alarm" || word == "clock" || word == "car" ||
+                       word == "beach" || word == "hill" || word == "room" ||
+                       word == "throne" || word == "fire" || word == "explosion" ||
+                       word == "group" || word == "stare") {
+                addUnique(subjects, word);
+            } else if (word == "spongebob" || word == "squidward" || word == "shrek" ||
+                       word == "drake" || word == "jordan" || word == "pepe" ||
+                       word == "doge" || word == "gary" || word == "krusty") {
+                addUnique(subjects, word);
+            }
+        }
+
+        if (hasWord(words, "angry") || hasWord(words, "fire") || hasWord(words, "explosion")) {
+            addAllUnique(moods, {"panic", "chaos", "meltdown"});
+        }
+        if (hasWord(words, "crying") || hasWord(words, "despair") || hasWord(words, "sad")) {
+            addAllUnique(moods, {"sad", "despair"});
+        }
+        if (hasWord(words, "side") || hasWord(words, "eye") || hasWord(words, "unimpressed") ||
+            hasWord(words, "stare")) {
+            addAllUnique(moods, {"skeptical", "deadpan"});
+        }
+        if (hasWord(words, "bliss") || hasWord(words, "sun") || hasWord(words, "beach")) {
+            addAllUnique(moods, {"calm", "joy"});
+        }
+        if (hasWord(words, "empty")) {
+            addAllUnique(moods, {"awkward", "absence"});
+        }
+        if (moods.empty()) addUnique(moods, "reaction");
+
+        std::string description = "Reaction meme asset showing " + titleizeStem(stem) + ".";
+        std::string bestFor = "Readable reaction beats, labels, and short punchlines.";
+        std::string captionGuidance = "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.";
+        return {
+            description,
+            bestFor,
+            uniqueValues(tags),
+            uniqueValues(moods),
+            uniqueValues(subjects),
+            uniqueValues(aliases),
+            captionGuidance,
+        };
+    }
+
+    inline const std::unordered_map<std::string, TemplateMetadata>& curatedAssetMetadata() {
+        static const std::unordered_map<std::string, TemplateMetadata> metadata = {
+            {"meme.angry_alarm_clock", {
+                "Angry alarm clock character with intense wake-up energy.",
+                "Sleep, Monday, procrastination, bargaining, and tiny daily betrayals.",
+                {"meme", "reaction", "alarm", "clock", "morning", "sleep"},
+                {"panic", "anger", "dread"},
+                {"alarm", "clock"},
+                {"alarm clock", "angry alarm", "morning alarm"},
+                "Use bottom captions for the complaint; avoid center text over the clock face.",
+            }},
+            {"meme.beach_dog_sitting", {
+                "Dog sitting alone on a beach with peaceful resigned energy.",
+                "Calm acceptance, pretending everything is fine, solitude, vacation-brain jokes.",
+                {"meme", "reaction", "dog", "beach", "calm", "resigned"},
+                {"calm", "resigned", "deadpan"},
+                {"dog", "beach"},
+                {"beach dog", "resigned dog", "calm dog"},
+                "Use bottom captions; keep text short so the quiet beach mood stays visible.",
+            }},
+            {"meme.cat_explosion", {
+                "Cat in a chaotic explosion scene with maximum meltdown energy.",
+                "Peak chaos, sudden realization, rage, disaster, and visual punchline moments.",
+                {"meme", "reaction", "cat", "explosion", "chaos", "meltdown"},
+                {"chaos", "panic", "meltdown"},
+                {"cat", "explosion", "fire"},
+                {"exploding cat", "chaos cat", "meltdown cat"},
+                "Use short top or bottom captions; heavy effects are appropriate, but keep the cat readable.",
+            }},
+            {"meme.distracted_boyfriend", {
+                "Classic distracted boyfriend scene with three clear role positions.",
+                "Temptation, bad priorities, choosing the wrong thing, and comparison jokes.",
+                {"meme", "template", "choice", "temptation", "comparison"},
+                {"tempted", "awkward", "comic"},
+                {"boyfriend", "girlfriend", "street"},
+                {"distracted boyfriend", "temptation trio", "boyfriend looking back"},
+                "Use short labels near each role; avoid generic ME/MY RESPONSIBILITIES unless requested.",
+            }},
+            {"meme.evil_cat_throne", {
+                "Cat seated like a tiny villain on a throne.",
+                "Scheming, petty power, snack crimes, household tyranny, and mock-grand drama.",
+                {"meme", "reaction", "cat", "throne", "villain", "scheming"},
+                {"smug", "sinister", "petty"},
+                {"cat", "throne"},
+                {"evil cat", "cat throne", "villain cat"},
+                "Bottom captions work best; one concise royal decree or consequence.",
+            }},
+            {"meme.girl_side_eye", {
+                "Girl giving a strong side-eye reaction.",
+                "Suspicion, judgment, awkward social moments, and disbelief.",
+                {"meme", "reaction", "side-eye", "judgment", "social"},
+                {"skeptical", "judging", "deadpan"},
+                {"girl", "face"},
+                {"side eye girl", "judgment stare", "suspicious girl"},
+                "Use top or bottom captions; never cover the eyes with center text.",
+            }},
+            {"meme.lonely_desk_worker", {
+                "Person alone at a desk with a monitor, quiet office mood.",
+                "Work cycles, late-night focus, debugging, isolation, and calm-before-chaos setups.",
+                {"meme", "reaction", "desk", "office", "computer", "debugging"},
+                {"calm", "lonely", "focused"},
+                {"desk", "worker", "computer"},
+                {"desk worker", "lonely desk", "alone at computer"},
+                "Use bottom captions or terminal-style text; keep the monitor and person visible.",
+            }},
+            {"meme.spongebob_group_stare", {
+                "Group stare reaction with multiple characters looking toward the viewer.",
+                "Group chat, social pressure, sudden attention, and everyone noticing at once.",
+                {"meme", "reaction", "group", "stare", "social"},
+                {"awkward", "judging", "surprised"},
+                {"group", "faces"},
+                {"group stare", "everyone staring", "spongebob group"},
+                "Use bottom captions; avoid covering faces with centered text.",
+            }},
+            {"meme.spongebob_war_room", {
+                "Chaotic SpongeBob war-room scene with planning-board energy.",
+                "Escalation, overthinking, debugging, strategy spirals, and panic planning.",
+                {"meme", "reaction", "war room", "planning", "chaos"},
+                {"tense", "panic", "spiral"},
+                {"spongebob", "room", "board"},
+                {"war room", "planning board", "spongebob war room"},
+                "Use bottom captions; pair with mild desaturation or contrast for tense middle beats.",
+            }},
+            {"meme.squidward_window_stare", {
+                "Squidward staring through a window with quiet longing and resignation.",
+                "Hollow victory, watching from outside, loneliness, envy, and quiet aftermath.",
+                {"meme", "reaction", "window", "squidward", "resignation"},
+                {"resigned", "sad", "hollow"},
+                {"squidward", "window"},
+                {"squidward window", "window stare", "outside looking in"},
+                "Use bottom captions with muted styling; avoid loud effects unless ironic.",
+            }},
+            {"meme.thousand_yard_stare", {
+                "Blank thousand-yard stare with exhausted existential energy.",
+                "Confusion, reality breaking, trauma, debugging rabbit holes, and quiet shock.",
+                {"meme", "reaction", "stare", "existential", "confusion"},
+                {"haunted", "confused", "dissociated"},
+                {"face", "stare"},
+                {"thousand yard stare", "blank stare", "haunted stare"},
+                "Use bottom captions; keep text short and let the stare carry the joke.",
+            }},
+        };
+        return metadata;
+    }
+
+    inline TemplateMetadata mergeMetadata(const TemplateMetadata& base, const TemplateMetadata& override) {
+        TemplateMetadata result = base;
+        if (!override.description.empty()) result.description = override.description;
+        if (!override.bestFor.empty()) result.bestFor = override.bestFor;
+        if (!override.captionGuidance.empty()) result.captionGuidance = override.captionGuidance;
+        addAllUnique(result.tags, override.tags);
+        addAllUnique(result.moods, override.moods);
+        addAllUnique(result.subjects, override.subjects);
+        addAllUnique(result.aliases, override.aliases);
+        result.tags = uniqueValues(result.tags);
+        result.moods = uniqueValues(result.moods);
+        result.subjects = uniqueValues(result.subjects);
+        result.aliases = uniqueValues(result.aliases);
+        return result;
+    }
+
+    inline TemplateMetadata metadataForAsset(const std::string& id, const std::string& stem, const std::string& category) {
+        auto base = fallbackAssetMetadata(stem, category);
+        const auto& curated = curatedAssetMetadata();
+        auto found = curated.find(id);
+        if (found == curated.end()) return base;
+        return mergeMetadata(base, found->second);
+    }
+
+    inline TemplateMetadata metadataForBuiltin(const TemplateDefinition& tmpl) {
+        auto words = stemWords(tmpl.id);
+        std::vector<std::string> tags = {"template", tmpl.category, tmpl.id};
+        addAllUnique(tags, words);
+        return {
+            tmpl.description,
+            tmpl.bestFor,
+            uniqueValues(tags),
+            {},
+            {},
+            {tmpl.id, tmpl.name},
+            "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
+        };
+    }
+
     inline bool isAllowedImageExt(const std::filesystem::path& path) {
         static const std::unordered_set<std::string> exts = {
             ".jpg", ".jpeg", ".png", ".gif",
@@ -79,6 +331,11 @@ namespace mac_catalog {
         if (!entry.assetCategory.empty()) {
             item["assetCategory"] = entry.assetCategory;
         }
+        item["tags"] = entry.tags;
+        item["moods"] = entry.moods;
+        item["subjects"] = entry.subjects;
+        item["aliases"] = entry.aliases;
+        item["captionGuidance"] = entry.captionGuidance;
         return item;
     }
 
@@ -106,15 +363,22 @@ namespace mac_catalog {
             for (const auto& image : images) {
                 auto stem = image.stem().string();
                 auto filename = image.filename().string();
+                auto id = category + "." + stem;
+                auto metadata = metadataForAsset(id, stem, category);
                 out.push_back({
-                    category + "." + stem,
+                    id,
                     titleizeStem(stem),
                     category,
-                    "Meme template: " + stem,
-                    "Reaction shots and recognizable meme beats.",
+                    metadata.description,
+                    metadata.bestFor,
                     "asset",
                     category,
                     "assets/templates/" + category + "/" + filename,
+                    metadata.tags,
+                    metadata.moods,
+                    metadata.subjects,
+                    metadata.aliases,
+                    metadata.captionGuidance,
                 });
             }
         }
@@ -125,15 +389,21 @@ namespace mac_catalog {
     inline std::vector<TemplateEntry> templateEntries(const std::string& binaryDir) {
         std::vector<TemplateEntry> out;
         for (const auto& tmpl : builtInTemplates()) {
+            auto metadata = metadataForBuiltin(tmpl);
             out.push_back({
                 tmpl.id,
                 tmpl.name,
                 tmpl.category,
-                tmpl.description,
-                tmpl.bestFor,
+                metadata.description,
+                metadata.bestFor,
                 "builtin",
                 "",
                 tmpl.assetPath,
+                metadata.tags,
+                metadata.moods,
+                metadata.subjects,
+                metadata.aliases,
+                metadata.captionGuidance,
             });
         }
         auto assets = assetTemplateEntries(binaryDir);
@@ -402,7 +672,7 @@ namespace mac_catalog {
             : splitSelectors(selectorText);
 
         json out = {
-            {"schema_version", 1},
+            {"schema_version", 2},
             {"mac_version", MAC_VERSION},
             {"catalog_fingerprint", catalogFingerprint(binaryDir)},
             {"included", json::array()},

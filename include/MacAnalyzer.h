@@ -39,8 +39,23 @@ namespace analyzer {
         }
 
         void addTemplate(const std::string& name, const std::string& category,
-                         const std::string& description) {
-            result.templates.push_back({name, category, description});
+                         const std::string& description, const std::string& bestFor,
+                         const std::string& captionGuidance,
+                         const std::vector<std::string>& tags,
+                         const std::vector<std::string>& moods,
+                         const std::vector<std::string>& subjects,
+                         const std::vector<std::string>& aliases) {
+            result.templates.push_back({
+                name,
+                category,
+                description,
+                bestFor,
+                captionGuidance,
+                tags,
+                moods,
+                subjects,
+                aliases,
+            });
         }
 
         std::string toJson() const { return analyzer::toJson(result); }

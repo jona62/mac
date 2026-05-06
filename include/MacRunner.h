@@ -249,7 +249,17 @@ namespace runner {
         macAnalyzer.analyze(statements, "user");
 
         for (const auto& tmpl : mac_catalog::templateEntries(binaryDir)) {
-            macAnalyzer.addTemplate(tmpl.id, tmpl.category, tmpl.description);
+            macAnalyzer.addTemplate(
+                tmpl.id,
+                tmpl.category,
+                tmpl.description,
+                tmpl.bestFor,
+                tmpl.captionGuidance,
+                tmpl.tags,
+                tmpl.moods,
+                tmpl.subjects,
+                tmpl.aliases
+            );
         }
 
         std::cout << macAnalyzer.toJson() << std::endl;

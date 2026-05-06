@@ -117,384 +117,1859 @@
   ],
   "templates": [
     {
+      "aliases": [
+        "blank",
+        "Blank"
+      ],
+      "bestFor": "Simple text-led stills and punchy cut-ins.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Plain white canvas.",
-      "name": "blank"
+      "moods": [],
+      "name": "blank",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "blank"
+      ]
     },
     {
+      "aliases": [
+        "bottom_text",
+        "Bottom Text"
+      ],
+      "bestFor": "One-liners, announcements, and dramatic reveals.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Poster-style with a heavy caption block.",
-      "name": "bottom_text"
+      "moods": [],
+      "name": "bottom_text",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "bottom_text",
+        "bottom",
+        "text"
+      ]
     },
     {
+      "aliases": [
+        "caption_bar",
+        "Caption Bar"
+      ],
+      "bestFor": "Poster-like cards and tidy social callouts.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Image-heavy composition with a clean caption zone.",
-      "name": "caption_bar"
+      "moods": [],
+      "name": "caption_bar",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "caption_bar",
+        "caption",
+        "bar"
+      ]
     },
     {
+      "aliases": [
+        "dark",
+        "Dark"
+      ],
+      "bestFor": "Night-mode cards, neon captions, dramatic overlays.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Dark background for neon and high-contrast text.",
-      "name": "dark"
+      "moods": [],
+      "name": "dark",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "dark"
+      ]
     },
     {
+      "aliases": [
+        "four_panel",
+        "Four Panel"
+      ],
+      "bestFor": "Comparison sets and multi-beat punchlines.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "2x2 grid with dividers.",
-      "name": "four_panel"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: angry_alarm_clock",
-      "name": "meme.angry_alarm_clock"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: barbie_car_fire",
-      "name": "meme.barbie_car_fire"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bathroom_throne",
-      "name": "meme.bathroom_throne"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: beach_dog_sitting",
-      "name": "meme.beach_dog_sitting"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bliss_ferret_stare",
-      "name": "meme.bliss_ferret_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: blossom_angry_fire",
-      "name": "meme.blossom_angry_fire"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: breaking_news_alert",
-      "name": "meme.breaking_news_alert"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: breaking_news_mic",
-      "name": "meme.breaking_news_mic"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bright_sun_day",
-      "name": "meme.bright_sun_day"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bubbles_chopsticks",
-      "name": "meme.bubbles_chopsticks"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bubbles_scheming",
-      "name": "meme.bubbles_scheming"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: bubbles_unimpressed",
-      "name": "meme.bubbles_unimpressed"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: cardi_blue_hair",
-      "name": "meme.cardi_blue_hair"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: cat_explosion",
-      "name": "meme.cat_explosion"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: cat_hill_peek",
-      "name": "meme.cat_hill_peek"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: cow_dolphin_jump",
-      "name": "meme.cow_dolphin_jump"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: distracted_boyfriend",
-      "name": "meme.distracted_boyfriend"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: dog_earbuds_bliss",
-      "name": "meme.dog_earbuds_bliss"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: doge_windows_hill",
-      "name": "meme.doge_windows_hill"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: drake_reaction_grid",
-      "name": "meme.drake_reaction_grid"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: empty_oval_office",
-      "name": "meme.empty_oval_office"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: empty_press_conference",
-      "name": "meme.empty_press_conference"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: empty_stage_spotlight",
-      "name": "meme.empty_stage_spotlight"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: evil_cat_throne",
-      "name": "meme.evil_cat_throne"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: fallon_staring",
-      "name": "meme.fallon_staring"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: gary_disguise",
-      "name": "meme.gary_disguise"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: girl_side_eye",
-      "name": "meme.girl_side_eye"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: guy_crying",
-      "name": "meme.guy_crying"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: guy_holding_rose",
-      "name": "meme.guy_holding_rose"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: height_chart_lineup",
-      "name": "meme.height_chart_lineup"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: horse_head_wedding",
-      "name": "meme.horse_head_wedding"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: idk_about_that",
-      "name": "meme.idk_about_that"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: jordan_crying",
-      "name": "meme.jordan_crying"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: kcat_stare",
-      "name": "meme.kcat_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: kid_crying",
-      "name": "meme.kid_crying"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: king_bach_stare",
-      "name": "meme.king_bach_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: kpop_shush",
-      "name": "meme.kpop_shush"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: krusty_krab_kitchen",
-      "name": "meme.krusty_krab_kitchen"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: krusty_krab_red_chair",
-      "name": "meme.krusty_krab_red_chair"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: lonely_desk_worker",
-      "name": "meme.lonely_desk_worker"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: many_bald_men",
-      "name": "meme.many_bald_men"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: mona_lisa_side_eye",
-      "name": "meme.mona_lisa_side_eye"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: peanuts_crosswalk",
-      "name": "meme.peanuts_crosswalk"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: pepe_clouds",
-      "name": "meme.pepe_clouds"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: rock_bliss_peek",
-      "name": "meme.rock_bliss_peek"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: shaq_timeout",
-      "name": "meme.shaq_timeout"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: shrek_side_eye",
-      "name": "meme.shrek_side_eye"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: shrek_smirk",
-      "name": "meme.shrek_smirk"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: shrek_sun_donkey",
-      "name": "meme.shrek_sun_donkey"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: shrek_xp_hill",
-      "name": "meme.shrek_xp_hill"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: sid_closeup",
-      "name": "meme.sid_closeup"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: spongebob_flower_hills",
-      "name": "meme.spongebob_flower_hills"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: spongebob_group_stare",
-      "name": "meme.spongebob_group_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: spongebob_houses_sunset",
-      "name": "meme.spongebob_houses_sunset"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: spongebob_war_room",
-      "name": "meme.spongebob_war_room"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: squidward_window_stare",
-      "name": "meme.squidward_window_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: stonks_arrow",
-      "name": "meme.stonks_arrow"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: t_rex_car_window",
-      "name": "meme.t_rex_car_window"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: this_is_fine_empty_room",
-      "name": "meme.this_is_fine_empty_room"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: thousand_yard_stare",
-      "name": "meme.thousand_yard_stare"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: three_matching_guys",
-      "name": "meme.three_matching_guys"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: tube_dogs_hill",
-      "name": "meme.tube_dogs_hill"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: will_smith_presenting",
-      "name": "meme.will_smith_presenting"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: window_bars",
-      "name": "meme.window_bars"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: window_despair",
-      "name": "meme.window_despair"
-    },
-    {
-      "category": "meme",
-      "description": "Meme template: windows_xp_bliss",
-      "name": "meme.windows_xp_bliss"
-    },
-    {
+      "moods": [],
+      "name": "four_panel",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "four_panel",
+        "four",
+        "panel"
+      ]
+    },
+    {
+      "aliases": [
+        "angry_alarm_clock",
+        "Angry Alarm Clock",
+        "alarm clock",
+        "angry alarm",
+        "morning alarm"
+      ],
+      "bestFor": "Sleep, Monday, procrastination, bargaining, and tiny daily betrayals.",
+      "captionGuidance": "Use bottom captions for the complaint; avoid center text over the clock face.",
+      "category": "meme",
+      "description": "Angry alarm clock character with intense wake-up energy.",
+      "moods": [
+        "panic",
+        "chaos",
+        "meltdown",
+        "anger",
+        "dread"
+      ],
+      "name": "meme.angry_alarm_clock",
+      "subjects": [
+        "alarm",
+        "clock"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "angry",
+        "alarm",
+        "clock",
+        "morning",
+        "sleep"
+      ]
+    },
+    {
+      "aliases": [
+        "barbie_car_fire",
+        "Barbie Car Fire"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Barbie Car Fire.",
+      "moods": [
+        "panic",
+        "chaos",
+        "meltdown"
+      ],
+      "name": "meme.barbie_car_fire",
+      "subjects": [
+        "car",
+        "fire"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "barbie",
+        "car",
+        "fire"
+      ]
+    },
+    {
+      "aliases": [
+        "bathroom_throne",
+        "Bathroom Throne"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bathroom Throne.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.bathroom_throne",
+      "subjects": [
+        "throne"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "bathroom",
+        "throne"
+      ]
+    },
+    {
+      "aliases": [
+        "beach_dog_sitting",
+        "Beach Dog Sitting",
+        "beach dog",
+        "resigned dog",
+        "calm dog"
+      ],
+      "bestFor": "Calm acceptance, pretending everything is fine, solitude, vacation-brain jokes.",
+      "captionGuidance": "Use bottom captions; keep text short so the quiet beach mood stays visible.",
+      "category": "meme",
+      "description": "Dog sitting alone on a beach with peaceful resigned energy.",
+      "moods": [
+        "calm",
+        "joy",
+        "resigned",
+        "deadpan"
+      ],
+      "name": "meme.beach_dog_sitting",
+      "subjects": [
+        "beach",
+        "dog"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "beach",
+        "dog",
+        "sitting",
+        "calm",
+        "resigned"
+      ]
+    },
+    {
+      "aliases": [
+        "bliss_ferret_stare",
+        "Bliss Ferret Stare"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bliss Ferret Stare.",
+      "moods": [
+        "skeptical",
+        "deadpan",
+        "calm",
+        "joy"
+      ],
+      "name": "meme.bliss_ferret_stare",
+      "subjects": [
+        "ferret",
+        "stare"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "bliss",
+        "ferret",
+        "stare"
+      ]
+    },
+    {
+      "aliases": [
+        "blossom_angry_fire",
+        "Blossom Angry Fire"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Blossom Angry Fire.",
+      "moods": [
+        "panic",
+        "chaos",
+        "meltdown"
+      ],
+      "name": "meme.blossom_angry_fire",
+      "subjects": [
+        "fire"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "blossom",
+        "angry",
+        "fire"
+      ]
+    },
+    {
+      "aliases": [
+        "breaking_news_alert",
+        "Breaking News Alert"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Breaking News Alert.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.breaking_news_alert",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "breaking",
+        "news",
+        "alert"
+      ]
+    },
+    {
+      "aliases": [
+        "breaking_news_mic",
+        "Breaking News Mic"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Breaking News Mic.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.breaking_news_mic",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "breaking",
+        "news",
+        "mic"
+      ]
+    },
+    {
+      "aliases": [
+        "bright_sun_day",
+        "Bright Sun Day"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bright Sun Day.",
+      "moods": [
+        "calm",
+        "joy"
+      ],
+      "name": "meme.bright_sun_day",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "bright",
+        "sun",
+        "day"
+      ]
+    },
+    {
+      "aliases": [
+        "bubbles_chopsticks",
+        "Bubbles Chopsticks"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bubbles Chopsticks.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.bubbles_chopsticks",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "bubbles",
+        "chopsticks"
+      ]
+    },
+    {
+      "aliases": [
+        "bubbles_scheming",
+        "Bubbles Scheming"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bubbles Scheming.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.bubbles_scheming",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "bubbles",
+        "scheming"
+      ]
+    },
+    {
+      "aliases": [
+        "bubbles_unimpressed",
+        "Bubbles Unimpressed"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Bubbles Unimpressed.",
+      "moods": [
+        "skeptical",
+        "deadpan"
+      ],
+      "name": "meme.bubbles_unimpressed",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "bubbles",
+        "unimpressed"
+      ]
+    },
+    {
+      "aliases": [
+        "cardi_blue_hair",
+        "Cardi Blue Hair"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Cardi Blue Hair.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.cardi_blue_hair",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "cardi",
+        "blue",
+        "hair"
+      ]
+    },
+    {
+      "aliases": [
+        "cat_explosion",
+        "Cat Explosion",
+        "exploding cat",
+        "chaos cat",
+        "meltdown cat"
+      ],
+      "bestFor": "Peak chaos, sudden realization, rage, disaster, and visual punchline moments.",
+      "captionGuidance": "Use short top or bottom captions; heavy effects are appropriate, but keep the cat readable.",
+      "category": "meme",
+      "description": "Cat in a chaotic explosion scene with maximum meltdown energy.",
+      "moods": [
+        "panic",
+        "chaos",
+        "meltdown"
+      ],
+      "name": "meme.cat_explosion",
+      "subjects": [
+        "cat",
+        "explosion",
+        "fire"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "cat",
+        "explosion",
+        "chaos",
+        "meltdown"
+      ]
+    },
+    {
+      "aliases": [
+        "cat_hill_peek",
+        "Cat Hill Peek"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Cat Hill Peek.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.cat_hill_peek",
+      "subjects": [
+        "cat",
+        "hill"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "cat",
+        "hill",
+        "peek"
+      ]
+    },
+    {
+      "aliases": [
+        "cow_dolphin_jump",
+        "Cow Dolphin Jump"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Cow Dolphin Jump.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.cow_dolphin_jump",
+      "subjects": [
+        "cow",
+        "dolphin"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "cow",
+        "dolphin",
+        "jump"
+      ]
+    },
+    {
+      "aliases": [
+        "distracted_boyfriend",
+        "Distracted Boyfriend",
+        "distracted boyfriend",
+        "temptation trio",
+        "boyfriend looking back"
+      ],
+      "bestFor": "Temptation, bad priorities, choosing the wrong thing, and comparison jokes.",
+      "captionGuidance": "Use short labels near each role; avoid generic ME/MY RESPONSIBILITIES unless requested.",
+      "category": "meme",
+      "description": "Classic distracted boyfriend scene with three clear role positions.",
+      "moods": [
+        "reaction",
+        "tempted",
+        "awkward",
+        "comic"
+      ],
+      "name": "meme.distracted_boyfriend",
+      "subjects": [
+        "boyfriend",
+        "girlfriend",
+        "street"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "distracted",
+        "boyfriend",
+        "template",
+        "choice",
+        "temptation",
+        "comparison"
+      ]
+    },
+    {
+      "aliases": [
+        "dog_earbuds_bliss",
+        "Dog Earbuds Bliss"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Dog Earbuds Bliss.",
+      "moods": [
+        "calm",
+        "joy"
+      ],
+      "name": "meme.dog_earbuds_bliss",
+      "subjects": [
+        "dog"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "dog",
+        "earbuds",
+        "bliss"
+      ]
+    },
+    {
+      "aliases": [
+        "doge_windows_hill",
+        "Doge Windows Hill"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Doge Windows Hill.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.doge_windows_hill",
+      "subjects": [
+        "doge",
+        "hill"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "doge",
+        "windows",
+        "hill"
+      ]
+    },
+    {
+      "aliases": [
+        "drake_reaction_grid",
+        "Drake Reaction Grid"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Drake Reaction Grid.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.drake_reaction_grid",
+      "subjects": [
+        "drake"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "drake",
+        "grid"
+      ]
+    },
+    {
+      "aliases": [
+        "empty_oval_office",
+        "Empty Oval Office"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Empty Oval Office.",
+      "moods": [
+        "awkward",
+        "absence"
+      ],
+      "name": "meme.empty_oval_office",
+      "subjects": [
+        "office"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "empty",
+        "oval",
+        "office"
+      ]
+    },
+    {
+      "aliases": [
+        "empty_press_conference",
+        "Empty Press Conference"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Empty Press Conference.",
+      "moods": [
+        "awkward",
+        "absence"
+      ],
+      "name": "meme.empty_press_conference",
+      "subjects": [
+        "press",
+        "conference"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "empty",
+        "press",
+        "conference"
+      ]
+    },
+    {
+      "aliases": [
+        "empty_stage_spotlight",
+        "Empty Stage Spotlight"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Empty Stage Spotlight.",
+      "moods": [
+        "awkward",
+        "absence"
+      ],
+      "name": "meme.empty_stage_spotlight",
+      "subjects": [
+        "stage"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "empty",
+        "stage",
+        "spotlight"
+      ]
+    },
+    {
+      "aliases": [
+        "evil_cat_throne",
+        "Evil Cat Throne",
+        "evil cat",
+        "cat throne",
+        "villain cat"
+      ],
+      "bestFor": "Scheming, petty power, snack crimes, household tyranny, and mock-grand drama.",
+      "captionGuidance": "Bottom captions work best; one concise royal decree or consequence.",
+      "category": "meme",
+      "description": "Cat seated like a tiny villain on a throne.",
+      "moods": [
+        "reaction",
+        "smug",
+        "sinister",
+        "petty"
+      ],
+      "name": "meme.evil_cat_throne",
+      "subjects": [
+        "cat",
+        "throne"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "evil",
+        "cat",
+        "throne",
+        "villain",
+        "scheming"
+      ]
+    },
+    {
+      "aliases": [
+        "fallon_staring",
+        "Fallon Staring"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Fallon Staring.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.fallon_staring",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "fallon",
+        "staring"
+      ]
+    },
+    {
+      "aliases": [
+        "gary_disguise",
+        "Gary Disguise"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Gary Disguise.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.gary_disguise",
+      "subjects": [
+        "gary"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "gary",
+        "disguise"
+      ]
+    },
+    {
+      "aliases": [
+        "girl_side_eye",
+        "Girl Side Eye",
+        "side eye girl",
+        "judgment stare",
+        "suspicious girl"
+      ],
+      "bestFor": "Suspicion, judgment, awkward social moments, and disbelief.",
+      "captionGuidance": "Use top or bottom captions; never cover the eyes with center text.",
+      "category": "meme",
+      "description": "Girl giving a strong side-eye reaction.",
+      "moods": [
+        "skeptical",
+        "deadpan",
+        "judging"
+      ],
+      "name": "meme.girl_side_eye",
+      "subjects": [
+        "girl",
+        "face"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "girl",
+        "side",
+        "eye",
+        "side-eye",
+        "judgment",
+        "social"
+      ]
+    },
+    {
+      "aliases": [
+        "guy_crying",
+        "Guy Crying"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Guy Crying.",
+      "moods": [
+        "sad",
+        "despair"
+      ],
+      "name": "meme.guy_crying",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "guy",
+        "crying"
+      ]
+    },
+    {
+      "aliases": [
+        "guy_holding_rose",
+        "Guy Holding Rose"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Guy Holding Rose.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.guy_holding_rose",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "guy",
+        "holding",
+        "rose"
+      ]
+    },
+    {
+      "aliases": [
+        "height_chart_lineup",
+        "Height Chart Lineup"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Height Chart Lineup.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.height_chart_lineup",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "height",
+        "chart",
+        "lineup"
+      ]
+    },
+    {
+      "aliases": [
+        "horse_head_wedding",
+        "Horse Head Wedding"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Horse Head Wedding.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.horse_head_wedding",
+      "subjects": [
+        "horse"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "horse",
+        "head",
+        "wedding"
+      ]
+    },
+    {
+      "aliases": [
+        "idk_about_that",
+        "Idk About That"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Idk About That.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.idk_about_that",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "idk",
+        "about",
+        "that"
+      ]
+    },
+    {
+      "aliases": [
+        "jordan_crying",
+        "Jordan Crying"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Jordan Crying.",
+      "moods": [
+        "sad",
+        "despair"
+      ],
+      "name": "meme.jordan_crying",
+      "subjects": [
+        "jordan"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "jordan",
+        "crying"
+      ]
+    },
+    {
+      "aliases": [
+        "kcat_stare",
+        "Kcat Stare"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Kcat Stare.",
+      "moods": [
+        "skeptical",
+        "deadpan"
+      ],
+      "name": "meme.kcat_stare",
+      "subjects": [
+        "stare"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "kcat",
+        "stare"
+      ]
+    },
+    {
+      "aliases": [
+        "kid_crying",
+        "Kid Crying"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Kid Crying.",
+      "moods": [
+        "sad",
+        "despair"
+      ],
+      "name": "meme.kid_crying",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "kid",
+        "crying"
+      ]
+    },
+    {
+      "aliases": [
+        "king_bach_stare",
+        "King Bach Stare"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing King Bach Stare.",
+      "moods": [
+        "skeptical",
+        "deadpan"
+      ],
+      "name": "meme.king_bach_stare",
+      "subjects": [
+        "stare"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "king",
+        "bach",
+        "stare"
+      ]
+    },
+    {
+      "aliases": [
+        "kpop_shush",
+        "Kpop Shush"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Kpop Shush.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.kpop_shush",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "kpop",
+        "shush"
+      ]
+    },
+    {
+      "aliases": [
+        "krusty_krab_kitchen",
+        "Krusty Krab Kitchen"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Krusty Krab Kitchen.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.krusty_krab_kitchen",
+      "subjects": [
+        "krusty",
+        "kitchen"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "krusty",
+        "krab",
+        "kitchen"
+      ]
+    },
+    {
+      "aliases": [
+        "krusty_krab_red_chair",
+        "Krusty Krab Red Chair"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Krusty Krab Red Chair.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.krusty_krab_red_chair",
+      "subjects": [
+        "krusty"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "krusty",
+        "krab",
+        "red",
+        "chair"
+      ]
+    },
+    {
+      "aliases": [
+        "lonely_desk_worker",
+        "Lonely Desk Worker",
+        "desk worker",
+        "lonely desk",
+        "alone at computer"
+      ],
+      "bestFor": "Work cycles, late-night focus, debugging, isolation, and calm-before-chaos setups.",
+      "captionGuidance": "Use bottom captions or terminal-style text; keep the monitor and person visible.",
+      "category": "meme",
+      "description": "Person alone at a desk with a monitor, quiet office mood.",
+      "moods": [
+        "reaction",
+        "calm",
+        "lonely",
+        "focused"
+      ],
+      "name": "meme.lonely_desk_worker",
+      "subjects": [
+        "desk",
+        "worker",
+        "computer"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "lonely",
+        "desk",
+        "worker",
+        "office",
+        "computer",
+        "debugging"
+      ]
+    },
+    {
+      "aliases": [
+        "many_bald_men",
+        "Many Bald Men"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Many Bald Men.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.many_bald_men",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "many",
+        "bald",
+        "men"
+      ]
+    },
+    {
+      "aliases": [
+        "mona_lisa_side_eye",
+        "Mona Lisa Side Eye"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Mona Lisa Side Eye.",
+      "moods": [
+        "skeptical",
+        "deadpan"
+      ],
+      "name": "meme.mona_lisa_side_eye",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "mona",
+        "lisa",
+        "side",
+        "eye"
+      ]
+    },
+    {
+      "aliases": [
+        "peanuts_crosswalk",
+        "Peanuts Crosswalk"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Peanuts Crosswalk.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.peanuts_crosswalk",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "peanuts",
+        "crosswalk"
+      ]
+    },
+    {
+      "aliases": [
+        "pepe_clouds",
+        "Pepe Clouds"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Pepe Clouds.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.pepe_clouds",
+      "subjects": [
+        "pepe"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "pepe",
+        "clouds"
+      ]
+    },
+    {
+      "aliases": [
+        "rock_bliss_peek",
+        "Rock Bliss Peek"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Rock Bliss Peek.",
+      "moods": [
+        "calm",
+        "joy"
+      ],
+      "name": "meme.rock_bliss_peek",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "rock",
+        "bliss",
+        "peek"
+      ]
+    },
+    {
+      "aliases": [
+        "shaq_timeout",
+        "Shaq Timeout"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Shaq Timeout.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.shaq_timeout",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "shaq",
+        "timeout"
+      ]
+    },
+    {
+      "aliases": [
+        "shrek_side_eye",
+        "Shrek Side Eye"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Shrek Side Eye.",
+      "moods": [
+        "skeptical",
+        "deadpan"
+      ],
+      "name": "meme.shrek_side_eye",
+      "subjects": [
+        "shrek"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "shrek",
+        "side",
+        "eye"
+      ]
+    },
+    {
+      "aliases": [
+        "shrek_smirk",
+        "Shrek Smirk"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Shrek Smirk.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.shrek_smirk",
+      "subjects": [
+        "shrek"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "shrek",
+        "smirk"
+      ]
+    },
+    {
+      "aliases": [
+        "shrek_sun_donkey",
+        "Shrek Sun Donkey"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Shrek Sun Donkey.",
+      "moods": [
+        "calm",
+        "joy"
+      ],
+      "name": "meme.shrek_sun_donkey",
+      "subjects": [
+        "shrek"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "shrek",
+        "sun",
+        "donkey"
+      ]
+    },
+    {
+      "aliases": [
+        "shrek_xp_hill",
+        "Shrek Xp Hill"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Shrek Xp Hill.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.shrek_xp_hill",
+      "subjects": [
+        "shrek",
+        "hill"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "shrek",
+        "xp",
+        "hill"
+      ]
+    },
+    {
+      "aliases": [
+        "sid_closeup",
+        "Sid Closeup"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Sid Closeup.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.sid_closeup",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "sid",
+        "closeup"
+      ]
+    },
+    {
+      "aliases": [
+        "spongebob_flower_hills",
+        "Spongebob Flower Hills"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Spongebob Flower Hills.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.spongebob_flower_hills",
+      "subjects": [
+        "spongebob"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "spongebob",
+        "flower",
+        "hills"
+      ]
+    },
+    {
+      "aliases": [
+        "spongebob_group_stare",
+        "Spongebob Group Stare",
+        "group stare",
+        "everyone staring",
+        "spongebob group"
+      ],
+      "bestFor": "Group chat, social pressure, sudden attention, and everyone noticing at once.",
+      "captionGuidance": "Use bottom captions; avoid covering faces with centered text.",
+      "category": "meme",
+      "description": "Group stare reaction with multiple characters looking toward the viewer.",
+      "moods": [
+        "skeptical",
+        "deadpan",
+        "awkward",
+        "judging",
+        "surprised"
+      ],
+      "name": "meme.spongebob_group_stare",
+      "subjects": [
+        "spongebob",
+        "group",
+        "stare",
+        "faces"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "spongebob",
+        "group",
+        "stare",
+        "social"
+      ]
+    },
+    {
+      "aliases": [
+        "spongebob_houses_sunset",
+        "Spongebob Houses Sunset"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Spongebob Houses Sunset.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.spongebob_houses_sunset",
+      "subjects": [
+        "spongebob"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "spongebob",
+        "houses",
+        "sunset"
+      ]
+    },
+    {
+      "aliases": [
+        "spongebob_war_room",
+        "Spongebob War Room",
+        "war room",
+        "planning board",
+        "spongebob war room"
+      ],
+      "bestFor": "Escalation, overthinking, debugging, strategy spirals, and panic planning.",
+      "captionGuidance": "Use bottom captions; pair with mild desaturation or contrast for tense middle beats.",
+      "category": "meme",
+      "description": "Chaotic SpongeBob war-room scene with planning-board energy.",
+      "moods": [
+        "reaction",
+        "tense",
+        "panic",
+        "spiral"
+      ],
+      "name": "meme.spongebob_war_room",
+      "subjects": [
+        "spongebob",
+        "room",
+        "board"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "spongebob",
+        "war",
+        "room",
+        "war room",
+        "planning",
+        "chaos"
+      ]
+    },
+    {
+      "aliases": [
+        "squidward_window_stare",
+        "Squidward Window Stare",
+        "squidward window",
+        "window stare",
+        "outside looking in"
+      ],
+      "bestFor": "Hollow victory, watching from outside, loneliness, envy, and quiet aftermath.",
+      "captionGuidance": "Use bottom captions with muted styling; avoid loud effects unless ironic.",
+      "category": "meme",
+      "description": "Squidward staring through a window with quiet longing and resignation.",
+      "moods": [
+        "skeptical",
+        "deadpan",
+        "resigned",
+        "sad",
+        "hollow"
+      ],
+      "name": "meme.squidward_window_stare",
+      "subjects": [
+        "squidward",
+        "window",
+        "stare"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "squidward",
+        "window",
+        "stare",
+        "resignation"
+      ]
+    },
+    {
+      "aliases": [
+        "stonks_arrow",
+        "Stonks Arrow"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Stonks Arrow.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.stonks_arrow",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "stonks",
+        "arrow"
+      ]
+    },
+    {
+      "aliases": [
+        "t_rex_car_window",
+        "T Rex Car Window"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing T Rex Car Window.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.t_rex_car_window",
+      "subjects": [
+        "t-rex",
+        "car",
+        "window"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "t",
+        "rex",
+        "car",
+        "window"
+      ]
+    },
+    {
+      "aliases": [
+        "this_is_fine_empty_room",
+        "This Is Fine Empty Room"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing This Is Fine Empty Room.",
+      "moods": [
+        "awkward",
+        "absence"
+      ],
+      "name": "meme.this_is_fine_empty_room",
+      "subjects": [
+        "room"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "this",
+        "is",
+        "fine",
+        "empty",
+        "room"
+      ]
+    },
+    {
+      "aliases": [
+        "thousand_yard_stare",
+        "Thousand Yard Stare",
+        "thousand yard stare",
+        "blank stare",
+        "haunted stare"
+      ],
+      "bestFor": "Confusion, reality breaking, trauma, debugging rabbit holes, and quiet shock.",
+      "captionGuidance": "Use bottom captions; keep text short and let the stare carry the joke.",
+      "category": "meme",
+      "description": "Blank thousand-yard stare with exhausted existential energy.",
+      "moods": [
+        "skeptical",
+        "deadpan",
+        "haunted",
+        "confused",
+        "dissociated"
+      ],
+      "name": "meme.thousand_yard_stare",
+      "subjects": [
+        "stare",
+        "face"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "thousand",
+        "yard",
+        "stare",
+        "existential",
+        "confusion"
+      ]
+    },
+    {
+      "aliases": [
+        "three_matching_guys",
+        "Three Matching Guys"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Three Matching Guys.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.three_matching_guys",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "three",
+        "matching",
+        "guys"
+      ]
+    },
+    {
+      "aliases": [
+        "tube_dogs_hill",
+        "Tube Dogs Hill"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Tube Dogs Hill.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.tube_dogs_hill",
+      "subjects": [
+        "hill"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "tube",
+        "dogs",
+        "hill"
+      ]
+    },
+    {
+      "aliases": [
+        "will_smith_presenting",
+        "Will Smith Presenting"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Will Smith Presenting.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.will_smith_presenting",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "will",
+        "smith",
+        "presenting"
+      ]
+    },
+    {
+      "aliases": [
+        "window_bars",
+        "Window Bars"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Window Bars.",
+      "moods": [
+        "reaction"
+      ],
+      "name": "meme.window_bars",
+      "subjects": [
+        "window"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "window",
+        "bars"
+      ]
+    },
+    {
+      "aliases": [
+        "window_despair",
+        "Window Despair"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Window Despair.",
+      "moods": [
+        "sad",
+        "despair"
+      ],
+      "name": "meme.window_despair",
+      "subjects": [
+        "window"
+      ],
+      "tags": [
+        "meme",
+        "reaction",
+        "window",
+        "despair"
+      ]
+    },
+    {
+      "aliases": [
+        "windows_xp_bliss",
+        "Windows Xp Bliss"
+      ],
+      "bestFor": "Readable reaction beats, labels, and short punchlines.",
+      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "category": "meme",
+      "description": "Reaction meme asset showing Windows Xp Bliss.",
+      "moods": [
+        "calm",
+        "joy"
+      ],
+      "name": "meme.windows_xp_bliss",
+      "subjects": [],
+      "tags": [
+        "meme",
+        "reaction",
+        "windows",
+        "xp",
+        "bliss"
+      ]
+    },
+    {
+      "aliases": [
+        "square",
+        "Square (1:1)"
+      ],
+      "bestFor": "Feed cards and balanced editorial compositions.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Square format for social posts.",
-      "name": "square"
+      "moods": [],
+      "name": "square",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "square"
+      ]
     },
     {
+      "aliases": [
+        "tall",
+        "Tall (9:16)"
+      ],
+      "bestFor": "Storyboards, vertical promos, and mobile-first ideas.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Portrait format for stories and reels.",
-      "name": "tall"
+      "moods": [],
+      "name": "tall",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "tall"
+      ]
     },
     {
+      "aliases": [
+        "three_panel",
+        "Three Panel"
+      ],
+      "bestFor": "Setups that need a beginning, middle, and spike.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Three beats with escalating energy.",
-      "name": "three_panel"
+      "moods": [],
+      "name": "three_panel",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "three_panel",
+        "three",
+        "panel"
+      ]
     },
     {
+      "aliases": [
+        "two_panel",
+        "Two Panel"
+      ],
+      "bestFor": "Pairing two ideas with a fast payoff.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Classic split-screen for before-and-after or expectation-vs-reality.",
-      "name": "two_panel"
+      "moods": [],
+      "name": "two_panel",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "two_panel",
+        "two",
+        "panel"
+      ]
     },
     {
+      "aliases": [
+        "wide",
+        "Wide (16:9)"
+      ],
+      "bestFor": "Video covers and wide-format studio cards.",
+      "captionGuidance": "Use the named slots implied by the template; prefer top/bottom captions for longer text.",
       "category": "canvas",
       "description": "Landscape format for thumbnails and banners.",
-      "name": "wide"
+      "moods": [],
+      "name": "wide",
+      "subjects": [],
+      "tags": [
+        "template",
+        "canvas",
+        "wide"
+      ]
     }
   ]
 }

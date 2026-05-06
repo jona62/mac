@@ -162,12 +162,16 @@ namespace analyzer {
     }
 
     struct TemplateInfo {
-        std::string name, category, description;
+        std::string name, category, description, bestFor, captionGuidance;
+        std::vector<std::string> tags, moods, subjects, aliases;
     };
 
     inline void to_json(json& j, const TemplateInfo& t) {
         j = json{
-            {"name", t.name}, {"category", t.category}, {"description", t.description}
+            {"name", t.name}, {"category", t.category}, {"description", t.description},
+            {"bestFor", t.bestFor}, {"captionGuidance", t.captionGuidance},
+            {"tags", t.tags}, {"moods", t.moods}, {"subjects", t.subjects},
+            {"aliases", t.aliases}
         };
     }
 
