@@ -14,3 +14,11 @@ tools/gen_templates
 !assets/emoji/*.png
 output/
 .superpowers/
+.todos/
+.sidecar/
+.sidecar-agent
+.sidecar-task
+.sidecar-pr
+.sidecar-start.sh
+.sidecar-base
+.td-root
