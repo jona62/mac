@@ -41,6 +41,9 @@ namespace mac_catalog {
         std::vector<std::string> subjects;
         std::vector<std::string> aliases;
         std::string captionGuidance;
+        std::string comedicName;
+        std::string comedicRead;
+        std::vector<std::string> antiPatterns;
     };
 
     struct TemplateMetadata {
@@ -51,6 +54,9 @@ namespace mac_catalog {
         std::vector<std::string> subjects;
         std::vector<std::string> aliases;
         std::string captionGuidance;
+        std::string comedicName;
+        std::string comedicRead;
+        std::vector<std::string> antiPatterns;
     };
 
     inline std::string lower(std::string value) {
@@ -156,6 +162,7 @@ namespace mac_catalog {
         std::string description = "Reaction meme asset showing " + titleizeStem(stem) + ".";
         std::string bestFor = "Readable reaction beats, labels, and short punchlines.";
         std::string captionGuidance = "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.";
+        std::string comedicRead = "A flexible reaction image; make the caption specific enough to supply the joke.";
         return {
             description,
             bestFor,
@@ -164,6 +171,9 @@ namespace mac_catalog {
             uniqueValues(subjects),
             uniqueValues(aliases),
             captionGuidance,
+            "",
+            comedicRead,
+            {"generic labels without a situation", "center text covering the subject"},
         };
     }
 
@@ -177,6 +187,33 @@ namespace mac_catalog {
                 {"alarm", "clock"},
                 {"alarm clock", "angry alarm", "morning alarm"},
                 "Use bottom captions for the complaint; avoid center text over the clock face.",
+                "The 7 AM Betrayal",
+                "A tiny plastic tyrant announcing that your previous self made bad choices.",
+                {"generic Monday bad text", "center captions over the clock face"},
+            }},
+            {"meme.barbie_car_fire", {
+                "Pink toy car scene consumed by very unserious-looking fire.",
+                "Cute aesthetics colliding with total crisis, overdramatic errands, and glamorous disaster.",
+                {"meme", "reaction", "barbie", "car", "fire", "cute", "crisis"},
+                {"panic", "chaos", "meltdown", "absurd"},
+                {"car", "fire"},
+                {"barbie car", "pink car fire", "cute disaster"},
+                "Use bottom captions; keep the fire and car readable.",
+                "Cute Car, Total Crisis",
+                "The visual joke is that everything is on fire but the branding stayed adorable.",
+                {"flat disaster labels", "effects so heavy the pink car disappears"},
+            }},
+            {"meme.bathroom_throne", {
+                "Bathroom scene with absurd throne energy.",
+                "Private revelations, fake luxury, shower thoughts, and decisions made with unearned authority.",
+                {"meme", "reaction", "bathroom", "throne", "privacy", "decision"},
+                {"deadpan", "absurd", "smug"},
+                {"bathroom", "throne"},
+                {"bathroom throne", "toilet throne", "private kingdom"},
+                "Prefer a short bottom caption; avoid making the scene feel too literal.",
+                "Executive Bathroom Decision",
+                "Someone has clearly mistaken solitude for leadership experience.",
+                {"gross-out captions as the whole joke", "long centered captions"},
             }},
             {"meme.beach_dog_sitting", {
                 "Dog sitting alone on a beach with peaceful resigned energy.",
@@ -186,6 +223,21 @@ namespace mac_catalog {
                 {"dog", "beach"},
                 {"beach dog", "resigned dog", "calm dog"},
                 "Use bottom captions; keep text short so the quiet beach mood stays visible.",
+                "Vacation Brain Has Left The Chat",
+                "A dog quietly accepting a situation it absolutely does not understand.",
+                {"busy captions that ruin the quiet", "loud chaos effects"},
+            }},
+            {"meme.bliss_ferret_stare", {
+                "Small ferret staring with serene, empty-headed bliss.",
+                "No-thoughts moments, tiny victories, harmless delusion, and being weirdly pleased.",
+                {"meme", "reaction", "ferret", "bliss", "stare", "empty headed"},
+                {"calm", "joy", "deadpan", "weird"},
+                {"ferret", "stare"},
+                {"bliss ferret", "ferret stare", "no thoughts ferret"},
+                "Bottom captions work best; let the blank stare do half the joke.",
+                "No Thoughts, Premium Bliss",
+                "The joke lands when the caption reveals why this tiny creature is so peacefully wrong.",
+                {"mean animal captions", "overexplaining the blank stare"},
             }},
             {"meme.cat_explosion", {
                 "Cat in a chaotic explosion scene with maximum meltdown energy.",
@@ -195,6 +247,9 @@ namespace mac_catalog {
                 {"cat", "explosion", "fire"},
                 {"exploding cat", "chaos cat", "meltdown cat"},
                 "Use short top or bottom captions; heavy effects are appropriate, but keep the cat readable.",
+                "Tiny Problem, Biblical Consequences",
+                "The correct asset when a minor inconvenience deserves an operatic disaster response.",
+                {"using it for mild reactions", "deepfry so strong the cat vanishes"},
             }},
             {"meme.distracted_boyfriend", {
                 "Classic distracted boyfriend scene with three clear role positions.",
@@ -204,6 +259,21 @@ namespace mac_catalog {
                 {"boyfriend", "girlfriend", "street"},
                 {"distracted boyfriend", "temptation trio", "boyfriend looking back"},
                 "Use short labels near each role; avoid generic ME/MY RESPONSIBILITIES unless requested.",
+                "Bad Priorities Walk By",
+                "A three-role temptation machine: stable choice, doomed observer, shiny mistake.",
+                {"ME/MY RESPONSIBILITIES defaults", "long labels that need reading twice"},
+            }},
+            {"meme.dog_earbuds_bliss", {
+                "Dog wearing earbuds in pure private-concert bliss.",
+                "Ignoring problems, main-character errands, tiny joy, and pretending the world is fine.",
+                {"meme", "reaction", "dog", "earbuds", "music", "bliss"},
+                {"joy", "calm", "smug"},
+                {"dog", "earbuds"},
+                {"earbuds dog", "music dog", "bliss dog"},
+                "Use bottom captions; avoid covering the face or earbuds.",
+                "Main Character Errand Walk",
+                "The mood is delusional confidence powered by one good song.",
+                {"generic happy dog text", "sad captions that fight the image"},
             }},
             {"meme.evil_cat_throne", {
                 "Cat seated like a tiny villain on a throne.",
@@ -213,6 +283,9 @@ namespace mac_catalog {
                 {"cat", "throne"},
                 {"evil cat", "cat throne", "villain cat"},
                 "Bottom captions work best; one concise royal decree or consequence.",
+                "The Snack Crime Overlord",
+                "A tiny monarch preparing a household policy nobody voted for.",
+                {"generic evil laugh captions", "overcrowding the throne area"},
             }},
             {"meme.girl_side_eye", {
                 "Girl giving a strong side-eye reaction.",
@@ -222,6 +295,9 @@ namespace mac_catalog {
                 {"girl", "face"},
                 {"side eye girl", "judgment stare", "suspicious girl"},
                 "Use top or bottom captions; never cover the eyes with center text.",
+                "The Receipt Has Been Noticed",
+                "For the exact second someone hears a detail that changes the whole story.",
+                {"covering the eyes", "generic 'sus' captions with no situation"},
             }},
             {"meme.lonely_desk_worker", {
                 "Person alone at a desk with a monitor, quiet office mood.",
@@ -231,6 +307,9 @@ namespace mac_catalog {
                 {"desk", "worker", "computer"},
                 {"desk worker", "lonely desk", "alone at computer"},
                 "Use bottom captions or terminal-style text; keep the monitor and person visible.",
+                "One Last Thing At 11:47 PM",
+                "The setup frame for any bad idea that starts calmly and becomes everyone else's problem.",
+                {"only developer jokes by default", "covering the desk/monitor subject"},
             }},
             {"meme.spongebob_group_stare", {
                 "Group stare reaction with multiple characters looking toward the viewer.",
@@ -240,6 +319,9 @@ namespace mac_catalog {
                 {"group", "faces"},
                 {"group stare", "everyone staring", "spongebob group"},
                 "Use bottom captions; avoid covering faces with centered text.",
+                "The Group Chat Goes Silent",
+                "Everyone has read the message; nobody wants to be the first to answer.",
+                {"covering faces", "too much caption for a reaction beat"},
             }},
             {"meme.spongebob_war_room", {
                 "Chaotic SpongeBob war-room scene with planning-board energy.",
@@ -249,6 +331,9 @@ namespace mac_catalog {
                 {"spongebob", "room", "board"},
                 {"war room", "planning board", "spongebob war room"},
                 "Use bottom captions; pair with mild desaturation or contrast for tense middle beats.",
+                "The Plan Is Mostly Panic",
+                "A room full of confidence that is technically just anxiety with stationery.",
+                {"starting GIF arcs at maximum chaos", "covering the board/faces"},
             }},
             {"meme.squidward_window_stare", {
                 "Squidward staring through a window with quiet longing and resignation.",
@@ -258,6 +343,9 @@ namespace mac_catalog {
                 {"squidward", "window"},
                 {"squidward window", "window stare", "outside looking in"},
                 "Use bottom captions with muted styling; avoid loud effects unless ironic.",
+                "Watching Joy Happen Elsewhere",
+                "A quiet little window into being technically fine and spiritually outside.",
+                {"loud panic styling", "captioning over the face/window read"},
             }},
             {"meme.thousand_yard_stare", {
                 "Blank thousand-yard stare with exhausted existential energy.",
@@ -267,6 +355,9 @@ namespace mac_catalog {
                 {"face", "stare"},
                 {"thousand yard stare", "blank stare", "haunted stare"},
                 "Use bottom captions; keep text short and let the stare carry the joke.",
+                "The Lights Are On But Nobody Saved",
+                "The face of someone whose brain has opened too many tabs and lost the original one.",
+                {"giant centered captions over the eyes", "using it for high-energy jokes"},
             }},
         };
         return metadata;
@@ -277,14 +368,18 @@ namespace mac_catalog {
         if (!override.description.empty()) result.description = override.description;
         if (!override.bestFor.empty()) result.bestFor = override.bestFor;
         if (!override.captionGuidance.empty()) result.captionGuidance = override.captionGuidance;
+        if (!override.comedicName.empty()) result.comedicName = override.comedicName;
+        if (!override.comedicRead.empty()) result.comedicRead = override.comedicRead;
         addAllUnique(result.tags, override.tags);
         addAllUnique(result.moods, override.moods);
         addAllUnique(result.subjects, override.subjects);
         addAllUnique(result.aliases, override.aliases);
+        addAllUnique(result.antiPatterns, override.antiPatterns);
         result.tags = uniqueValues(result.tags);
         result.moods = uniqueValues(result.moods);
         result.subjects = uniqueValues(result.subjects);
         result.aliases = uniqueValues(result.aliases);
+        result.antiPatterns = uniqueValues(result.antiPatterns);
         return result;
     }
 
@@ -336,6 +431,9 @@ namespace mac_catalog {
         item["subjects"] = entry.subjects;
         item["aliases"] = entry.aliases;
         item["captionGuidance"] = entry.captionGuidance;
+        if (!entry.comedicName.empty()) item["comedicName"] = entry.comedicName;
+        if (!entry.comedicRead.empty()) item["comedicRead"] = entry.comedicRead;
+        if (!entry.antiPatterns.empty()) item["antiPatterns"] = entry.antiPatterns;
         return item;
     }
 
@@ -365,9 +463,11 @@ namespace mac_catalog {
                 auto filename = image.filename().string();
                 auto id = category + "." + stem;
                 auto metadata = metadataForAsset(id, stem, category);
+                auto canonicalName = titleizeStem(stem);
+                addUnique(metadata.aliases, canonicalName);
                 out.push_back({
                     id,
-                    titleizeStem(stem),
+                    metadata.comedicName.empty() ? canonicalName : metadata.comedicName,
                     category,
                     metadata.description,
                     metadata.bestFor,
@@ -379,6 +479,9 @@ namespace mac_catalog {
                     metadata.subjects,
                     metadata.aliases,
                     metadata.captionGuidance,
+                    metadata.comedicName,
+                    metadata.comedicRead,
+                    metadata.antiPatterns,
                 });
             }
         }
@@ -404,6 +507,9 @@ namespace mac_catalog {
                 metadata.subjects,
                 metadata.aliases,
                 metadata.captionGuidance,
+                metadata.comedicName,
+                metadata.comedicRead,
+                metadata.antiPatterns,
             });
         }
         auto assets = assetTemplateEntries(binaryDir);
@@ -672,7 +778,7 @@ namespace mac_catalog {
             : splitSelectors(selectorText);
 
         json out = {
-            {"schema_version", 2},
+            {"schema_version", 3},
             {"mac_version", MAC_VERSION},
             {"catalog_fingerprint", catalogFingerprint(binaryDir)},
             {"included", json::array()},

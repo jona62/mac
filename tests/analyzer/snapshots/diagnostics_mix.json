@@ -249,16 +249,20 @@
     {
       "aliases": [
         "barbie_car_fire",
-        "Barbie Car Fire"
+        "Barbie Car Fire",
+        "barbie car",
+        "pink car fire",
+        "cute disaster"
       ],
-      "bestFor": "Readable reaction beats, labels, and short punchlines.",
-      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "bestFor": "Cute aesthetics colliding with total crisis, overdramatic errands, and glamorous disaster.",
+      "captionGuidance": "Use bottom captions; keep the fire and car readable.",
       "category": "meme",
-      "description": "Reaction meme asset showing Barbie Car Fire.",
+      "description": "Pink toy car scene consumed by very unserious-looking fire.",
       "moods": [
         "panic",
         "chaos",
-        "meltdown"
+        "meltdown",
+        "absurd"
       ],
       "name": "meme.barbie_car_fire",
       "subjects": [
@@ -270,30 +274,41 @@
         "reaction",
         "barbie",
         "car",
-        "fire"
+        "fire",
+        "cute",
+        "crisis"
       ]
     },
     {
       "aliases": [
         "bathroom_throne",
-        "Bathroom Throne"
+        "Bathroom Throne",
+        "bathroom throne",
+        "toilet throne",
+        "private kingdom"
       ],
-      "bestFor": "Readable reaction beats, labels, and short punchlines.",
-      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "bestFor": "Private revelations, fake luxury, shower thoughts, and decisions made with unearned authority.",
+      "captionGuidance": "Prefer a short bottom caption; avoid making the scene feel too literal.",
       "category": "meme",
-      "description": "Reaction meme asset showing Bathroom Throne.",
+      "description": "Bathroom scene with absurd throne energy.",
       "moods": [
-        "reaction"
+        "reaction",
+        "deadpan",
+        "absurd",
+        "smug"
       ],
       "name": "meme.bathroom_throne",
       "subjects": [
-        "throne"
+        "throne",
+        "bathroom"
       ],
       "tags": [
         "meme",
         "reaction",
         "bathroom",
-        "throne"
+        "throne",
+        "privacy",
+        "decision"
       ]
     },
     {
@@ -332,17 +347,21 @@
     {
       "aliases": [
         "bliss_ferret_stare",
-        "Bliss Ferret Stare"
+        "Bliss Ferret Stare",
+        "bliss ferret",
+        "ferret stare",
+        "no thoughts ferret"
       ],
-      "bestFor": "Readable reaction beats, labels, and short punchlines.",
-      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "bestFor": "No-thoughts moments, tiny victories, harmless delusion, and being weirdly pleased.",
+      "captionGuidance": "Bottom captions work best; let the blank stare do half the joke.",
       "category": "meme",
-      "description": "Reaction meme asset showing Bliss Ferret Stare.",
+      "description": "Small ferret staring with serene, empty-headed bliss.",
       "moods": [
         "skeptical",
         "deadpan",
         "calm",
-        "joy"
+        "joy",
+        "weird"
       ],
       "name": "meme.bliss_ferret_stare",
       "subjects": [
@@ -354,7 +373,8 @@
         "reaction",
         "bliss",
         "ferret",
-        "stare"
+        "stare",
+        "empty headed"
       ]
     },
     {
@@ -656,26 +676,32 @@
     {
       "aliases": [
         "dog_earbuds_bliss",
-        "Dog Earbuds Bliss"
+        "Dog Earbuds Bliss",
+        "earbuds dog",
+        "music dog",
+        "bliss dog"
       ],
-      "bestFor": "Readable reaction beats, labels, and short punchlines.",
-      "captionGuidance": "Prefer top or bottom captions; keep center text very short and avoid covering faces or the primary subject.",
+      "bestFor": "Ignoring problems, main-character errands, tiny joy, and pretending the world is fine.",
+      "captionGuidance": "Use bottom captions; avoid covering the face or earbuds.",
       "category": "meme",
-      "description": "Reaction meme asset showing Dog Earbuds Bliss.",
+      "description": "Dog wearing earbuds in pure private-concert bliss.",
       "moods": [
         "calm",
-        "joy"
+        "joy",
+        "smug"
       ],
       "name": "meme.dog_earbuds_bliss",
       "subjects": [
-        "dog"
+        "dog",
+        "earbuds"
       ],
       "tags": [
         "meme",
         "reaction",
         "dog",
         "earbuds",
-        "bliss"
+        "bliss",
+        "music"
       ]
     },
     {

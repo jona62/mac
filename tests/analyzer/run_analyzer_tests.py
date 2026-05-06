@@ -658,7 +658,7 @@ def catalog_full_registered():
         "layouts", "style_presets", "limits", "allowed_names",
     ):
         assert_true(key in data, f"catalog should include {key}")
-    assert_eq(data["schema_version"], 2)
+    assert_eq(data["schema_version"], 3)
 
 
 @test
@@ -680,11 +680,14 @@ def catalog_asset_selector_registered():
     assert_true(find(assets, id="meme.distracted_boyfriend") is not None)
     template = find(assets, id="meme.distracted_boyfriend")
     assert_true(template["assetPath"].endswith("assets/templates/meme/distracted_boyfriend.jpg"))
-    for key in ("tags", "moods", "subjects", "aliases", "captionGuidance"):
+    for key in ("tags", "moods", "subjects", "aliases", "captionGuidance", "comedicName", "comedicRead", "antiPatterns"):
         assert_true(key in template, f"asset metadata should include {key}")
     assert_true("temptation" in template["tags"])
     assert_true("boyfriend" in template["subjects"])
     assert_true("ME/MY RESPONSIBILITIES" in template["captionGuidance"])
+    assert_eq(template["name"], "Bad Priorities Walk By")
+    assert_true("shiny mistake" in template["comedicRead"])
+    assert_true("ME/MY RESPONSIBILITIES defaults" in template["antiPatterns"])
 
 
 @test

@@ -60,7 +60,7 @@ mac --catalog=layouts,style_presets,allowed_names
 
 Output runtime catalog metadata as JSON. `mac --catalog` returns the full catalog; `--catalog=<selector>` returns one or more comma-separated subsets. Supported selectors include `templates`, `assets`, `assets:<category>`, `effects`, `effect_definitions`, `layouts`, `style_presets`, `limits`, and `allowed_names`.
 
-Asset entries include stable IDs such as `meme.distracted_boyfriend` and relative asset paths such as `assets/templates/meme/distracted_boyfriend.jpg`. Image bytes are not embedded.
+Asset entries include stable IDs such as `meme.distracted_boyfriend`, display names, relative asset paths such as `assets/templates/meme/distracted_boyfriend.jpg`, searchable tags, moods, subjects, aliases, caption guidance, and optional comedy metadata such as `comedicName`, `comedicRead`, and `antiPatterns`. Image bytes are not embedded.
 
 ### Version
 
