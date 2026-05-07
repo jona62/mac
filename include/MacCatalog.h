@@ -39,6 +39,26 @@ namespace mac_catalog {
         std::string guidance;
     };
 
+    struct SubjectZone {
+        std::string id;
+        std::string label;
+        int x = 0;
+        int y = 0;
+        int width = 0;
+        int height = 0;
+        std::string guidance;
+    };
+
+    struct TemplateRoleSlot {
+        std::string id;
+        std::string label;
+        std::string role;
+        std::string textZoneId;
+        std::string subjectZoneId;
+        std::string guidance;
+        bool required = true;
+    };
+
     struct TemplateEntry {
         std::string id;
         std::string name;
@@ -57,6 +77,8 @@ namespace mac_catalog {
         std::string comedicRead;
         std::vector<std::string> antiPatterns;
         std::vector<TextZone> textZones;
+        std::vector<SubjectZone> subjectZones;
+        std::vector<TemplateRoleSlot> templateRoleSlots;
     };
 
     struct TemplateMetadata {
@@ -71,6 +93,8 @@ namespace mac_catalog {
         std::string comedicRead;
         std::vector<std::string> antiPatterns;
         std::vector<TextZone> textZones;
+        std::vector<SubjectZone> subjectZones;
+        std::vector<TemplateRoleSlot> templateRoleSlots;
     };
 
     inline std::string lower(std::string value) {
@@ -304,6 +328,14 @@ namespace mac_catalog {
                     {"reject_option", "top-right label panel", 390, 40, 300, 260, "center", "sm", "Rejected option; keep to 3-7 words."},
                     {"approve_option", "bottom-right label panel", 390, 400, 300, 260, "center", "sm", "Preferred option or punchline; keep to 3-7 words."},
                 },
+                {
+                    {"reject_reaction", "Drake rejecting", 0, 0, 360, 360, "Reaction subject for the rejected option; keep text out of this panel."},
+                    {"approve_reaction", "Drake approving", 0, 360, 360, 360, "Reaction subject for the preferred option; keep text out of this panel."},
+                },
+                {
+                    {"reject_option", "Rejected option", "rejected_option", "reject_option", "reject_reaction", "Label the idea Drake rejects.", true},
+                    {"approve_option", "Preferred option", "preferred_option", "approve_option", "approve_reaction", "Label the better or funnier alternative Drake approves.", true},
+                },
             }},
             {"meme.evil_cat_throne", {
                 "Cat seated like a tiny villain on a throne.",
@@ -406,6 +438,8 @@ namespace mac_catalog {
         addAllUnique(result.aliases, override.aliases);
         addAllUnique(result.antiPatterns, override.antiPatterns);
         if (!override.textZones.empty()) result.textZones = override.textZones;
+        if (!override.subjectZones.empty()) result.subjectZones = override.subjectZones;
+        if (!override.templateRoleSlots.empty()) result.templateRoleSlots = override.templateRoleSlots;
         result.tags = uniqueValues(result.tags);
         result.moods = uniqueValues(result.moods);
         result.subjects = uniqueValues(result.subjects);
@@ -467,6 +501,48 @@ namespace mac_catalog {
         return items;
     }
 
+    inline json subjectZoneToJson(const SubjectZone& zone) {
+        json item = {
+            {"id", zone.id},
+            {"label", zone.label},
+            {"x", zone.x},
+            {"y", zone.y},
+            {"width", zone.width},
+            {"height", zone.height},
+            {"guidance", zone.guidance},
+        };
+        return item;
+    }
+
+    inline json subjectZonesToJson(const std::vector<SubjectZone>& zones) {
+        json items = json::array();
+        for (const auto& zone : zones) {
+            items.push_back(subjectZoneToJson(zone));
+        }
+        return items;
+    }
+
+    inline json templateRoleSlotToJson(const TemplateRoleSlot& slot) {
+        json item = {
+            {"id", slot.id},
+            {"label", slot.label},
+            {"role", slot.role},
+            {"textZoneId", slot.textZoneId},
+            {"required", slot.required},
+            {"guidance", slot.guidance},
+        };
+        if (!slot.subjectZoneId.empty()) item["subjectZoneId"] = slot.subjectZoneId;
+        return item;
+    }
+
+    inline json templateRoleSlotsToJson(const std::vector<TemplateRoleSlot>& slots) {
+        json items = json::array();
+        for (const auto& slot : slots) {
+            items.push_back(templateRoleSlotToJson(slot));
+        }
+        return items;
+    }
+
     inline json templateToJson(const TemplateEntry& entry) {
         json item = {
             {"id", entry.id},
@@ -489,6 +565,8 @@ namespace mac_catalog {
         if (!entry.comedicRead.empty()) item["comedicRead"] = entry.comedicRead;
         if (!entry.antiPatterns.empty()) item["antiPatterns"] = entry.antiPatterns;
         if (!entry.textZones.empty()) item["textZones"] = textZonesToJson(entry.textZones);
+        if (!entry.subjectZones.empty()) item["subjectZones"] = subjectZonesToJson(entry.subjectZones);
+        if (!entry.templateRoleSlots.empty()) item["templateRoleSlots"] = templateRoleSlotsToJson(entry.templateRoleSlots);
         return item;
     }
 
@@ -538,6 +616,8 @@ namespace mac_catalog {
                     metadata.comedicRead,
                     metadata.antiPatterns,
                     metadata.textZones,
+                    metadata.subjectZones,
+                    metadata.templateRoleSlots,
                 });
             }
         }
@@ -567,6 +647,8 @@ namespace mac_catalog {
                 metadata.comedicRead,
                 metadata.antiPatterns,
                 metadata.textZones,
+                metadata.subjectZones,
+                metadata.templateRoleSlots,
             });
         }
         auto assets = assetTemplateEntries(binaryDir);
@@ -835,7 +917,7 @@ namespace mac_catalog {
             : splitSelectors(selectorText);
 
         json out = {
-            {"schema_version", 4},
+            {"schema_version", 5},
             {"mac_version", MAC_VERSION},
             {"catalog_fingerprint", catalogFingerprint(binaryDir)},
             {"included", json::array()},

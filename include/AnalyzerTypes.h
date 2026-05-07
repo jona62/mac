@@ -165,6 +165,8 @@ namespace analyzer {
         std::string name, category, description, bestFor, captionGuidance;
         std::vector<std::string> tags, moods, subjects, aliases;
         json textZones = json::array();
+        json subjectZones = json::array();
+        json templateRoleSlots = json::array();
     };
 
     inline void to_json(json& j, const TemplateInfo& t) {
@@ -175,6 +177,8 @@ namespace analyzer {
             {"aliases", t.aliases}
         };
         if (!t.textZones.empty()) j["textZones"] = t.textZones;
+        if (!t.subjectZones.empty()) j["subjectZones"] = t.subjectZones;
+        if (!t.templateRoleSlots.empty()) j["templateRoleSlots"] = t.templateRoleSlots;
     }
 
     // ── Analysis result ───────────────────────────────────────────

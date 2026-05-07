@@ -658,7 +658,7 @@ def catalog_full_registered():
         "layouts", "style_presets", "limits", "allowed_names",
     ):
         assert_true(key in data, f"catalog should include {key}")
-    assert_eq(data["schema_version"], 4)
+    assert_eq(data["schema_version"], 5)
 
 
 @test
@@ -692,6 +692,10 @@ def catalog_asset_selector_registered():
     assert_true(drake is not None)
     assert_true("textZones" in drake)
     assert_eq([z["id"] for z in drake["textZones"]], ["reject_option", "approve_option"])
+    assert_eq([z["id"] for z in drake["subjectZones"]], ["reject_reaction", "approve_reaction"])
+    assert_eq([s["id"] for s in drake["templateRoleSlots"]], ["reject_option", "approve_option"])
+    assert_eq(drake["templateRoleSlots"][0]["textZoneId"], "reject_option")
+    assert_eq(drake["templateRoleSlots"][1]["subjectZoneId"], "approve_reaction")
     assert_true("right-side blank panels" in drake["captionGuidance"])
 
 
@@ -707,6 +711,8 @@ def analyzer_template_metadata_matches_catalog():
     analyzer_drake = find(analyzed["templates"], name="meme.drake_reaction_grid")
     catalog_drake = find(cataloged, id="meme.drake_reaction_grid")
     assert_eq(analyzer_drake["textZones"], catalog_drake["textZones"])
+    assert_eq(analyzer_drake["subjectZones"], catalog_drake["subjectZones"])
+    assert_eq(analyzer_drake["templateRoleSlots"], catalog_drake["templateRoleSlots"])
 
 
 @test

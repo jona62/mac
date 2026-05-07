@@ -1204,6 +1204,26 @@
         "comparison"
       ],
       "name": "meme.drake_reaction_grid",
+      "subjectZones": [
+        {
+          "guidance": "Reaction subject for the rejected option; keep text out of this panel.",
+          "height": 360,
+          "id": "reject_reaction",
+          "label": "Drake rejecting",
+          "width": 360,
+          "x": 0,
+          "y": 0
+        },
+        {
+          "guidance": "Reaction subject for the preferred option; keep text out of this panel.",
+          "height": 360,
+          "id": "approve_reaction",
+          "label": "Drake approving",
+          "width": 360,
+          "x": 0,
+          "y": 360
+        }
+      ],
       "subjects": [
         "drake",
         "grid",
@@ -1217,6 +1237,26 @@
         "comparison",
         "two panel",
         "label panel"
+      ],
+      "templateRoleSlots": [
+        {
+          "guidance": "Label the idea Drake rejects.",
+          "id": "reject_option",
+          "label": "Rejected option",
+          "required": true,
+          "role": "rejected_option",
+          "subjectZoneId": "reject_reaction",
+          "textZoneId": "reject_option"
+        },
+        {
+          "guidance": "Label the better or funnier alternative Drake approves.",
+          "id": "approve_option",
+          "label": "Preferred option",
+          "required": true,
+          "role": "preferred_option",
+          "subjectZoneId": "approve_reaction",
+          "textZoneId": "approve_option"
+        }
       ],
       "textZones": [
         {
