@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mac Language Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash
+# Usage: curl -fsSL https://macstudio.meme/install.sh | bash
 
 set -e
 

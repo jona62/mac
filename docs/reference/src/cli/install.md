@@ -3,7 +3,7 @@
 ## Quick Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash
+curl -fsSL https://macstudio.meme/install.sh | bash
 ```
 
 This detects your platform, downloads the latest release binary, and installs to `~/.mac/` with a symlink at `~/.local/bin/mac`.
