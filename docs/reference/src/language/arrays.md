@@ -76,6 +76,21 @@ enumerate(["a", "b"]);                 // [[0, "a"], [1, "b"]]
 join(["a", "b", "c"], ", ");           // "a, b, c"
 ```
 
+## Spread Operator
+
+The `...` spread operator unpacks an array's elements into a new array literal.
+
+```
+val a = [1, 2, 3];
+val b = [0, ...a, 4];         // [0, 1, 2, 3, 4]
+
+val left = ["a", "b"];
+val right = ["c", "d"];
+val all = [...left, ...right]; // ["a", "b", "c", "d"]
+```
+
+Spread also works inside [grid blocks](../meme/grid.md) to fill cells from an array.
+
 ## Nested Arrays
 
 ```

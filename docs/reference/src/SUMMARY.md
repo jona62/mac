@@ -14,6 +14,7 @@
 - [Arrays](./language/arrays.md)
 - [Maps](./language/maps.md)
 - [Enums](./language/enums.md)
+- [Error Handling](./language/errors.md)
 
 # Meme as Code
 
