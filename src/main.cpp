@@ -29,8 +29,9 @@ int main(int argc, char **argv) {
         }
     }
 
-    // --uninstall: remove mac installation
-    if (argc == 2 && strcmp(argv[1], "--uninstall") == 0) {
+    // --uninstall [--purge]: remove mac installation
+    if (argc >= 2 && strcmp(argv[1], "--uninstall") == 0) {
+        bool purge = argc == 3 && strcmp(argv[2], "--purge") == 0;
         string home = getenv("HOME") ? getenv("HOME") : ".";
         string installDir = home + "/.mac";
         string binLink = home + "/.local/bin/mac";
@@ -65,16 +66,10 @@ int main(int argc, char **argv) {
 
         removeFile(historyFile);
 
-        // Ask before removing user-generated output
-        if (std::filesystem::exists(outputDir) && !std::filesystem::is_empty(outputDir)) {
-            cout << "\n  \033[33m?\033[0m Delete generated files in " << outputDir << "? [y/N] ";
-            string answer;
-            getline(cin, answer);
-            if (!answer.empty() && (answer[0] == 'y' || answer[0] == 'Y')) {
-                removeDir(outputDir);
-            } else {
-                cout << "  \033[2m-\033[0m Kept " << outputDir << endl;
-            }
+        if (purge) {
+            removeDir(outputDir);
+        } else if (std::filesystem::exists(outputDir) && !std::filesystem::is_empty(outputDir)) {
+            cout << "  \033[2m-\033[0m Kept " << outputDir << " (use --purge to remove)" << endl;
         }
 
         cout << "\n  \033[1m\033[32mDone.\033[0m Mac has been uninstalled." << endl;
@@ -92,7 +87,7 @@ int main(int argc, char **argv) {
         cout << "Usage: mac [script]" << endl;
         cout << "       mac --analyze <file>" << endl;
         cout << "       mac --catalog[=<selector[,selector]>]" << endl;
-        cout << "       mac --uninstall" << endl;
+        cout << "       mac --uninstall [--purge]" << endl;
         cout << "       mac --version" << endl;
         return 1;
     }

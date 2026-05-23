@@ -6,7 +6,7 @@
 mac [script]
 mac --analyze <file>
 mac --catalog[=<selector[,selector]>]
-mac --uninstall
+mac --uninstall [--purge]
 mac --version
 ```
 
@@ -74,10 +74,11 @@ Print the version string (e.g., `Mac v0.2.3`).
 ### Uninstall
 
 ```bash
-mac --uninstall
+mac --uninstall           # keeps ~/mac/output/
+mac --uninstall --purge   # also removes generated output
 ```
 
-Remove the Mac installation. See [Installation](./install.md#uninstall).
+Remove the Mac installation. Generated output files in `~/mac/output/` are kept unless `--purge` is passed. See [Installation](./install.md#uninstall).
 
 ## See Also
 
