@@ -540,7 +540,7 @@ connection.onCompletion((params: CompletionParams): CompletionItem[] => {
     const items: CompletionItem[] = [];
     const seen = new Set<string>();
 
-    for (const keyword of ["and", "break", "class", "continue", "else", "false", "fun", "for", "if", "in", "nil", "or", "print", "return", "super", "this", "true", "var", "while"]) {
+    for (const keyword of ["and", "break", "class", "continue", "effect", "else", "enum", "false", "fun", "for", "gif", "grid", "if", "in", "match", "nil", "or", "print", "return", "style", "super", "this", "true", "val", "var", "while"]) {
         pushCompletion(items, seen, {
             label: keyword,
             kind: CompletionItemKind.Keyword,
