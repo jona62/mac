@@ -6,9 +6,9 @@
 #include <iostream>             // cout (output)
 #include <sstream>              // ostringstream (source buffering)
 #include <string>               // string
-#include <unistd.h>             // isatty, fileno (interactive detection)
 #include <vector>               // vector (tokens, AST)
 
+#include "Platform.h"           // platform::getExePath, isInteractiveTTY, getHomeDir
 #include "Scanner.h"            // scanner::Scanner (lexical analysis)
 #include "Parser.h"             // parser::Parser (syntactic analysis)
 #include "Resolver.h"           // resolver::Resolver (variable resolution)
@@ -17,33 +17,21 @@
 #include "NativeFunctions.h"    // callable::cleanupTempFiles
 #include "nlohmann/json.hpp"    // nlohmann::json (analyzer error output)
 
+#ifdef _WIN32
+#include "LinenoiseStub.h"      // stub linenoise API for Windows (std::getline fallback)
+#else
 extern "C" {
 #include "linenoise.h"          // linenoise, linenoiseHistoryAdd/Save/Load (REPL editing)
 }
-#include "MacMeme.h"            // meme::MacMeme (scriptDir, binaryDir, templateMap)
-
-#ifdef __APPLE__
-#include <mach-o/dyld.h>        // _NSGetExecutablePath (binary location)
 #endif
+#include "MacMeme.h"            // meme::MacMeme (scriptDir, binaryDir, templateMap)
 
 namespace runner {
 
     using MV = value::MacValue;
 
-    // Resolve the binary's own directory for finding assets/stdlib
     inline std::string getBinaryDir() {
-        std::filesystem::path exe;
-#ifdef __APPLE__
-        char buf[1024];
-        uint32_t size = sizeof(buf);
-        if (_NSGetExecutablePath(buf, &size) == 0) {
-            exe = std::filesystem::canonical(buf);
-        }
-#elif defined(__linux__)
-        exe = std::filesystem::canonical("/proc/self/exe");
-#endif
-        if (!exe.empty()) return exe.parent_path().string();
-        return ".";
+        return platform::getExePath();
     }
 
     // Try path relative to binary first, then cwd
@@ -124,7 +112,7 @@ namespace runner {
 
     // Interactive REPL or piped stdin
     inline void runPrompt(Runtime& rt) {
-        bool interactive = isatty(fileno(stdin));
+        bool interactive = platform::isInteractiveTTY();
 
         // Non-interactive (piped) mode: read all input as a batch
         if (!interactive) {
@@ -146,11 +134,8 @@ namespace runner {
         }
 
         // Interactive mode with linenoise — arrow keys, history, Ctrl-C
-        std::string historyPath;
-        if (const char* home = std::getenv("HOME")) {
-            historyPath = std::string(home) + "/.mac_history";
-            linenoiseHistoryLoad(historyPath.c_str());
-        }
+        std::string historyPath = platform::historyFile();
+        linenoiseHistoryLoad(historyPath.c_str());
         linenoiseSetMultiLine(1);
 
         std::string buffer;
@@ -206,11 +191,8 @@ namespace runner {
             }
         }
 
-        // Save history
-        if (!historyPath.empty()) {
-            linenoiseHistorySetMaxLen(500);
-            linenoiseHistorySave(historyPath.c_str());
-        }
+        linenoiseHistorySetMaxLen(500);
+        linenoiseHistorySave(historyPath.c_str());
     }
 
     // Run --analyze mode for LSP

@@ -1,13 +1,16 @@
-#include <cstring>                  // strcmp
+#include <cstring>              // strcmp
 #include <iostream>             // cout, endl
 #include <string>               // string
-#include "MacCatalog.h"             // mac_catalog::printCatalog
-#include "MacRunner.h"              // runner::Runtime, getBinaryDir, runFile, runPrompt, analyzeFile
-#include "UpdateCheck.h"            // updateCheck::checkForUpdate
+#include "MacCatalog.h"         // mac_catalog::printCatalog
+#include "MacRunner.h"          // runner::Runtime, getBinaryDir, runFile, runPrompt, analyzeFile
+#include "Platform.h"           // platform::enableAnsiEscapes, getHomeDir
+#include "UpdateCheck.h"        // updateCheck::checkForUpdate
 
 using namespace std;
 
 int main(int argc, char **argv) {
+    platform::enableAnsiEscapes();
+
     auto binaryDir = runner::getBinaryDir();
     meme::MacMeme::binaryDir() = binaryDir;
 
@@ -32,11 +35,11 @@ int main(int argc, char **argv) {
     // --uninstall [--purge]: remove mac installation
     if (argc >= 2 && strcmp(argv[1], "--uninstall") == 0) {
         bool purge = argc == 3 && strcmp(argv[2], "--purge") == 0;
-        string home = getenv("HOME") ? getenv("HOME") : ".";
-        string installDir = home + "/.mac";
-        string binLink = home + "/.local/bin/mac";
-        string outputDir = home + "/mac/output";
-        string historyFile = home + "/.mac_history";
+        string home = platform::getHomeDir();
+        string installDir = platform::installDir();
+        string binLink = platform::binLink();
+        string outputDir = platform::outputDir();
+        string historyFile = platform::historyFile();
 
         cout << "\033[1m\033[35m  Uninstalling Mac...\033[0m" << endl;
 

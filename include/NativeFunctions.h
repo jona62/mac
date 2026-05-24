@@ -5,7 +5,6 @@
 #include <unordered_set>        // unordered_set (unique dedup)
 #include <atomic>               // atomic (temp file counter)
 #include <cctype>               // tolower, toupper
-#include <unistd.h>             // getpid (temp file naming)
 #include <chrono>               // high_resolution_clock (clock())
 #include <cmath>                // sqrt, abs, pow, floor, ceil, round
 #include <cstdlib>              // rand (noise effects)
@@ -24,6 +23,7 @@
 #include "MemeLayout.h"         // layout::resizePixels, compositePixels
 #include "MacInstance.h"        // instance::MacInstance (property extraction)
 #include "MacEnum.h"            // enumeration::MacEnum (enum type check)
+#include "Platform.h"           // platform::getHomeDir, getProcessId, getTempDir
 
 namespace callable {
 
@@ -31,9 +31,7 @@ namespace callable {
 
     // Default output directory for bare filenames when no override is set.
     static std::string getDefaultOutputDir() {
-        const char* home = std::getenv("HOME");
-        if (!home) home = ".";
-        std::string dir = std::string(home) + "/mac/output";
+        std::string dir = platform::outputDir();
         std::filesystem::create_directories(dir);
         return dir;
     }
@@ -644,7 +642,7 @@ namespace callable {
     // Helper: save pixels to a temp file and return the path
     static std::atomic<int> tempCounter{0};
     static std::string saveTempImage(const std::vector<unsigned char>& pixels, int w, int h) {
-        std::string tmpDir = "/tmp/mac_effects_" + std::to_string(getpid());
+        std::string tmpDir = platform::getTempDir() + "/mac_effects_" + std::to_string(platform::getProcessId());
         std::filesystem::create_directories(tmpDir);
         int id = tempCounter.fetch_add(1);
         std::string path = tmpDir + "/fx_" + std::to_string(id) + ".png";
@@ -652,9 +650,8 @@ namespace callable {
         return path;
     }
 
-    // Clean up temp effect files for this process
     static void cleanupTempFiles() {
-        std::string tmpDir = "/tmp/mac_effects_" + std::to_string(getpid());
+        std::string tmpDir = platform::getTempDir() + "/mac_effects_" + std::to_string(platform::getProcessId());
         std::filesystem::remove_all(tmpDir);
     }
 

@@ -16,15 +16,24 @@ include_directories(include)
 # Add the source files
 set(SOURCES
     src/main.cpp
-    src/Scanner.cpp  # Scanner implementation is in src/Scanner.cpp
-    src/Parser.cpp # Parser implementation is in src/Parser.cpp
-    src/Interpreter.cpp # Interpreter implementation is in src/Interpreter.cpp
-    src/stb_impl.cpp # stb library implementations
-    src/linenoise.c  # Line editing library (arrow keys, history)
+    src/Scanner.cpp
+    src/Parser.cpp
+    src/Interpreter.cpp
+    src/stb_impl.cpp
 )
+
+if(NOT WIN32)
+    list(APPEND SOURCES src/linenoise.c)
+endif()
 
 # Create the executable
 add_executable(mac ${SOURCES})
+
+# MSVC-specific flags
+if(MSVC)
+    target_compile_options(mac PRIVATE /utf-8)
+    target_compile_definitions(mac PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 # Copy assets and stdlib to build directory on every build
 add_custom_target(copy_runtime_assets ALL

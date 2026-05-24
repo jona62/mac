@@ -2,11 +2,19 @@
 
 ## Quick Install
 
+**macOS / Linux:**
+
 ```bash
 curl -fsSL https://macstudio.meme/install.sh | bash
 ```
 
-This detects your platform, downloads the latest release binary, and installs to `~/.mac/` with a symlink at `~/.local/bin/mac`.
+**Windows (PowerShell):**
+
+```powershell
+irm macstudio.meme/install.ps1 | iex
+```
+
+On macOS/Linux this installs to `~/.mac/` with a symlink at `~/.local/bin/mac`. On Windows it installs to `%USERPROFILE%\.mac\` and adds it to your user PATH.
 
 ## Supported Platforms
 
@@ -15,6 +23,7 @@ This detects your platform, downloads the latest release binary, and installs to
 | macOS | arm64 (Apple Silicon) |
 | macOS | x86_64 (Intel) |
 | Linux | x86_64 |
+| Windows | x86_64 |
 
 ## Updating
 

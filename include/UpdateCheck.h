@@ -1,15 +1,13 @@
 #ifndef UPDATE_CHECK_H
 #define UPDATE_CHECK_H
 
-#include <array>                // array (popen buffer)
 #include <chrono>               // system_clock (cache TTL)
-#include <cstdio>               // popen, pclose, fgets
-#include <cstdlib>              // getenv
 #include <filesystem>           // path, exists, create_directories
 #include <fstream>              // ifstream, ofstream
 #include <iostream>             // cerr
 #include <sstream>              // istringstream
 #include <string>               // string, stoi
+#include "Platform.h"           // platform::popenRead, getHomeDir, nullDevice
 #include "nlohmann/json.hpp"    // nlohmann::json (API response parsing)
 
 namespace updateCheck {
@@ -45,26 +43,14 @@ namespace updateCheck {
     }
 
     inline std::string execCurl() {
-        const char* cmd = "curl -sf --max-time 2 "
-            "https://api.github.com/repos/jona62/mac/releases/latest 2>/dev/null";
-        FILE* pipe = popen(cmd, "r");
-        if (!pipe) return "";
-        std::string result;
-        std::array<char, 4096> buf;
-        while (fgets(buf.data(), buf.size(), pipe)) {
-            result += buf.data();
-        }
-        int status = pclose(pipe);
-        if (status != 0) return "";
-        return result;
+        std::string cmd = std::string("curl -sf --max-time 2 "
+            "https://api.github.com/repos/jona62/mac/releases/latest ") + platform::nullDevice();
+        return platform::popenRead(cmd.c_str());
     }
 
     inline void checkForUpdate() {
         try {
-            const char* home = std::getenv("HOME");
-            if (!home) return;
-
-            std::filesystem::path cacheDir = std::string(home) + "/.mac";
+            std::filesystem::path cacheDir = platform::installDir();
             std::filesystem::path cacheFile = cacheDir / "update_check";
 
             auto now = std::chrono::system_clock::now();
