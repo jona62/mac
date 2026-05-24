@@ -115,7 +115,7 @@ namespace updateCheck {
             if (latest > current) {
                 std::cerr << "\033[2mUpdate available: v" << MAC_VERSION
                           << " \xe2\x86\x92 v" << latestVersion
-                          << " \xe2\x80\x94 run: curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash\033[0m"
+                          << " \xe2\x80\x94 run: curl -fsSL https://macstudio.meme/install.sh | bash\033[0m"
                           << std::endl;
             }
         } catch (...) {

@@ -12,7 +12,7 @@ Meme as Code. A programming language where memes are first-class citizens.
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/install.sh | bash
+curl -fsSL https://macstudio.meme/install.sh | bash
 ```
 
 Or build from source:
@@ -180,16 +180,16 @@ If `MAC_OUTPUT_DIR` is set, saves are redirected there and only the filename por
 
 ## Reference
 
-| Element | Options |
-|---------|---------|
-| **Templates** | `two_panel` `three_panel` `bottom_text` `blank` `dark` `wide` `tall` `square` `four_panel` `caption_bar` or `@"path"` |
-| **Positions** | `top` `bottom` `center` |
-| **Effects (param)** | `blur(n)` `pixelate(n)` `noise(n)` `saturate(n)` `contrast(n)` `brightness(n)` `jpeg(n)` `hueShift(n)` `glow(n)` `posterize(n)` `chromatic(n)` `threshold(n)` `tint(n)` |
-| **Effects (direct)** | `invert` `sepia` `sharpen` `vignette` `grayscale` `deepfry` |
-| **Transitions** | `crossfade` `slideLeft` `slideRight` `slideUp` `slideDown` `wipe` `fadeBlack` `zoom` |
-| **Easing** | `ease` `easeIn` `easeOut` `easeInOut` |
-| **Durations** | `400ms` `2s` `Duration(400)` |
-| **Sizes** | `800x600` `Size(800, 600)` |
+| Element                    | Options                                                                                                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Templates**        | `two_panel` `three_panel` `bottom_text` `blank` `dark` `wide` `tall` `square` `four_panel` `caption_bar` or `@"path"`                                                       |
+| **Positions**        | `top` `bottom` `center`                                                                                                                                                                     |
+| **Effects (param)**  | `blur(n)` `pixelate(n)` `noise(n)` `saturate(n)` `contrast(n)` `brightness(n)` `jpeg(n)` `hueShift(n)` `glow(n)` `posterize(n)` `chromatic(n)` `threshold(n)` `tint(n)` |
+| **Effects (direct)** | `invert` `sepia` `sharpen` `vignette` `grayscale` `deepfry`                                                                                                                           |
+| **Transitions**      | `crossfade` `slideLeft` `slideRight` `slideUp` `slideDown` `wipe` `fadeBlack` `zoom`                                                                                              |
+| **Easing**           | `ease` `easeIn` `easeOut` `easeInOut`                                                                                                                                                     |
+| **Durations**        | `400ms` `2s` `Duration(400)`                                                                                                                                                                |
+| **Sizes**            | `800x600` `Size(800, 600)`                                                                                                                                                                    |
 
 ## Language
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Mac Language Uninstaller
-# Usage: curl -fsSL https://raw.githubusercontent.com/jona62/mac/main/uninstall.sh | bash
+# Usage: curl -fsSL https://macstudio.meme/uninstall.sh | bash
 
 set -e
 
@@ -41,10 +41,19 @@ elif [ -f "$BIN_DIR/mac" ]; then
     removed=1
 fi
 
+if [ -f "$HOME/.mac_history" ]; then
+    rm -f "$HOME/.mac_history"
+    printf "  ${GREEN}✓${RESET} Removed ${DIM}~/.mac_history${RESET}\n"
+fi
+
 if [ -d "$OUTPUT_DIR" ]; then
-    count=$(find "$OUTPUT_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')
-    rm -rf "$OUTPUT_DIR"
-    printf "  ${GREEN}✓${RESET} Removed output directory ${DIM}($count files)${RESET}\n"
+    if [ "$1" = "--purge" ]; then
+        count=$(find "$OUTPUT_DIR" -type f 2>/dev/null | wc -l | tr -d ' ')
+        rm -rf "$OUTPUT_DIR"
+        printf "  ${GREEN}✓${RESET} Removed output directory ${DIM}($count files)${RESET}\n"
+    else
+        printf "  ${DIM}-${RESET} Kept ${DIM}$OUTPUT_DIR${RESET} (use --purge to remove)\n"
+    fi
     removed=1
 fi
 

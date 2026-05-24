@@ -40,12 +40,20 @@ Requires CMake 3.20+ and a C++23 compiler.
 mac --uninstall
 ```
 
+Or without the binary installed:
+
+```bash
+curl -fsSL https://macstudio.meme/uninstall.sh | bash
+```
+
 Removes `~/.mac/` (binary, assets, stdlib), `~/.local/bin/mac` (symlink), and `~/.mac_history` (REPL history). Your generated output in `~/mac/output/` is kept by default.
 
 To also remove generated output files:
 
 ```bash
 mac --uninstall --purge
+# or
+curl -fsSL https://macstudio.meme/uninstall.sh | bash -s -- --purge
 ```
 
 ## File Locations
