@@ -6,9 +6,16 @@
 #include <string>               // string
 
 #ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>            // GetModuleFileNameA, SetConsoleOutputCP, etc.
+#undef FALSE
+#undef TRUE
+#undef IN
+#undef NEAR
+#undef FAR
 #include <io.h>                 // _isatty, _fileno
 #include <process.h>            // _getpid
-#include <windows.h>            // GetModuleFileNameA, SetConsoleOutputCP, etc.
 #include <cstdio>               // _popen, _pclose, fgets
 #else
 #include <unistd.h>             // isatty, fileno, getpid
