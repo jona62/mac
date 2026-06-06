@@ -75,19 +75,9 @@ jobs:
       - run: bash tests/run_tests.sh
       - run: python3 tests/analyzer/run_analyzer_tests.py
 
-  test-windows:
-    name: Test (Windows)
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v5
-      - run: cmake -S . -B build
-      - run: cmake --build build --config Release
-      - run: python3 tests/analyzer/run_analyzer_tests.py
-
   release:
     name: Build (${{ matrix.target }})
-    needs: [test-linux, test-macos, test-windows, lint-lsp, check-version]
+    needs: [test-linux, test-macos, lint-lsp, check-version]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -96,17 +86,13 @@ jobs:
           - { os: macos-latest,  target: mac-macos-arm64 }
           - { os: macos-15,      target: mac-macos-x86_64 }
           - { os: ubuntu-latest, target: mac-linux-x86_64 }
-          - { os: windows-latest, target: mac-windows-x86_64 }
     steps:
       - uses: actions/checkout@v5
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --config Release
-      - name: Test (Unix)
-        if: runner.os != 'Windows'
-        run: bash tests/run_tests.sh
+      - run: bash tests/run_tests.sh
       - run: python3 tests/analyzer/run_analyzer_tests.py
-      - name: Package (Unix)
-        if: runner.os != 'Windows'
+      - name: Package
         run: |
           mkdir -p dist/${{ matrix.target }}
           cp build/mac dist/${{ matrix.target }}/mac
@@ -114,27 +100,41 @@ jobs:
           cp -r build/stdlib dist/${{ matrix.target }}/stdlib
           cp README.md dist/${{ matrix.target }}/
           cd dist && tar czf ${{ matrix.target }}.tar.gz ${{ matrix.target }}
-      - name: Package (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist/${{ matrix.target }}
-          Copy-Item build/Release/mac.exe dist/${{ matrix.target }}/mac.exe
-          Copy-Item -Recurse build/assets dist/${{ matrix.target }}/assets
-          Copy-Item -Recurse build/stdlib dist/${{ matrix.target }}/stdlib
-          Copy-Item README.md dist/${{ matrix.target }}/
-          Compress-Archive -Path dist/${{ matrix.target }} -DestinationPath dist/${{ matrix.target }}.zip
       - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.target }}
-          path: |
-            dist/${{ matrix.target }}.tar.gz
-            dist/${{ matrix.target }}.zip
+          path: dist/${{ matrix.target }}.tar.gz
+
+  # Windows builds separately - does not block the release
+  release-windows:
+    name: Build (mac-windows-x86_64)
+    needs: [test-linux, lint-lsp, check-version]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --config Release
+      - run: python3 tests/analyzer/run_analyzer_tests.py
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/mac-windows-x86_64
+          Copy-Item build/Release/mac.exe dist/mac-windows-x86_64/mac.exe
+          Copy-Item -Recurse build/assets dist/mac-windows-x86_64/assets
+          Copy-Item -Recurse build/stdlib dist/mac-windows-x86_64/stdlib
+          Copy-Item README.md dist/mac-windows-x86_64/
+          Compress-Archive -Path dist/mac-windows-x86_64 -DestinationPath dist/mac-windows-x86_64.zip
+      - uses: actions/upload-artifact@v5
+        with:
+          name: mac-windows-x86_64
+          path: dist/mac-windows-x86_64.zip
 
   publish:
     name: Publish Release
-    needs: release
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release, release-windows]
+    if: startsWith(github.ref, 'refs/tags/v') && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write
