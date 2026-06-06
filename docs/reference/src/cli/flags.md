@@ -7,8 +7,11 @@ mac [script]
 mac --analyze <file>
 mac --catalog[=<selector[,selector]>]
 mac --uninstall [--purge]
-mac --version
+mac --version | -v
+mac --help | -h
 ```
+
+Pass `--help` to any command for detailed usage (e.g. `mac --catalog --help`).
 
 ## Modes
 
@@ -69,7 +72,7 @@ mac --version
 mac -v
 ```
 
-Print the version string (e.g., `Mac v0.2.3`).
+Print the version string (e.g., `Mac v0.13.0`).
 
 ### Uninstall
 
@@ -79,6 +82,15 @@ mac --uninstall --purge   # also removes generated output
 ```
 
 Remove the Mac installation. Generated output files in `~/mac/output/` are kept unless `--purge` is passed. See [Installation](./install.md#uninstall).
+
+### Help
+
+```bash
+mac --help
+mac -h
+```
+
+Print usage information and available commands.
 
 ## See Also
 
