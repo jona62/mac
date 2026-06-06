@@ -32,7 +32,7 @@ add_executable(mac ${SOURCES})
 # MSVC-specific flags
 if(MSVC)
     target_compile_options(mac PRIVATE /utf-8)
-    target_compile_definitions(mac PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(mac PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX WIN32_LEAN_AND_MEAN)
 endif()
 
 # Copy assets and stdlib to build directory on every build

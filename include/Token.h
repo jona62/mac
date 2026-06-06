@@ -11,6 +11,16 @@
 #include <variant>              // variant, monostate, get, holds_alternative
 #include <unordered_map>        // unordered_map (keyword lookup)
 
+#ifdef _WIN32
+#undef FALSE
+#undef TRUE
+#undef IN
+#undef NEAR
+#undef FAR
+#undef NOMINMAX
+#define NOMINMAX
+#endif
+
 using std::cout, std::endl;
 using std::monostate;
 using std::string;
