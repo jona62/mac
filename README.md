@@ -1,6 +1,20 @@
 # Mac
 
-Meme as Code. A programming language where memes are first-class citizens.
+Interpreter for Mac, a programming language where memes are first-class values
+
+## What it is
+
+Mac (Meme as Code) is a dynamically typed language with functions, closures, classes, pipes and enums, where meme literals, effects, grids and GIF timelines are built in. Programs render to PNG or GIF files.
+
+## Stack
+
+- C++23 and CMake for the tree-walk interpreter and analyzer
+- TypeScript for the VS Code extension and language server (`mac-lang/`)
+- mdBook for the language reference (`docs/reference/`)
+- Bash and Python test runners, GitHub Actions for CI
+- The web GIF Studio and Playground live in [mac-studio-meme/mac-studio](https://github.com/mac-studio-meme/mac-studio)
+
+## Example
 
 ```mac
 @two_panel {
@@ -9,7 +23,9 @@ Meme as Code. A programming language where memes are first-class citizens.
 } |> glitch => "meme.png"
 ```
 
-## Install
+## Run it
+
+### Install
 
 ```bash
 curl -fsSL https://macstudio.meme/install.sh | bash
@@ -185,7 +201,7 @@ If `MAC_OUTPUT_DIR` is set, saves are redirected there and only the filename por
 | **Templates**        | `two_panel` `three_panel` `bottom_text` `blank` `dark` `wide` `tall` `square` `four_panel` `caption_bar` or `@"path"`                                                       |
 | **Positions**        | `top` `bottom` `center`                                                                                                                                                                     |
 | **Effects (param)**  | `blur(n)` `pixelate(n)` `noise(n)` `saturate(n)` `contrast(n)` `brightness(n)` `jpeg(n)` `hueShift(n)` `glow(n)` `posterize(n)` `chromatic(n)` `threshold(n)` `tint(n)` |
-| **Effects (direct)** | `invert` `sepia` `sharpen` `vignette` `grayscale` `deepfry`                                                                                                                           |
+| **Effects (direct)** | `invert` `sepia` `sharpen` `vignette` `grayscale`                                                                                                                           |
 | **Transitions**      | `crossfade` `slideLeft` `slideRight` `slideUp` `slideDown` `wipe` `fadeBlack` `zoom`                                                                                              |
 | **Easing**           | `ease` `easeIn` `easeOut` `easeInOut`                                                                                                                                                     |
 | **Durations**        | `400ms` `2s` `Duration(400)`                                                                                                                                                                |
@@ -195,7 +211,7 @@ If `MAC_OUTPUT_DIR` is set, saves are redirected there and only the filename por
 
 Mac is a dynamically typed language with functions, closures, classes, arrays, maps, arrow functions, pipes, and operator overloading.
 
-See [LANGUAGE.md](LANGUAGE.md) for the full reference.
+See the [language reference](https://docs.macstudio.meme) (source in `docs/reference/`) for the full reference. Prelude effects such as `deepfry` are defined in `stdlib/prelude.mac`.
 
 ## VS Code Extension
 
@@ -212,8 +228,8 @@ ln -sf "$(pwd)/mac-lang" ~/.vscode/extensions/mac-lang
 cmake --build build && bash tests/run_tests.sh
 ```
 
-See [docs/BUILDING.md](docs/BUILDING.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [language reference](https://docs.macstudio.meme).
 
 ## License
 
-MIT
+MIT, see [LICENSE](LICENSE).
